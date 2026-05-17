@@ -1,15 +1,15 @@
-import LeanStat.Descriptive
+import LeanStats.Descriptive
 
-/-! # LeanStat.Regression — linear regression and correlation
+/-! # LeanStats.Regression — linear regression and correlation
 
 Pure functions for ordinary-least-squares linear regression and
 Pearson correlation. Manifest claims about least-squares optimality
-and orthogonality live in `LeanStat/Manifests/Regression.lean`.
+and orthogonality live in `LeanStats/Manifests/Regression.lean`.
 -/
 
 set_option autoImplicit false
 
-namespace LeanStat
+namespace LeanStats
 
 structure LinearFit where
   slope : Float
@@ -49,4 +49,4 @@ def linearRegression (xs ys : Array Float) : Option LinearFit :=
       let r := correlation xs ys
       some { slope, intercept, r2 := r ^ 2, n }
 
-end LeanStat
+end LeanStats

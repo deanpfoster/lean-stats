@@ -1,10 +1,10 @@
-import LeanStat.Plot.Axes
+import LeanStats.Plot.Axes
 
-/-! # LeanStat.Plot.Scatter — scatter plot -/
+/-! # LeanStats.Plot.Scatter — scatter plot -/
 
 set_option autoImplicit false
 
-namespace LeanStat.Plot
+namespace LeanStats.Plot
 
 def scatterPlot (data : Array (Float × Float)) (opts : PlotOptions := {}) : Svg :=
   let xs := data.map Prod.fst
@@ -16,4 +16,4 @@ def scatterPlot (data : Array (Float × Float)) (opts : PlotOptions := {}) : Svg
     Svg.circle (xScale.apply x) (yScale.apply y) 3 [attr "fill" "steelblue"]
   Svg.group ([axes] ++ points) []
 
-end LeanStat.Plot
+end LeanStats.Plot

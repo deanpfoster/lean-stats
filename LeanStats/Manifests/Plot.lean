@@ -1,7 +1,7 @@
 import DeanLean.Basic
-import LeanStat.Plot.Svg
-import LeanStat.Plot.Scatter
-import LeanStat.Plot.Histogram
+import LeanStats.Plot.Svg
+import LeanStats.Plot.Scatter
+import LeanStats.Plot.Histogram
 
 /-! # Manifests/Plot — claims about chart rendering
 
@@ -24,8 +24,8 @@ Plot output is a string of SVG. We claim:
 
 set_option autoImplicit false
 
-namespace LeanStat.Manifests.Plot
-open LeanStat.Plot
+namespace LeanStats.Manifests.Plot
+open LeanStats.Plot
 
 /-- An empty group renders to a self-closing-style `<g></g>`. -/
 UnprovenConjecture empty_group_renders :
@@ -45,4 +45,4 @@ UnprovenConjecture scale_constant :
 UnprovenConjecture attr_escaping_known_gap :
   True
 
-end LeanStat.Manifests.Plot
+end LeanStats.Manifests.Plot

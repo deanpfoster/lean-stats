@@ -1,4 +1,4 @@
-/-! # LeanStat.Report.Tooltip — tooltip and modal JS/CSS for HTML reports
+/-! # LeanStats.Report.Tooltip — tooltip and modal JS/CSS for HTML reports
 
 Helpers for adding interactive tooltips and click-to-drill-down modals
 to generated HTML reports. Pure: produces CSS and JS as strings, the
@@ -7,7 +7,7 @@ consumer embeds them in a report.
 
 set_option autoImplicit false
 
-namespace LeanStat.Report
+namespace LeanStats.Report
 
 /-- CSS for tooltips and modal dialogs. -/
 def tooltipCss : String :=
@@ -36,4 +36,4 @@ def tooltipJs : String :=
   "ov.addEventListener('click',function(e){if(e.target===ov)ov.remove()})})});" ++
   "})"
 
-end LeanStat.Report
+end LeanStats.Report

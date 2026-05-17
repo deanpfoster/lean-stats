@@ -1,19 +1,19 @@
-import LeanStat.Report.Tooltip
+import LeanStats.Report.Tooltip
 
-/-! # LeanStat.Report.Html — pure HTML report generator
+/-! # LeanStats.Report.Html — pure HTML report generator
 
 Produces a self-contained HTML document from a `Report` (title +
 sections). Each section can include prose and an optional SVG (e.g.
-from `LeanStat.Plot.*`).
+from `LeanStats.Plot.*`).
 
 Pure: returns a `String`. The caller writes the file via IO. This
-keeps `LeanStat` free of capability concerns; report-writing-to-disk
+keeps `LeanStats` free of capability concerns; report-writing-to-disk
 is the consumer's job.
 -/
 
 set_option autoImplicit false
 
-namespace LeanStat.Report
+namespace LeanStats.Report
 
 structure Section where
   heading : String
@@ -53,4 +53,4 @@ def renderReport (r : Report) : String :=
   (r.sections.map renderSection).foldl (· ++ ·) "" ++
   "<script>" ++ defaultJs ++ "</script></body></html>"
 
-end LeanStat.Report
+end LeanStats.Report

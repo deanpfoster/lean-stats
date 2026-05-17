@@ -1,10 +1,10 @@
-/-! # LeanStat.Plot.Svg — core SVG type and renderer
+/-! # LeanStats.Plot.Svg — core SVG type and renderer
 
 Pure SVG element model and renderer. We model only the shapes we
 actually need (circle, rect, line, text, path, group) and render
 them to a string. No DOM, no streaming, no parsing.
 
-Rationale: charts produced by `LeanStat` are short documents (KB
+Rationale: charts produced by `LeanStats` are short documents (KB
 range), often embedded in HTML reports. A simple inductive `Svg`
 type with a `render : Svg → String` is the right shape for that
 use case.
@@ -18,7 +18,7 @@ See `Manifests/Plot.lean`.
 
 set_option autoImplicit false
 
-namespace LeanStat.Plot
+namespace LeanStats.Plot
 
 inductive Attr where
   | mk : String → String → Attr
@@ -59,4 +59,4 @@ partial def Svg.render : Svg → String
 def svgDoc (width height : Float) (content : Svg) : String :=
   s!"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {width} {height}' width='{width}' height='{height}'>\n{content.render}\n</svg>"
 
-end LeanStat.Plot
+end LeanStats.Plot

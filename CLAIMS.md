@@ -1,7 +1,7 @@
 # Claims
 
-Human-readable index of every formal claim in lean-stat. Source of
-truth is `LeanStat/Manifests/<topic>.lean`; this is the dashboard.
+Human-readable index of every formal claim in lean-stats. Source of
+truth is `LeanStats/Manifests/<topic>.lean`; this is the dashboard.
 
 ## Status snapshot
 
@@ -19,7 +19,7 @@ truth is `LeanStat/Manifests/<topic>.lean`; this is the dashboard.
   Next work: write actual formal claims (mostly `decide` /
   `native_decide` on small fixtures) and promote.
 
-## Headline (`LeanStat/Manifest.lean`)
+## Headline (`LeanStats/Manifest.lean`)
 
 | Claim | Evidence | Statement |
 |-------|----------|-----------|
@@ -31,12 +31,12 @@ truth is `LeanStat/Manifests/<topic>.lean`; this is the dashboard.
 
 ## Per-axis manifests
 
-  - `LeanStat.Manifests.Descriptive` — mean/variance/median identities
-  - `LeanStat.Manifests.Regression` — degenerate-input behavior; OLS
+  - `LeanStats.Manifests.Descriptive` — mean/variance/median identities
+  - `LeanStats.Manifests.Regression` — degenerate-input behavior; OLS
     optimality (TODO)
-  - `LeanStat.Manifests.Plot` — SVG well-formedness; scale monotonicity;
+  - `LeanStats.Manifests.Plot` — SVG well-formedness; scale monotonicity;
     KNOWN GAP: attribute-value escaping
-  - `LeanStat.Manifests.Report` — HTML document structure; KNOWN GAP:
+  - `LeanStats.Manifests.Report` — HTML document structure; KNOWN GAP:
     HTML escaping
 
 ## What we do NOT claim

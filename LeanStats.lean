@@ -1,29 +1,29 @@
-import LeanStat.Descriptive
-import LeanStat.Regression
-import LeanStat.Tests
+import LeanStats.Descriptive
+import LeanStats.Regression
+import LeanStats.Tests
 
-import LeanStat.Plot.Svg
-import LeanStat.Plot.Scale
-import LeanStat.Plot.Axes
-import LeanStat.Plot.Scatter
-import LeanStat.Plot.Histogram
+import LeanStats.Plot.Svg
+import LeanStats.Plot.Scale
+import LeanStats.Plot.Axes
+import LeanStats.Plot.Scatter
+import LeanStats.Plot.Histogram
 
-import LeanStat.Report.Tooltip
-import LeanStat.Report.Html
+import LeanStats.Report.Tooltip
+import LeanStats.Report.Html
 
-import LeanStat.Manifest
+import LeanStats.Manifest
 
-/-! # LeanStat — pure-Lean statistics, plotting, and reporting
+/-! # LeanStats — pure-Lean statistics, plotting, and reporting
 
 A pure Lean 4 library for statistical computation, plotting, and
 HTML report generation. All functions are pure; no IO. Designed to
 be wrapped by tools (e.g. l3m) that handle file ingestion and output
 under a capability-token discipline.
 
-For the headline claims: `LeanStat.Manifest`.
-For per-axis claims: `LeanStat.Manifests.<topic>`.
-For the source: `LeanStat.Descriptive`, `LeanStat.Regression`,
-`LeanStat.Tests`, `LeanStat.Plot.*`, `LeanStat.Report.*`.
+For the headline claims: `LeanStats.Manifest`.
+For per-axis claims: `LeanStats.Manifests.<topic>`.
+For the source: `LeanStats.Descriptive`, `LeanStats.Regression`,
+`LeanStats.Tests`, `LeanStats.Plot.*`, `LeanStats.Report.*`.
 
 ## What's here
 

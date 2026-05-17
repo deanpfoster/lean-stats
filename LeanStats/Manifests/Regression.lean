@@ -1,5 +1,5 @@
 import DeanLean.Basic
-import LeanStat.Regression
+import LeanStats.Regression
 
 /-! # Manifests/Regression — claims about correlation and linear regression
 
@@ -15,7 +15,7 @@ The OLS implementation should satisfy:
 
 set_option autoImplicit false
 
-namespace LeanStat.Manifests.Regression
+namespace LeanStats.Manifests.Regression
 open LeanStat
 
 /-- Correlation of empty or singleton inputs is 0. -/
@@ -36,4 +36,4 @@ UnprovenConjecture regression_mismatched :
 UnprovenConjecture regression_zero_variance :
   linearRegression #[1.0, 1.0, 1.0] #[1.0, 2.0, 3.0] = none
 
-end LeanStat.Manifests.Regression
+end LeanStats.Manifests.Regression

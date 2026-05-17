@@ -1,10 +1,10 @@
-import LeanStat.Plot.Axes
+import LeanStats.Plot.Axes
 
-/-! # LeanStat.Plot.Histogram — histogram plot -/
+/-! # LeanStats.Plot.Histogram — histogram plot -/
 
 set_option autoImplicit false
 
-namespace LeanStat.Plot
+namespace LeanStats.Plot
 
 def histogram (data : Array Float) (bins : Nat := 10) (opts : PlotOptions := {}) : Svg :=
   let bins' := if bins == 0 then 1 else bins
@@ -40,4 +40,4 @@ def histogram (data : Array Float) (bins : Nat := 10) (opts : PlotOptions := {})
     Svg.rect x y barW barH [attr "fill" "steelblue", attr "stroke" "white"]
   Svg.group ([axes] ++ bars) []
 
-end LeanStat.Plot
+end LeanStats.Plot

@@ -1,5 +1,5 @@
 import DeanLean.Basic
-import LeanStat.Descriptive
+import LeanStats.Descriptive
 
 /-! # Manifests/Descriptive — claims about descriptive statistics
 
@@ -28,7 +28,7 @@ Per-function structural and mathematical claims. Most are
 
 set_option autoImplicit false
 
-namespace LeanStat.Manifests.Descriptive
+namespace LeanStats.Manifests.Descriptive
 open LeanStat
 
 /-- Empty array: mean is 0. -/
@@ -55,4 +55,4 @@ UnprovenConjecture summary_n_correct :
 UnprovenConjecture median_singleton :
   ∀ (x : Float), median #[x] = x
 
-end LeanStat.Manifests.Descriptive
+end LeanStats.Manifests.Descriptive

@@ -1,4 +1,4 @@
-# lean-stat
+# lean-stats
 
 Pure Lean 4 statistics, plotting, and HTML reporting. Designed to
 be wrapped by capability-bounded agents (e.g.
@@ -15,7 +15,7 @@ that need real propositions. See `CLAIMS.md` for the dashboard.
 ## Layout
 
 ```
-LeanStat/
+LeanStats/
   Descriptive.lean      — mean, variance, quantiles, summary
   Regression.lean       — Pearson correlation, OLS linear regression
   Tests.lean            — one-sample and Welch two-sample t-tests
@@ -48,10 +48,10 @@ Requires `lean-toolchain` `leanprover/lean4:v4.16.0`. Path-dep on
 ## Usage
 
 ```lean
-import LeanStat
+import LeanStats
 
 open LeanStat
-open LeanStat.Plot
+open LeanStats.Plot
 
 def example : IO Unit := do
   let xs := #[1.0, 2.0, 3.0, 4.0, 5.0]
@@ -69,9 +69,9 @@ def example : IO Unit := do
 
 **Pure all the way down.** No IO, no IORefs, no `partial def`
 except `Svg.render` (which is documented and the totality is
-backed by manifest claims). This makes `lean-stat` cleanly
+backed by manifest claims). This makes `lean-stats` cleanly
 wrappable as tool functions inside an agent: the agent provides
-capability tokens for file IO, network, etc., and `lean-stat`
+capability tokens for file IO, network, etc., and `lean-stats`
 provides correctness for the math.
 
 **Manifest-driven.** Every function eventually has a manifest

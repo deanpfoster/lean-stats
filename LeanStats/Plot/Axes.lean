@@ -1,10 +1,10 @@
-import LeanStat.Plot.Scale
+import LeanStats.Plot.Scale
 
-/-! # LeanStat.Plot.Axes — axis drawing with tick marks -/
+/-! # LeanStats.Plot.Axes — axis drawing with tick marks -/
 
 set_option autoImplicit false
 
-namespace LeanStat.Plot
+namespace LeanStats.Plot
 
 def drawAxes (xScale yScale : Scale) (opts : PlotOptions) : Svg :=
   let plotW := opts.plotWidth
@@ -48,4 +48,4 @@ def drawAxes (xScale yScale : Scale) (opts : PlotOptions) : Svg :=
     else [])
   Svg.group ([xAxis, yAxis] ++ xTicks ++ yTicks ++ labels) []
 
-end LeanStat.Plot
+end LeanStats.Plot

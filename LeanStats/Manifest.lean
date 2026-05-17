@@ -1,13 +1,13 @@
 import DeanLean.Basic
-import LeanStat.Descriptive
-import LeanStat.Regression
-import LeanStat.Tests
-import LeanStat.Plot.Svg
-import LeanStat.Report.Html
+import LeanStats.Descriptive
+import LeanStats.Regression
+import LeanStats.Tests
+import LeanStats.Plot.Svg
+import LeanStats.Report.Html
 
 /-! # Manifest — headline claims about LeanStat
 
-LeanStat is a pure Lean 4 library for statistics, plotting, and
+LeanStats is a pure Lean 4 library for statistics, plotting, and
 HTML report generation. The headline claims below describe what
 the library promises at the level a consumer cares about.
 
@@ -24,7 +24,7 @@ built from those) for:
 ## Headline claims
 
 1. **All functions are pure**: no IO, no IORefs, no environment
-   access. Wrapping LeanStat as a tool inside a capability-bounded
+   access. Wrapping LeanStats as a tool inside a capability-bounded
    agent is mechanical. (`pure_no_io`)
 
 2. **Statistical functions are total**: every function returns a
@@ -43,7 +43,7 @@ built from those) for:
    slope minimizes `sum (yᵢ - (slope·xᵢ + intercept))²` over choices
    of `slope` and `intercept`. (`regression_least_squares`)
 
-5. **Plot output is well-formed SVG**: every `LeanStat.Plot` function
+5. **Plot output is well-formed SVG**: every `LeanStats.Plot` function
    produces a string that any SVG parser will accept. (`svg_well_formed`)
 
 ## What we do NOT claim
@@ -76,9 +76,9 @@ the per-axis manifests and proof files will fill in over time.
 
 set_option autoImplicit false
 
-namespace LeanStat.Manifest
+namespace LeanStats.Manifest
 
-/-- All LeanStat functions are pure (no IO type in their signatures).
+/-- All LeanStats functions are pure (no IO type in their signatures).
 
     This is a structural property checked by audit-grep, not by a Lean
     theorem. The claim here is a placeholder; the real check is in
@@ -109,4 +109,4 @@ UnprovenConjecture regression_least_squares :
 UnprovenConjecture svg_well_formed :
   True
 
-end LeanStat.Manifest
+end LeanStats.Manifest

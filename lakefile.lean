@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL
 
-package «lean-stat» where
+package «lean-stats» where
   leanOptions := #[
     ⟨`autoImplicit, false⟩
   ]
@@ -11,4 +11,4 @@ package «lean-stat» where
 require dean_lean from ".." / "lean-manifests"
 
 @[default_target]
-lean_lib «LeanStat» where
+lean_lib «LeanStats» where

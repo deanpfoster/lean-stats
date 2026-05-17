@@ -1,6 +1,6 @@
-import LeanStat.Plot.Svg
+import LeanStats.Plot.Svg
 
-/-! # LeanStat.Plot.Scale — data-to-pixel scaling
+/-! # LeanStats.Plot.Scale — data-to-pixel scaling
 
 A `Scale` is an affine map `domain → range`. Used to position data
 points within a chart's pixel area.
@@ -8,7 +8,7 @@ points within a chart's pixel area.
 
 set_option autoImplicit false
 
-namespace LeanStat.Plot
+namespace LeanStats.Plot
 
 structure Scale where
   domainMin : Float
@@ -45,4 +45,4 @@ def PlotOptions.plotWidth (o : PlotOptions) : Float :=
 def PlotOptions.plotHeight (o : PlotOptions) : Float :=
   o.height - o.marginTop - o.marginBottom
 
-end LeanStat.Plot
+end LeanStats.Plot

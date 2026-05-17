@@ -1,5 +1,5 @@
 import DeanLean.Basic
-import LeanStat.Report.Html
+import LeanStats.Report.Html
 
 /-! # Manifests/Report — claims about HTML report generation
 
@@ -10,7 +10,7 @@ section heading/prose) into an HTML document. Known limitations:
     execute. This is a deliberate simplification at this stage: we
     expect the consumer (e.g. l3m) to sanitize inputs at the
     capability boundary before passing them in. A future version
-    of LeanStat will add an `escapeHtml` pass and a manifest claim
+    of LeanStats will add an `escapeHtml` pass and a manifest claim
     that no script tags survive.
 
   - **CSS / JS injection** via control characters in title or
@@ -28,8 +28,8 @@ These are testable via `native_decide` on small fixtures.
 
 set_option autoImplicit false
 
-namespace LeanStat.Manifests.Report
-open LeanStat.Report
+namespace LeanStats.Manifests.Report
+open LeanStats.Report
 
 /-- An empty report (no sections) renders to a valid HTML document. -/
 UnprovenConjecture empty_report_renders :
@@ -40,4 +40,4 @@ UnprovenConjecture empty_report_renders :
 UnprovenConjecture html_escaping_known_gap :
   True
 
-end LeanStat.Manifests.Report
+end LeanStats.Manifests.Report

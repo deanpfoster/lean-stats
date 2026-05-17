@@ -1,4 +1,4 @@
-# State of lean-stat — context for next session
+# State of lean-stats — context for next session
 
 **Date:** 2026-05-17
 **Author:** Kiro (code_first)
@@ -8,7 +8,7 @@ not yet started.
 ## Why this exists
 
 This file captures the conversational context that led to creating
-`lean-stat` so the next session can pick up without re-deriving the
+`lean-stats` so the next session can pick up without re-deriving the
 plan.
 
 ## The conversation that led here
@@ -24,7 +24,7 @@ benefit from being **pure Lean libraries with manifest discipline,
 wrapped by l3m for capability-safe data interaction**. The user
 asked for five candidate library domains; I named:
 
-  1. `lean-stat` (this repo) — statistics
+  1. `lean-stats` (this repo) — statistics
   2. `lean-tab` (or similar) — relational/tabular operations
   3. `lean-graph` — graph algorithms
   4. `lean-bytes` — binary parsing and analysis
@@ -33,25 +33,25 @@ asked for five candidate library domains; I named:
 The user then asked specifically about images for an artist's
 workflow — we agreed it fits the same pattern but is 6+ months out.
 
-The decision: **`lean-stat` is the canonical name** (kebab-case
-package, `LeanStat` Lean namespace). It lives as a sibling repo of
+The decision: **`lean-stats` is the canonical name** (kebab-case
+package, `LeanStats` Lean namespace). It lives as a sibling repo of
 l3m and lean-manifests, NOT as a sub-package inside l3m. Reasons:
 
   - Discoverability: a Lean stats library should be findable by
     "Lean statistics" search, not buried in an agent project.
   - Versioning independence.
-  - Clean trust-surface separation: lean-stat's manifest is about
+  - Clean trust-surface separation: lean-stats's manifest is about
     mathematical correctness; l3m's is about safety. Mixing them
     makes both noisier.
   - Future contributions: someone wanting to add chi-square forks
-    `lean-stat`, not l3m.
+    `lean-stats`, not l3m.
 
 ## What's here vs what's next
 
 ### Here (initial extraction):
 
   - All 11 source files copied from l3m, namespaces renamed
-    `L3m.{Stats,Plot,Report}` → `LeanStat.{Descriptive,Regression,
+    `L3m.{Stats,Plot,Report}` → `LeanStats.{Descriptive,Regression,
     Tests,Plot.*,Report.*}`.
   - Lakefile, lean-toolchain, .gitignore.
   - Path-dep on `../lean-manifests`.
@@ -116,7 +116,7 @@ This file IS that extraction. The next merge step is:
     directories (the source files now live here).
   - In l3m's lakefile (when we want to wrap as tools, NOT
     necessarily during the initial merge): add
-    `require «lean-stat» from "../lean-stat"`.
+    `require «lean-stats» from "../lean-stats"`.
 
 ## Naming decision rationale
 
@@ -131,18 +131,23 @@ Lean world?" Looking at neighbors:
     libraries)
 
 The "lean-X" pattern is most natural for utility/format libraries
-that are clearly Lean-targeted but not core. `lean-stat` fits this
+that are clearly Lean-targeted but not core. `lean-stats` fits this
 shape and matches the `lean-manifests` neighbor.
 
-Lean module name: `LeanStat` (PascalCase). Sub-namespaces flat:
-`LeanStat.Descriptive`, `LeanStat.Regression`, `LeanStat.Plot.Svg`,
+Initial draft used `lean-stat` (singular). Master's go-ahead memo
+suggested `lean-stats` (plural — "Lean library for statistics" parses
+naturally; `lean-stat` parses as "Lean library for statistic" which
+is awkward). Renamed to plural.
+
+Lean module name: `LeanStats` (PascalCase). Sub-namespaces flat:
+`LeanStats.Descriptive`, `LeanStats.Regression`, `LeanStats.Plot.Svg`,
 etc. (Mirrors how `Mathlib` does it for sub-areas.)
 
 ## Dependencies
 
 Path-dep on `../lean-manifests` (provides `dean_lean` / `DeanLean`).
 
-When integrated with l3m, l3m will path-dep on `../lean-stat`.
+When integrated with l3m, l3m will path-dep on `../lean-stats`.
 
 ## Future companion libraries (per the user's plan)
 

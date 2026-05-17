@@ -1,8 +1,8 @@
-/-! # LeanStat.Descriptive — mean, variance, quantiles
+/-! # LeanStats.Descriptive — mean, variance, quantiles
 
 Pure descriptive statistics over `Array Float`. All functions are
 total and deterministic; manifest claims about their structural
-properties live in `LeanStat/Manifests/Descriptive.lean`.
+properties live in `LeanStats/Manifests/Descriptive.lean`.
 
 ## What's here
 
@@ -20,7 +20,7 @@ properties live in `LeanStat/Manifests/Descriptive.lean`.
 
 set_option autoImplicit false
 
-namespace LeanStat
+namespace LeanStats
 
 def mean (xs : Array Float) : Float :=
   if xs.isEmpty then 0 else xs.foldl (· + ·) 0 / xs.size.toFloat
@@ -77,4 +77,4 @@ def summary (xs : Array Float) : Summary :=
     q75 := quantile xs 0.75
     max := if s.isEmpty then 0 else s[s.size - 1]! }
 
-end LeanStat
+end LeanStats
