@@ -103,6 +103,26 @@ l3m and lean-manifests, NOT as a sub-package inside l3m. Reasons:
 The library takes `Array Float` and structured records; returns
 `Float`, `Option <record>`, `String` (for SVG/HTML). Period.
 
+## Repository layout (worktrees)
+
+Set up 2026-05-17 to mirror l3m's multi-worktree pattern:
+
+  ~/lean-stats.git/             — bare repository (canonical)
+  ~/lean-stats.code_first/      — code_first worktree, branch `code_first`
+  ~/lean-stats.kiro/            — kiro worktree, branch `kiro`
+
+Default branch (in the bare repo) is `mainline`. Per-agent branches
+fork from there. Same convention as `lean-manifests`.
+
+To add another agent:
+
+  cd ~/lean-stats.git
+  git worktree add -b <agent-name> ~/lean-stats.<agent-name> mainline
+
+Cross-branch memos use the `.workspace/<recipient>/` convention
+from l3m (kiro writes to `.workspace/code_first/` to send a memo
+to code_first, etc.). The `.workspace/` directory IS committed.
+
 ## Connection to the broader merge
 
 The merge memo in `~/l3m.kiro.codeFirst/.workspace/code_first/
