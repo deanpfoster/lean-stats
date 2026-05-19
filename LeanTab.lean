@@ -14,6 +14,7 @@ import LeanTab.Sql.Ast
 import LeanTab.Sql.Parse
 import LeanTab.Sql.Eval
 import LeanTab.Sql.Manifest
+import LeanTab.Query
 import LeanTab.Manifest
 import LeanTab.Manifests.Join
 import LeanTab.Manifests.Window
