@@ -132,16 +132,109 @@ private def jmpJs : String :=
     "for(let i=coef.length-1;i>=0;i--){let c=coef[i].toPrecision(4);if(i===0)eq+=c;else if(i===1)eq+=c+'·x + ';else eq+=c+'·x^'+i+' + '}" ++
     "statsEl.textContent=`n=${xd.length}  R²=${r2.toPrecision(4)}  se=${se.toPrecision(4)}\\n${eq}`" ++
   "}" ++
-  -- Event listeners
-  "document.getElementById('xform').addEventListener('change',draw);" ++
-  "document.getElementById('yform').addEventListener('change',draw);" ++
-  "document.getElementById('fitBtn').addEventListener('click',doFit);" ++
-  "document.getElementById('seToggle').addEventListener('change',function(){if(window._xd)doFit()});" ++
-  "document.getElementById('degree').addEventListener('change',function(){if(window._xd)doFit()});" ++
+  -- Event listeners + WebSocket reporting
+  "document.getElementById('xform').addEventListener('change',function(){draw();report()});" ++
+  "document.getElementById('yform').addEventListener('change',function(){draw();report()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){doFit();report()});" ++
+  "document.getElementById('seToggle').addEventListener('change',function(){if(window._xd)doFit();report()});" ++
+  "document.getElementById('degree').addEventListener('change',function(){if(window._xd)doFit();report()});" ++
+  -- WebSocket connection (l3m starts the server; we just connect)
+  "var ws=null;try{ws=new WebSocket('ws://localhost:9147')}catch(e){}" ++
+  "function report(){" ++
+    "if(!ws||ws.readyState!==1)return;" ++
+    "const xf=document.getElementById('xform').value;" ++
+    "const yf=document.getElementById('yform').value;" ++
+    "const deg=document.getElementById('degree').value;" ++
+    "const se=document.getElementById('seToggle').checked;" ++
+    "const xd=window._xd,yd=window._yd;" ++
+    "if(!xd)return;" ++
+    -- Compute summary stats for current view
+    "const n=xd.length;" ++
+    "const xMin=Math.min(...xd),xMax=Math.max(...xd);" ++
+    "const yMin=Math.min(...yd),yMax=Math.max(...yd);" ++
+    "const xMean=xd.reduce((a,b)=>a+b,0)/n;" ++
+    "const yMean=yd.reduce((a,b)=>a+b,0)/n;" ++
+    "let sxy=0,sxx=0,syy=0;" ++
+    "for(let i=0;i<n;i++){sxy+=(xd[i]-xMean)*(yd[i]-yMean);sxx+=(xd[i]-xMean)**2;syy+=(yd[i]-yMean)**2}" ++
+    "const r=sxx>0&&syy>0?sxy/Math.sqrt(sxx*syy):0;" ++
+    -- Curvature
+    "let sxc=0,src=0;" ++
+    "if(window._coef){const coef=window._coef;let sse=0;for(let i=0;i<n;i++){const res=yd[i]-polyEval(coef,xd[i]);sse+=res*res;const xc=(xd[i]-xMean)**2;sxc+=xc*xc;src+=xc*res}" ++
+    "var curv=sxc>0?src/sxc:0}else{var curv=0}" ++
+    -- Build message
+    "let msg={event:'view_change',xform:xf,yform:yf,degree:parseInt(deg),se_bands:se," ++
+    "n:n,x_range:[xMin,xMax],y_range:[yMin,yMax],pearson_r:+r.toFixed(4),curvature:+curv.toFixed(4)};" ++
+    "if(window._r2!==undefined)msg.r2=+window._r2.toFixed(4);" ++
+    "if(window._coef)msg.equation=window._coef.map(c=>+c.toPrecision(4));" ++
+    "ws.send(JSON.stringify(msg))" ++
+  "}" ++
+  -- Store fit results for reporting
+  "var _origDoFit=doFit;" ++
+  "doFit=function(){_origDoFit();if(window._xd){" ++
+    "const deg=parseInt(document.getElementById('degree').value);" ++
+    "const coef=polyFit(window._xd,window._yd,deg);" ++
+    "window._coef=coef;" ++
+    "const yMean=window._yd.reduce((a,b)=>a+b,0)/window._yd.length;" ++
+    "let sst=0,sse=0;for(let i=0;i<window._xd.length;i++){let yh=polyEval(coef,window._xd[i]);sse+=(window._yd[i]-yh)**2;sst+=(window._yd[i]-yMean)**2}" ++
+    "window._r2=1-sse/sst}};" ++
   "draw();"
 
+/-- A user interaction event from the JMP scatter page. -/
+structure JmpEvent where
+  xform : String       -- "linear", "log", "sqrt", "recip", "square"
+  yform : String
+  degree : Nat
+  seBands : Bool
+  n : Nat
+  xRange : Float × Float
+  yRange : Float × Float
+  pearsonR : Float
+  curvature : Float
+  r2 : Option Float := none
+  equation : Option (Array Float) := none
+  deriving Repr
+
+/-- Generate the LLM summary string from a user interaction event.
+    This is what l3m feeds to the LLM when the user changes the plot. -/
+def summarizeJmpEvent (ev : JmpEvent) (xName yName : String) : String :=
+  let xLabel := if ev.xform == "linear" then xName else s!"{ev.xform}({xName})"
+  let yLabel := if ev.yform == "linear" then yName else s!"{ev.yform}({yName})"
+  let header := s!"User applied: x={xLabel}, y={yLabel}"
+  let stats := s!"n: {ev.n}, x ∈ [{ev.xRange.1}, {ev.xRange.2}], y ∈ [{ev.yRange.1}, {ev.yRange.2}]"
+  let corr := s!"pearson_r: {ev.pearsonR}"
+  -- Interpret the correlation
+  let interp := if ev.pearsonR.abs > 0.95 then "near-perfect linear"
+    else if ev.pearsonR.abs > 0.8 then "strong linear"
+    else if ev.pearsonR.abs > 0.5 then "moderate linear"
+    else if ev.pearsonR.abs > 0.2 then "weak linear"
+    else "no linear relationship"
+  -- Curvature assessment
+  let curvNote := if ev.curvature.abs > 0.1 then s!", curvature: {ev.curvature} (nonlinear)"
+    else if ev.curvature.abs > 0.01 then s!", curvature @ {ev.curvature}σ (borderline)"
+    else ""
+  -- Fit info
+  let fitNote := match ev.r2, ev.equation with
+    | some r2, some coef =>
+      let eqStr := formatPoly coef xLabel
+      s!"\nfit (degree {ev.degree}): {eqStr}, R² = {r2}"
+    | some r2, none => s!"\nfit: R² = {r2}"
+    | _, _ => ""
+  -- Shape summary
+  let shape := s!"shape: {interp}{curvNote}"
+  s!"{header}\n{stats}\n{corr}\n{shape}{fitNote}"
+where
+  formatPoly (coef : Array Float) (xVar : String) : String :=
+    let terms := (List.range coef.size).reverse.filterMap fun i =>
+      let c := coef.getD i 0
+      if c.abs < 1e-10 && i > 0 then none
+      else if i == 0 then some (toString c)
+      else if i == 1 then some s!"{c}·{xVar}"
+      else some s!"{c}·{xVar}^{i}"
+    String.intercalate " + " terms
+
 /-- Generate a self-contained HTML page with JMP-style interactive scatter.
-    The page includes all data, JS for polynomial fitting, transforms, and SE bands. -/
+    The page includes all data, JS for polynomial fitting, transforms, and SE bands.
+    If l3m runs a WebSocket server on port 9147, the page reports user actions back. -/
 def jmpScatter (xs ys : Array Float)
     (xName : String := "x") (yName : String := "y")
     (title : String := "") : String :=
