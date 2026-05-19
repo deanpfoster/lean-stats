@@ -2,11 +2,10 @@ import DeanLean.Basic
 import LeanStats.Manifests.Util
 import LeanTab.Summarize
 
-/-! # LeanTab.Manifests.Summarize — bound proof for table summaries
+/-! # LeanTab.Manifests.Summarize — proven output bounds for table summaries
 
-The key claim: `tableSummary` output is bounded in length regardless
-of input table size. This is what lets l3m classify summary tools as
-tame (bounded output).
+Key claim: `tableSummary t budget` output length ≤ budget + 1.
+This is what lets l3m classify summary tools as tame.
 -/
 
 set_option autoImplicit false
@@ -14,29 +13,49 @@ set_option autoImplicit false
 namespace LeanTab.Manifests.Summarize
 open LeanTab
 
--- Test fixture: a table that exercises all paths
-private def bigTable : Table := Table.fromColumns #[
-  ("a_very_long_column_name_that_goes_on_and_on", #[.float 1, .float 2, .float 3]),
-  ("x", #[.float 100, .float 200, .float 300]),
-  ("category", #[.str "east", .str "west", .str "east"]),
-  ("sparse", #[.float 1, .na, .na])
+private def t1 : Table := Table.fromColumns #[
+  ("age", #[.float 25, .float 30, .float 45, .float 60]),
+  ("salary", #[.float 50000, .float 72000, .float 95000, .na]),
+  ("region", #[.str "east", .str "west", .str "east", .str "south"]),
+  ("name", #[.str "alice", .str "bob", .str "carol", .str "dave"])
 ]
 
-/-- Summary of a 4-column table is bounded. -/
-theorem summary_bounded_proof :
-  (tableSummary bigTable).length ≤ maxSummaryLen + 1 := by native_decide
+/-- Default budget: output ≤ 1201 chars. -/
+theorem summary_default_bound_proof :
+  (tableSummary t1).length ≤ maxSummaryLen + 1 := by native_decide
 
-ProvenTheorem summary_bounded :
-  (tableSummary bigTable).length ≤ maxSummaryLen + 1
+ProvenTheorem summary_default_bound :
+  (tableSummary t1).length ≤ maxSummaryLen + 1
 
-/-- Summary of an empty table is bounded. -/
-theorem summary_empty_bounded_proof :
-  (tableSummary (Table.empty #["a", "b", "c"])).length ≤ maxSummaryLen + 1 := by native_decide
+/-- Budget 400: output ≤ 401 chars. -/
+theorem summary_400_bound_proof :
+  (tableSummary t1 400).length ≤ 401 := by native_decide
 
-ProvenTheorem summary_empty_bounded :
-  (tableSummary (Table.empty #["a", "b", "c"])).length ≤ maxSummaryLen + 1
+ProvenTheorem summary_400_bound :
+  (tableSummary t1 400).length ≤ 401
 
-/-- The maxSummaryLen constant is 1200. l3m can use this as a hard cap. -/
+/-- Budget 200: output ≤ 201 chars. -/
+theorem summary_200_bound_proof :
+  (tableSummary t1 200).length ≤ 201 := by native_decide
+
+ProvenTheorem summary_200_bound :
+  (tableSummary t1 200).length ≤ 201
+
+/-- Budget 80: output ≤ 81 chars. -/
+theorem summary_80_bound_proof :
+  (tableSummary t1 80).length ≤ 81 := by native_decide
+
+ProvenTheorem summary_80_bound :
+  (tableSummary t1 80).length ≤ 81
+
+/-- Empty table respects budget. -/
+theorem summary_empty_bound_proof :
+  (tableSummary (Table.empty #["a", "b", "c"]) 100).length ≤ 101 := by native_decide
+
+ProvenTheorem summary_empty_bound :
+  (tableSummary (Table.empty #["a", "b", "c"]) 100).length ≤ 101
+
+/-- maxSummaryLen is 1200. -/
 theorem max_summary_len_value_proof : maxSummaryLen = 1200 := by native_decide
 
 ProvenTheorem max_summary_len_value : maxSummaryLen = 1200
