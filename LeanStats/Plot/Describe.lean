@@ -37,6 +37,7 @@ structure ScatterDesc where
   r2 : Option Float := none
   shape : String := ""
   maxResidSigma : Option Float := none
+  curvature : Option Float := none  -- coefficient of (x - x̄)² in residuals
   nOutliers : Nat := 0
   deriving Repr
 
@@ -53,13 +54,25 @@ def describeScatter (xs ys : Array Float)
     if acc.contains v then acc else acc.push v).size
   let r := LeanStats.correlation xs ys
   -- OLS fit
-  let (slope, intercept, r2, maxResidSigma, nOutliers) :=
-    match LeanStats.regressionDiag xs ys with
+  -- OLS fit + curvature
+  let diagResult := LeanStats.regressionDiag xs ys
+  let slope := diagResult.map (·.slope)
+  let intercept := diagResult.map (·.intercept)
+  let r2 := diagResult.map (·.r2)
+  let maxResidSigma := diagResult.map fun d =>
+    d.stdResiduals.foldl (fun a b => if b.abs > a then b.abs else a) 0
+  let nOutliers := match diagResult with
+    | some d => (LeanStats.outliersByStdResid d).size
+    | none => 0
+  -- Curvature: regress residuals on (x - x̄)²
+  let curvature := match diagResult with
     | some d =>
-      let maxR := d.stdResiduals.foldl (fun a b => if b.abs > a then b.abs else a) 0
-      let nOut := (LeanStats.outliersByStdResid d).size
-      (some d.slope, some d.intercept, some d.r2, some maxR, nOut)
-    | none => (none, none, none, none, 0)
+      let mx := LeanStats.mean xs
+      let xc2 := xs.map (fun x => (x - mx) ^ 2)
+      match LeanStats.linearRegression xc2 d.residuals with
+      | some fit => some fit.slope
+      | none => none
+    | none => none
   -- Shape description
   let shape :=
     let dir := if r > 0.3 then "increasing" else if r < -0.3 then "decreasing" else "no trend"
@@ -67,13 +80,16 @@ def describeScatter (xs ys : Array Float)
       else if r.abs > 0.7 then "moderate linear"
       else if r.abs > 0.3 then "weak linear"
       else "no linear relationship"
+    let curvNote := match curvature with
+      | some c => if c.abs > 0.01 then s!"; curvature detected" else ""
+      | none => ""
     let outlierNote := if nOutliers > 0 then s!"; {nOutliers} outliers"
       else match maxResidSigma with
         | some m => s!"; no outliers (max |resid| = {fmtF m 2}σ)"
         | none => ""
-    s!"monotone {dir}, {lin}{outlierNote}"
+    s!"monotone {dir}, {lin}{curvNote}{outlierNote}"
   { n, xName, xMin, xMax, xDistinct, yName, yMin, yMax,
-    correlation := r, slope, intercept, r2, shape, maxResidSigma, nOutliers }
+    correlation := r, slope, intercept, r2, shape, maxResidSigma, curvature, nOutliers }
 where
   fmtF (f : Float) (decimals : Nat) : String :=
     let factor := (10 ^ decimals).toFloat
@@ -86,12 +102,15 @@ def ScatterDesc.render (d : ScatterDesc) : String :=
       let sign := if i ≥ 0 then "+" else ""
       s!"ols: {d.yName} = {s}·{d.xName} {sign} {i} (R² = {r2})\n"
     | _, _, _ => ""
+  let curvLine := match d.curvature with
+    | some c => if c.abs > 0.001 then s!"curvature: {c} · ({d.xName} - x̄)²\n" else ""
+    | none => ""
   s!"chart: scatter\n" ++
   s!"x: {d.xName} ∈ [{d.xMin}, {d.xMax}], {d.xDistinct} distinct values\n" ++
   s!"y: {d.yName} ∈ [{d.yMin}, {d.yMax}]\n" ++
   s!"n: {d.n} (0 clipped, {d.nMissing} missing)\n" ++
   s!"pearson_r: {d.correlation}\n" ++
-  olsLine ++
+  olsLine ++ curvLine ++
   s!"shape: {d.shape}"
 
 /-- Description of a histogram. -/
