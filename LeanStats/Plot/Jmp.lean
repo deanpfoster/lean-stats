@@ -153,14 +153,14 @@ private def jmpJs : String :=
     "statsEl.textContent=`n=${xd.length}  R²=${r2.toPrecision(4)}  se=${se.toPrecision(4)}\\n${eq}`" ++
   "}" ++
   -- Event listeners + WebSocket reporting
-  "var fitActive=false;" ++
-  "var fitLines=[];" ++  -- accumulated SVG paths for multiple fits
-  "document.getElementById('xform').addEventListener('change',function(){fitLines=[];fitActive=false;draw();report()});" ++
-  "document.getElementById('yform').addEventListener('change',function(){fitLines=[];draw();if(fitActive){doFit()}report()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){if(fitActive){fitActive=false;fitLines=[];draw();report()}else{fitActive=true;doFit();report()}});" ++
-  "document.getElementById('seToggle').addEventListener('change',function(){if(fitActive){fitLines.pop();draw();doFit();report()}});" ++
-  "document.getElementById('degree').addEventListener('change',function(){if(fitActive){fitLines.pop();draw();doFit();report()}});" ++
-  "document.getElementById('origToggle').addEventListener('change',function(){draw();if(fitActive)doFit();report()});" ++
+  "var fitLines=[];" ++
+  "document.getElementById('xform').addEventListener('change',function(){fitLines=[];draw();report()});" ++
+  "document.getElementById('yform').addEventListener('change',function(){fitLines=[];draw();report()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){doFit();report()});" ++
+  "document.getElementById('clearBtn').addEventListener('click',function(){fitLines=[];draw();report()});" ++
+  "document.getElementById('seToggle').addEventListener('change',function(){});" ++
+  "document.getElementById('degree').addEventListener('change',function(){});" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){fitLines=[];draw();report()});" ++
   -- WebSocket connection (l3m starts the server; we just connect)
   "var ws=null;try{ws=new WebSocket('ws://localhost:9147')}catch(e){}" ++
   "function report(){" ++
@@ -271,7 +271,8 @@ def jmpScatter (xs ys : Array Float)
   <label>X: <select id='xform'><option value='linear'>linear</option><option value='log'>log</option><option value='sqrt'>√</option><option value='recip'>1/x</option><option value='square'>x²</option></select></label>
   <label>Y: <select id='yform'><option value='linear'>linear</option><option value='log'>log</option><option value='sqrt'>√</option><option value='recip'>1/y</option><option value='square'>y²</option></select></label>
   <label>Degree: <select id='degree'><option value='1'>1 (linear)</option><option value='2'>2 (quadratic)</option><option value='3'>3 (cubic)</option><option value='4'>4 (quartic)</option></select></label>
-  <button id='fitBtn'>Fit</button>
+  <button id='fitBtn'>+ Fit</button>
+  <button id='clearBtn'>Clear fits</button>
   <label><input type='checkbox' id='seToggle'> SE bands</label>
   <label><input type='checkbox' id='origToggle'> Original</label>
 </div>
