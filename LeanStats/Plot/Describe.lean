@@ -201,4 +201,92 @@ def DiagDesc.render (d : DiagDesc) : String :=
   s!"residuals: {d.residPattern}, DW: {d.durbinWatson}\n" ++
   s!"outliers: {d.nOutliers}, influential: {d.nInfluential}"
 
+/-- Description of a residuals-vs-fitted plot. -/
+structure ResidDesc where
+  n : Nat
+  residMin : Float
+  residMax : Float
+  residSd : Float
+  pattern : String  -- "random", "funnel", "curved", "clustered"
+  nOutliers : Nat
+  durbinWatson : Float
+  deriving Repr
+
+/-- Describe a residuals-vs-fitted plot. -/
+def describeResidVsFitted (diag : LeanStats.RegressionDiag) : ResidDesc :=
+  let resid := diag.residuals
+  let rMin := resid.foldl (fun a b => if b < a then b else a) (resid.getD 0 0)
+  let rMax := resid.foldl (fun a b => if b > a then b else a) (resid.getD 0 0)
+  let rSd := LeanStats.stdDev resid
+  let nOut := (LeanStats.outliersByStdResid diag).size
+  let half := diag.n / 2
+  let var1 := LeanStats.variance (resid.extract 0 half)
+  let var2 := LeanStats.variance (resid.extract half resid.size)
+  let pattern := if var2 > var1 * 2 then "funnel"
+    else if diag.durbinWatson < 1.5 || diag.durbinWatson > 2.5 then "autocorrelated"
+    else "random"
+  { n := diag.n, residMin := rMin, residMax := rMax, residSd := rSd,
+    pattern, nOutliers := nOut, durbinWatson := diag.durbinWatson }
+
+/-- Render residual plot description. -/
+def ResidDesc.render (d : ResidDesc) : String :=
+  s!"chart: residuals_vs_fitted\n" ++
+  s!"n: {d.n}\n" ++
+  s!"residuals ∈ [{d.residMin}, {d.residMax}], sd: {d.residSd}\n" ++
+  s!"pattern: {d.pattern}, DW: {d.durbinWatson}\n" ++
+  s!"outliers (|resid| > 2σ): {d.nOutliers}"
+
+/-- Description of a normal Q-Q plot. -/
+structure QQDesc where
+  n : Nat
+  tailBehavior : String  -- "normal", "heavy_tails", "light_tails", "right_skew", "left_skew"
+  maxDeviation : Float   -- largest departure from the reference line
+  nOffLine : Nat         -- points clearly off the diagonal
+  deriving Repr
+
+/-- Describe a Q-Q plot from residuals. -/
+def describeQQ (diag : LeanStats.RegressionDiag) : QQDesc :=
+  let resid := diag.residuals
+  let n := resid.size
+  let sorted := resid.qsort (· < ·)
+  let sd := LeanStats.stdDev resid
+  -- Compare tails to normal expectation
+  -- For normal: sorted[0] ≈ -2.3σ for n=50, sorted[n-1] ≈ +2.3σ
+  let expectedTailZ := if n > 10 then 2.3 else 1.5  -- rough
+  let loTail := if sd > 0 then (sorted.getD 0 0).abs / sd else 0
+  let hiTail := if sd > 0 then (sorted.getD (n-1) 0).abs / sd else 0
+  let tailBehavior :=
+    if loTail > expectedTailZ * 1.3 && hiTail > expectedTailZ * 1.3 then "heavy_tails"
+    else if loTail < expectedTailZ * 0.7 && hiTail < expectedTailZ * 0.7 then "light_tails"
+    else if hiTail > expectedTailZ * 1.3 && loTail < expectedTailZ * 1.1 then "right_skew"
+    else if loTail > expectedTailZ * 1.3 && hiTail < expectedTailZ * 1.1 then "left_skew"
+    else "normal"
+  -- Max deviation from diagonal (in SD units)
+  let maxDev := if sd > 0
+    then sorted.foldl (fun mx v => let d := v.abs / sd; if d > mx then d else mx) 0
+    else 0
+  -- Count points clearly off line (> 2.5 SD)
+  let nOff := if sd > 0
+    then sorted.filter (fun v => v.abs / sd > 2.5) |>.size
+    else 0
+  { n, tailBehavior, maxDeviation := maxDev, nOffLine := nOff }
+
+/-- Render Q-Q description. -/
+def QQDesc.render (d : QQDesc) : String :=
+  s!"chart: normal_qq\n" ++
+  s!"n: {d.n}\n" ++
+  s!"tails: {d.tailBehavior}\n" ++
+  s!"max deviation from line: {d.maxDeviation}σ\n" ++
+  s!"points off diagonal: {d.nOffLine}"
+
+-- ════════════════════════════════════════════════════════════
+-- § Chart-level tooltip for HTML (shows LLM summary to human)
+-- ════════════════════════════════════════════════════════════
+
+/-- Wrap an SVG string with a title tooltip showing the text summary.
+    When the user hovers over the chart border, they see what the LLM sees. -/
+def withChartTooltip (svg : String) (description : String) : String :=
+  let escaped := description.replace "'" "&#39;" |>.replace "\n" "&#10;"
+  s!"<div class='chart-container' title='{escaped}'>{svg}</div>"
+
 end LeanStats.Plot
