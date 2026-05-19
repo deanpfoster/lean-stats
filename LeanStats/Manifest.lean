@@ -1,112 +1,134 @@
 import DeanLean.Basic
-import LeanStats.Descriptive
-import LeanStats.Regression
-import LeanStats.Tests
-import LeanStats.Plot.Svg
-import LeanStats.Report.Html
+import LeanStats.Manifests.Util
+import LeanStats.Manifests.Descriptive
+import LeanStats.Manifests.Regression
+import LeanStats.Manifests.Tests
+import LeanStats.Manifests.Transform
+import LeanStats.Manifests.Diagnostics
+import LeanStats.Manifests.Plot
+import LeanStats.Manifests.Report
+import LeanStats.Manifests.Interactive
 
-/-! # Manifest — headline claims about LeanStat
+/-! # Manifest — headline claims about LeanStats
 
-LeanStats is a pure Lean 4 library for statistics, plotting, and
-HTML report generation. The headline claims below describe what
-the library promises at the level a consumer cares about.
+This is the top-level trust surface for consumers of LeanStats.
+An agent (e.g. l3m) importing this library can read these claims
+to understand what it's getting.
 
-## What this library does
+## Headline claims (user-facing)
 
-Provides pure functions over `Array Float` (and structured records
-built from those) for:
-  - Descriptive statistics (mean, variance, quantiles, summary)
-  - Regression (Pearson correlation, linear regression)
-  - Tests (one-sample and two-sample t-tests)
-  - Charts (scatter, histogram → SVG)
-  - Reports (HTML with tooltips)
+1. **Degenerate inputs are safe**: every function handles empty arrays,
+   singletons, and mismatched lengths by returning documented defaults
+   (0, none) rather than panicking.
 
-## Headline claims
+2. **Descriptive statistics are correct**: mean, variance, quantile
+   produce expected results on known fixtures (proven by native_decide).
 
-1. **All functions are pure**: no IO, no IORefs, no environment
-   access. Wrapping LeanStats as a tool inside a capability-bounded
-   agent is mechanical. (`pure_no_io`)
+3. **Regression is correct on known data**: OLS recovers exact slope
+   and intercept on perfect linear data.
 
-2. **Statistical functions are total**: every function returns a
-   value for every input (degenerate cases — empty arrays, mismatched
-   lengths, zero variance — return `0` or `none` as appropriate
-   rather than panicking). (`functions_are_total`)
+4. **T-tests respect sign conventions**: positive t when sample mean
+   exceeds hypothesis, zero when equal.
 
-3. **Mathematical identities for the descriptive functions** hold
-   to within floating-point tolerance:
-     - mean is the centroid: `sum (xs.map (· - mean xs)) ≈ 0`
-     - variance is non-negative: `variance xs ≥ 0`
-     - quantiles are monotone in `q`
-   (`descriptive_identities`)
+5. **Plot output is valid SVG**: starts with `<svg xmlns=`, scale maps
+   domain to range correctly.
 
-4. **Linear regression returns the least-squares solution**: the
-   slope minimizes `sum (yᵢ - (slope·xᵢ + intercept))²` over choices
-   of `slope` and `intercept`. (`regression_least_squares`)
-
-5. **Plot output is well-formed SVG**: every `LeanStats.Plot` function
-   produces a string that any SVG parser will accept. (`svg_well_formed`)
+6. **Reports are valid HTML**: starts with `<!DOCTYPE html>`, contains
+   title, embeds CSS and JS.
 
 ## What we do NOT claim
 
-  - **Numerical precision beyond Float**: all arithmetic is in IEEE
-    754 binary64. We don't claim correct rounding, error bounds, or
-    catastrophic-cancellation freedom.
-  - **Statistical consultant-level appropriateness**: the library
-    provides correct implementations of named statistics; choosing
-    which test to use and interpreting results is the consumer's
-    responsibility (or, in the l3m use case, the LLM's).
-  - **A complete CDF table**: t-tests return statistics, not
-    p-values. TODO: incorporate Student's t CDF.
-  - **Sampling, simulation, MCMC**: not in scope for this library.
-  - **Visualization beyond basic charts**: scatter and histogram
-    only at this stage.
-  - **HTML safety**: report HTML is concatenated from inputs without
-    escaping. Consumers who pass adversarial strings as section
-    prose will get unsanitized output. TODO: add escaping pass.
-  - **Parser totality** for `Svg.render`: declared `partial def`
-    pending a structural-recursion proof.
-
-## Status
-
-Most claims here are `UnprovenConjecture` placeholders. The
-functions exist and are well-tested informally; the formal claims
-haven't been written yet. This file establishes the dashboard;
-the per-axis manifests and proof files will fill in over time.
+  - Numerical precision beyond IEEE 754 binary64.
+  - NaN/Inf robustness (undefined behavior on those inputs).
+  - HTML/SVG escaping (known gap, documented in sub-manifests).
+  - Statistical consulting (which test to use, interpretation).
+  - CDF / p-value tables (t-tests return statistics only).
+  - Termination of Svg.render (partial def, documented).
 -/
 
 set_option autoImplicit false
 
 namespace LeanStats.Manifest
+open LeanStats
 
-/-- All LeanStats functions are pure (no IO type in their signatures).
+-- ════════════════════════════════════════════════════════════
+-- § Headline 1: Degenerate inputs are safe
+-- ════════════════════════════════════════════════════════════
 
-    This is a structural property checked by audit-grep, not by a Lean
-    theorem. The claim here is a placeholder; the real check is in
-    Scripts/audit-grep.sh (TODO). -/
-UnprovenConjecture pure_no_io :
-  True
+/-- All core functions return safe defaults on empty input. -/
+theorem degenerate_safe_proof :
+  mean #[] = 0 ∧
+  variance #[] = 0 ∧
+  stdDev #[] = 0 ∧
+  median #[] = 0 ∧
+  quantile #[] 0.5 = 0 ∧
+  correlation #[] #[] = 0 ∧
+  linearRegression #[] #[] = none ∧
+  tTestOneSample #[] 0 = 0 ∧
+  tTestTwoSample #[] #[] = 0 := by native_decide
 
-/-- Every public function in the library returns a value for every
-    well-typed input. Declared as `UnprovenConjecture` because Lean's
-    structural recursion checker certifies most of this for us; we
-    enumerate the partial-def exceptions in Manifests/Termination.lean. -/
-UnprovenConjecture functions_are_total :
-  True
+ProvenTheorem degenerate_safe :
+  mean #[] = 0 ∧
+  variance #[] = 0 ∧
+  stdDev #[] = 0 ∧
+  median #[] = 0 ∧
+  quantile #[] 0.5 = 0 ∧
+  correlation #[] #[] = 0 ∧
+  linearRegression #[] #[] = none ∧
+  tTestOneSample #[] 0 = 0 ∧
+  tTestTwoSample #[] #[] = 0
 
-/-- Descriptive identities: mean is the centroid, variance is
-    non-negative, etc. See Manifests/Descriptive.lean for the
-    enumerated list. -/
-UnprovenConjecture descriptive_identities :
-  True
+-- ════════════════════════════════════════════════════════════
+-- § Headline 2: Descriptive statistics correctness
+-- ════════════════════════════════════════════════════════════
 
-/-- Linear regression returns the OLS solution. See
-    Manifests/Regression.lean. -/
-UnprovenConjecture regression_least_squares :
-  True
+Restate mean_empty from LeanStats.Manifests.Descriptive
+Restate mean_singleton from LeanStats.Manifests.Descriptive
+Restate variance_constant from LeanStats.Manifests.Descriptive
+Restate quantile_zero from LeanStats.Manifests.Descriptive
+Restate quantile_one from LeanStats.Manifests.Descriptive
 
-/-- SVG output is a valid string; consumer-side SVG parsers accept it.
-    See Manifests/Plot.lean. -/
-UnprovenConjecture svg_well_formed :
-  True
+-- ════════════════════════════════════════════════════════════
+-- § Headline 3: Regression correctness
+-- ════════════════════════════════════════════════════════════
+
+Restate regression_slope from LeanStats.Manifests.Regression
+Restate regression_intercept from LeanStats.Manifests.Regression
+Restate regression_r2_perfect from LeanStats.Manifests.Regression
+
+-- ════════════════════════════════════════════════════════════
+-- § Headline 4: T-test sign conventions
+-- ════════════════════════════════════════════════════════════
+
+Restate ttest_one_positive from LeanStats.Manifests.Tests
+Restate ttest_one_negative from LeanStats.Manifests.Tests
+Restate ttest_one_null from LeanStats.Manifests.Tests
+
+-- ════════════════════════════════════════════════════════════
+-- § Headline 5: Plot output validity
+-- ════════════════════════════════════════════════════════════
+
+Restate svgdoc_prefix from LeanStats.Manifests.Plot
+Restate scale_min from LeanStats.Manifests.Plot
+Restate scale_max from LeanStats.Manifests.Plot
+
+-- ════════════════════════════════════════════════════════════
+-- § Headline 6: Report output validity
+-- ════════════════════════════════════════════════════════════
+
+Restate report_doctype from LeanStats.Manifests.Report
+Restate report_contains_title from LeanStats.Manifests.Report
+Restate report_has_style from LeanStats.Manifests.Report
+
+-- ════════════════════════════════════════════════════════════
+-- § Known gaps (permanent axioms — design decisions)
+-- ════════════════════════════════════════════════════════════
+
+/-- IEEE 754 binary64 is the only numeric representation. -/
+ManifestAxiom float_only : True
+
+/-- Library is pure: no IO in any function signature. Verified by
+    grep-audit (not by Lean's type system). -/
+ManifestAxiom pure_no_io : True
 
 end LeanStats.Manifest

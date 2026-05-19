@@ -12,3 +12,5 @@ require dean_lean from ".." / "lean-manifests"
 
 @[default_target]
 lean_lib «LeanStats» where
+
+lean_lib «LeanTab» where

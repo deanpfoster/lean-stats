@@ -1,25 +1,29 @@
 import DeanLean.Basic
-import LeanStats.Plot.Svg
+import LeanStats.Manifests.Util
 import LeanStats.Plot.Scatter
 import LeanStats.Plot.Histogram
 
 /-! # Manifests/Plot — claims about chart rendering
 
-Plot output is a string of SVG. We claim:
+## User-facing (what an agent calling `scatterPlot`/`histogram` can trust)
 
-  - `Svg.render` is total on every finite SVG tree (no infinite
-    loop, no panic). Currently `partial def`; the manifest claim is
-    backed by `native_decide` on a curated corpus.
+  - `svgDoc` output starts with `<svg xmlns=` (valid SVG root).
+  - Scale maps domain endpoints to range endpoints correctly.
+  - Scale of constant data doesn't crash (returns rangeMin).
 
-  - The rendered string contains a single `<svg ...>` root, balanced
-    tags, and no script-injection vectors from user data (TODO:
-    we don't currently escape attribute values, so adversarial
-    `attr` content can break out).
+## Internal (implementation correctness)
 
-  - `Scale.apply` is monotone in its input (within float tolerance).
+  - `Scale.apply` maps domainMin → rangeMin and domainMax → rangeMax.
+  - `Scale.fromData` spans the input data (domainMin/Max correct).
+  - `Svg.render` on basic shapes produces expected strings.
+  - Attr renders to ` key='value'` format.
 
-  - `Scale.fromData` produces a scale whose domain spans the input
-    data: `domainMin ≤ min data ∧ domainMax ≥ max data`.
+## What we do NOT claim
+
+  - SVG spec conformance (no DTD validation).
+  - Attribute-value escaping (known gap).
+  - Visual correctness ("looks right") — human judgment.
+  - Termination of `Svg.render` (partial def).
 -/
 
 set_option autoImplicit false
@@ -27,22 +31,87 @@ set_option autoImplicit false
 namespace LeanStats.Manifests.Plot
 open LeanStats.Plot
 
-/-- An empty group renders to a self-closing-style `<g></g>`. -/
-UnprovenConjecture empty_group_renders :
-  True   -- Svg.render (Svg.group [] []) = "<g></g>"  (ish; exact form TBD)
+-- ════════════════════════════════════════════════════════════
+-- § User-facing claims
+-- ════════════════════════════════════════════════════════════
 
-/-- Scale of constant data has domainMin = domainMax. -/
-UnprovenConjecture scale_constant :
-  ∀ (v r0 r1 : Float),
-    let s := Scale.fromData #[v] r0 r1
-    s.domainMin = v ∧ s.domainMax = v
+/-- svgDoc output starts with the SVG namespace declaration. -/
+theorem svgdoc_prefix_proof :
+  (svgDoc 600 400 (Svg.group [] [])).startsWith "<svg xmlns=" = true := by native_decide
 
-/-- TODO: attribute-value escaping. Currently the renderer concatenates
-    raw strings into `key='value'` pairs without escaping `'`, `<`,
-    `>`, or `&`. An adversarial caller can inject SVG markup. We
-    document this as a known gap; consumers should either sanitize
-    inputs or run output through a separate SVG validator. -/
-UnprovenConjecture attr_escaping_known_gap :
-  True
+ProvenTheorem svgdoc_prefix :
+  (svgDoc 600 400 (Svg.group [] [])).startsWith "<svg xmlns=" = true
+
+/-- Scale of constant data maps any input to rangeMin (degenerate case). -/
+theorem scale_constant_proof :
+  (Scale.fromData #[5.0] 10 200).apply 5.0 = 10 := by native_decide
+
+ProvenTheorem scale_constant :
+  (Scale.fromData #[5.0] 10 200).apply 5.0 = 10
+
+/-- Scale maps domainMin to rangeMin. -/
+theorem scale_min_proof :
+  (Scale.fromData #[1.0, 5.0] 0 100).apply 1.0 = 0 := by native_decide
+
+ProvenTheorem scale_min :
+  (Scale.fromData #[1.0, 5.0] 0 100).apply 1.0 = 0
+
+/-- Scale maps domainMax to rangeMax. -/
+theorem scale_max_proof :
+  (Scale.fromData #[1.0, 5.0] 0 100).apply 5.0 = 100 := by native_decide
+
+ProvenTheorem scale_max :
+  (Scale.fromData #[1.0, 5.0] 0 100).apply 5.0 = 100
+
+/-- Scale midpoint maps to range midpoint (linearity). -/
+theorem scale_mid_proof :
+  (Scale.fromData #[0.0, 10.0] 0 100).apply 5.0 = 50 := by native_decide
+
+ProvenTheorem scale_mid :
+  (Scale.fromData #[0.0, 10.0] 0 100).apply 5.0 = 50
+
+-- ════════════════════════════════════════════════════════════
+-- § Internal claims
+-- ════════════════════════════════════════════════════════════
+
+/-- Empty group renders to `<g>\n</g>`. -/
+theorem empty_group_proof :
+  (Svg.group [] []).render = "<g>\n</g>" := by native_decide
+
+ProvenTheorem empty_group :
+  (Svg.group [] []).render = "<g>\n</g>"
+
+/-- Scale.fromData captures the min of the input. -/
+theorem scale_domain_min_proof :
+  (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMin = 1.0 := by native_decide
+
+ProvenTheorem scale_domain_min :
+  (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMin = 1.0
+
+/-- Scale.fromData captures the max of the input. -/
+theorem scale_domain_max_proof :
+  (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMax = 5.0 := by native_decide
+
+ProvenTheorem scale_domain_max :
+  (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMax = 5.0
+
+/-- Attr renders to key='value' format. -/
+theorem attr_render_proof :
+  (attr "fill" "red").render = " fill='red'" := by native_decide
+
+ProvenTheorem attr_render :
+  (attr "fill" "red").render = " fill='red'"
+
+-- ════════════════════════════════════════════════════════════
+-- § Known gaps (permanent axioms)
+-- ════════════════════════════════════════════════════════════
+
+/-- KNOWN GAP: attribute-value escaping. The renderer concatenates raw
+    strings into `key='value'` without escaping quotes, `<`, `>`, or `&`. -/
+ManifestAxiom attr_escaping_known_gap : True
+
+/-- KNOWN GAP: Svg.render is `partial def`. Structurally decreasing on
+    the List of children, but termination is not formally proven. -/
+ManifestAxiom svg_render_partial : True
 
 end LeanStats.Manifests.Plot

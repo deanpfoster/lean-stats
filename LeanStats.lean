@@ -1,5 +1,7 @@
 import LeanStats.Descriptive
 import LeanStats.Regression
+import LeanStats.Transform
+import LeanStats.Diagnostics
 import LeanStats.Tests
 
 import LeanStats.Plot.Svg
@@ -7,11 +9,18 @@ import LeanStats.Plot.Scale
 import LeanStats.Plot.Axes
 import LeanStats.Plot.Scatter
 import LeanStats.Plot.Histogram
+import LeanStats.Plot.FittedLine
+import LeanStats.Plot.Interactive
+import LeanStats.Plot.Terminal
 
 import LeanStats.Report.Tooltip
+import LeanStats.Report.Interactive
+import LeanStats.Report.Provenance
+import LeanStats.Report.Literate
 import LeanStats.Report.Html
 
 import LeanStats.Manifest
+import LeanStats.Interface
 
 /-! # LeanStats — pure-Lean statistics, plotting, and reporting
 
