@@ -75,7 +75,6 @@ private def jmpJs : String :=
     -- Points
     "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
     "svg.innerHTML=s;" ++
-    "if(fitLines.length>0)svg.innerHTML+=fitLines.join('');" ++
     "window._xd=xd;window._yd=yd;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;" ++
     "statsEl.textContent=`n=${pairs.length}, x∈[${xMin.toPrecision(4)}, ${xMax.toPrecision(4)}], y∈[${yMin.toPrecision(4)}, ${yMax.toPrecision(4)}]`" ++
   "}" ++
@@ -145,22 +144,59 @@ private def jmpJs : String :=
     "let extra='';" ++
     "if(showSE&&bandU){extra+=`<path d='${bandU}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/>`}" ++
     "extra+=`<path d='${path}' fill='none' stroke='crimson' stroke-width='2'/>`;" ++
-    "fitLines.push(extra);" ++
-    "svg.innerHTML+=fitLines.join('');" ++
+    "svg.innerHTML+=extra;" ++
     -- Stats
     "let eq='y = ';" ++
     "for(let i=coef.length-1;i>=0;i--){let c=coef[i].toPrecision(4);if(i===0)eq+=c;else if(i===1)eq+=c+'·x + ';else eq+=c+'·x^'+i+' + '}" ++
     "statsEl.textContent=`n=${xd.length}  R²=${r2.toPrecision(4)}  se=${se.toPrecision(4)}\\n${eq}`" ++
   "}" ++
+  -- renderFits: recompute all stored fits against current view
+  "function renderFits(){" ++
+    "const orig=document.getElementById('origToggle').checked;" ++
+    "const colors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2','#4f46e5','#dc2626'];" ++
+    "fits.forEach(function(spec,idx){" ++
+      -- Build pairs for this fit's transform
+      "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],spec.xf),yt=tx(rawY[i],spec.yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
+      "if(pairs.length<spec.deg+1)return;" ++
+      "const txd=pairs.map(p=>p.tx),tyd=pairs.map(p=>p.ty);" ++
+      "const coef=polyFit(txd,tyd,spec.deg);" ++
+      -- Compute R²
+      "const yMean=tyd.reduce((a,b)=>a+b,0)/tyd.length;" ++
+      "let sst=0,sse=0;for(let i=0;i<txd.length;i++){let yh=polyEval(coef,txd[i]);sse+=(tyd[i]-yh)**2;sst+=(tyd[i]-yMean)**2}" ++
+      "const r2=sst>0?1-sse/sst:1;const se=Math.sqrt(sse/(txd.length-spec.deg-1));" ++
+      -- Draw curve in current view coordinates
+      "const sx=window._sx,sy=window._sy,xMin=window._xMin,xMax=window._xMax;" ++
+      "const curXf=document.getElementById('xform').value;" ++
+      "const curYf=document.getElementById('yform').value;" ++
+      "let path='';const nPts=100;" ++
+      "for(let i=0;i<=nPts;i++){" ++
+        "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
+        -- Convert current plot x → this fit's transform space
+        "let txI;" ++
+        "if(orig){txI=tx(plotXi,spec.xf)}else{txI=tx(itx(plotXi,curXf),spec.xf)}" ++
+        "if(isNaN(txI)||!isFinite(txI))continue;" ++
+        "const tyI=polyEval(coef,txI);" ++
+        -- Convert fit y back to current plot space
+        "let plotYi;" ++
+        "if(orig){plotYi=itx(tyI,spec.yf)}else{plotYi=tx(itx(tyI,spec.yf),curYf)}" ++
+        "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
+        "path+=(path===''?'M':'L')+sx(plotXi)+','+sy(plotYi)" ++
+      "}" ++
+      "const col=colors[idx%colors.length];" ++
+      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='2'/>`" ++
+    "});" ++
+    -- Show last fit stats
+    "if(fits.length>0){const last=fits[fits.length-1];statsEl.textContent=`${fits.length} fit(s) shown. Last: degree ${last.deg}, x=${last.xf}, y=${last.yf}`}" ++
+  "}" ++
   -- Event listeners + WebSocket reporting
-  "var fitLines=[];" ++
-  "document.getElementById('xform').addEventListener('change',function(){fitLines=[];draw();report()});" ++
-  "document.getElementById('yform').addEventListener('change',function(){fitLines=[];draw();report()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){doFit();report()});" ++
-  "document.getElementById('clearBtn').addEventListener('click',function(){fitLines=[];draw();report()});" ++
+  "var fits=[];" ++  -- array of {degree, xf, yf, se} specs
+  "document.getElementById('xform').addEventListener('change',function(){draw();renderFits();report()});" ++
+  "document.getElementById('yform').addEventListener('change',function(){draw();renderFits();report()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var deg=parseInt(document.getElementById('degree').value);var se=document.getElementById('seToggle').checked;fits.push({deg:deg,xf:xf,yf:yf,se:se});draw();renderFits();report()});" ++
+  "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];draw();report()});" ++
   "document.getElementById('seToggle').addEventListener('change',function(){});" ++
   "document.getElementById('degree').addEventListener('change',function(){});" ++
-  "document.getElementById('origToggle').addEventListener('change',function(){fitLines=[];draw();report()});" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){draw();renderFits();report()});" ++
   -- WebSocket connection (l3m starts the server; we just connect)
   "var ws=null;try{ws=new WebSocket('ws://localhost:9147')}catch(e){}" ++
   "function report(){" ++
