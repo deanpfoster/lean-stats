@@ -158,3 +158,85 @@ These moments map directly to regression diagnostics:
 - visual_slope → "be careful interpreting the graph's appearance"
 
 The LLM can use these to decide next steps without human prompting.
+
+## The visual slope theorem (bounding box claim)
+
+**Claim:** In a scatter plot drawn with equal-length axes spanning
+the data range, the apparent visual slope of the point cloud is
+NOT the regression slope β₁, but rather:
+
+  visual_slope = β₁ · (range_x / range_y)
+
+Or equivalently in standardized moments:
+
+  E(X*·Y*³) / E(Y*⁴) ≈ r · (sd_x / sd_y) · (aspect correction)
+
+**Why this matters:** When sd_y >> sd_x, the bounding box is tall
+and narrow. A correlation of r = 0.5 LOOKS like r = 0.9 because
+the points fill a narrow diagonal band in the tall box. Conversely,
+when sd_x >> sd_y, a strong correlation looks weak.
+
+**Theorem (informal):** For bivariate normal (X, Y) with correlation r,
+plotted in a bounding box with aspect ratio A = range_y / range_x:
+
+  perceived_slope ≈ r · (sd_y / sd_x)   (the regression slope)
+  visual_angle = arctan(r · sd_y / sd_x · (1/A))
+
+When A = sd_y/sd_x (natural aspect), visual_angle = arctan(r).
+When A ≠ sd_y/sd_x (stretched/compressed), the visual impression
+diverges from the statistical reality.
+
+**The E(XY³) moment captures this:** For non-normal data, the
+visual impression of slope depends on where the MASS of the data
+is, not just the correlation. Heavy tails in Y (kurtosis_y > 3)
+make the visual slope appear steeper because extreme Y values
+dominate the bounding box. E(XY³) measures this: it's the
+correlation weighted by Y's cubic, which emphasizes the tails.
+
+For bivariate normal: E(X*Y*³) = 3r (a theorem).
+When observed > 3r: the plot looks steeper than r suggests.
+When observed < 3r: the plot looks flatter than r suggests.
+
+**Proof sketch for E(X*Y*³) = 3r under bivariate normal:**
+
+Let X*, Y* be standardized bivariate normal with correlation r.
+Then Y* = rX* + √(1-r²)·Z where Z ⊥ X*, Z ~ N(0,1).
+
+E(X*·Y*³) = E(X*·(rX* + √(1-r²)Z)³)
+
+Expanding the cube and using E(X*^k · Z^j) = E(X*^k)·E(Z^j)
+(independence), and E(X*⁴) = 3, E(X*²) = 1, E(Z²) = 1:
+
+= r³·E(X*⁴) + 3r·(1-r²)·E(X*²)·E(Z²)
+= 3r³ + 3r(1-r²)
+= 3r³ + 3r - 3r³
+= 3r  ∎
+
+## Reporting format: the sigma notation
+
+When a moment is NOT statistically significant (|z| < 2.5), we
+still sometimes want to mention it — especially to talk someone
+DOWN from seeing a pattern that isn't there.
+
+Format: `moment @ +Nσ` or `moment @ -Nσ`
+
+Examples:
+```
+curvature @ +0.4σ        ← "you might think you see a curve, but it's noise"
+heteroscedasticity @ -0.2σ  ← "the fan shape you're worried about isn't real"
+kurtosis_y @ +1.8σ       ← "borderline heavy tails, not conclusive"
+```
+
+When a moment IS significant (|z| > 2.5), report the value directly:
+```
+curvature: 1.4           ← "real curve, consider a transformation"
+skew_x: -0.9            ← "left-skewed X, consider log transform"
+```
+
+The rule:
+- |z| > 2.5 → report value (it's real, act on it)
+- |z| ≤ 2.5 → report as `@ Nσ` only if the user asks or if we're
+  preemptively addressing a visual illusion
+
+This communicates: "yes I checked, no it's not significant" without
+cluttering the default summary with non-findings.
