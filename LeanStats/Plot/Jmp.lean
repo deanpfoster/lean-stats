@@ -37,22 +37,30 @@ private def jmpJs : String :=
   "const pw=W-M.l-M.r,ph=H-M.t-M.b;" ++
   "const svg=document.getElementById('plot');" ++
   "const statsEl=document.getElementById('stats');" ++
-  -- Transform functions
+  -- Transform functions (forward and inverse)
   "function tx(v,f){switch(f){case'log':return v>0?Math.log(v):NaN;case'sqrt':return v>=0?Math.sqrt(v):NaN;case'recip':return v!==0?1/v:NaN;case'square':return v*v;default:return v}}" ++
+  "function itx(v,f){switch(f){case'log':return Math.exp(v);case'sqrt':return v*v;case'recip':return v!==0?1/v:NaN;case'square':return v>=0?Math.sqrt(v):NaN;default:return v}}" ++
   -- Draw function
   "function draw(){" ++
     "const xf=document.getElementById('xform').value;" ++
     "const yf=document.getElementById('yform').value;" ++
-    "let xd=rawX.map(v=>tx(v,xf)).filter(v=>!isNaN(v)&&isFinite(v));" ++
-    "let yd=rawY.map((v,i)=>{let xv=tx(rawX[i],xf);return(!isNaN(xv)&&isFinite(xv))?tx(v,yf):NaN}).filter(v=>!isNaN(v)&&isFinite(v));" ++
-    -- Pair them (both must be valid)
-    "let pairs=[];for(let i=0;i<rawX.length;i++){let x=tx(rawX[i],xf),y=tx(rawY[i],yf);if(!isNaN(x)&&isFinite(x)&&!isNaN(y)&&isFinite(y))pairs.push([x,y])}" ++
+    "const orig=document.getElementById('origToggle').checked;" ++
+    -- Build valid pairs (both transforms must succeed)
+    "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf),yt=tx(rawY[i],yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
     "if(pairs.length<2){svg.innerHTML='<text x=\"350\" y=\"250\" text-anchor=\"middle\">Not enough valid points after transform</text>';return}" ++
-    "xd=pairs.map(p=>p[0]);yd=pairs.map(p=>p[1]);" ++
+    -- Choose which coordinates to plot
+    "let plotX,plotY,axLabelX,axLabelY;" ++
+    "if(orig){plotX=pairs.map(p=>p.rx);plotY=pairs.map(p=>p.ry);axLabelX=xName;axLabelY=yName}" ++
+    "else{plotX=pairs.map(p=>p.tx);plotY=pairs.map(p=>p.ty);axLabelX=xf==='linear'?xName:xf+'('+xName+')';axLabelY=yf==='linear'?yName:yf+'('+yName+')'}" ++
+    -- Store transformed coords for fitting (always fit in transform space)
+    "window._txd=pairs.map(p=>p.tx);window._tyd=pairs.map(p=>p.ty);" ++
+    "window._pairs=pairs;window._orig=orig;window._xf=xf;window._yf=yf;" ++
+    "let xd=plotX,yd=plotY;" ++
     "const xMin=Math.min(...xd),xMax=Math.max(...xd),yMin=Math.min(...yd),yMax=Math.max(...yd);" ++
     "const xR=xMax-xMin||1,yR=yMax-yMin||1;" ++
     "const sx=x=>(x-xMin)/xR*pw+M.l;" ++
     "const sy=y=>H-M.b-(y-yMin)/yR*ph;" ++
+    "window._xd=xd;window._yd=yd;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._yMin=yMin;window._yMax=yMax;" ++
     -- Build SVG
     "let s='';" ++
     -- Axes
@@ -62,10 +70,8 @@ private def jmpJs : String :=
     "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     -- Axis labels
-    "let xl=xf==='linear'?xName:xf+'('+xName+')';" ++
-    "let yl=yf==='linear'?yName:yf+'('+yName+')';" ++
-    "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13'>${xl}</text>`;" ++
-    "s+=`<text x='15' y='${M.t+ph/2}' text-anchor='middle' font-size='13' transform='rotate(-90,15,${M.t+ph/2})'>${yl}</text>`;" ++
+    "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13'>${axLabelX}</text>`;" ++
+    "s+=`<text x='15' y='${M.t+ph/2}' text-anchor='middle' font-size='13' transform='rotate(-90,15,${M.t+ph/2})'>${axLabelY}</text>`;" ++
     -- Points
     "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
     "svg.innerHTML=s;" ++
@@ -95,31 +101,43 @@ private def jmpJs : String :=
   "function doFit(){" ++
     "const deg=parseInt(document.getElementById('degree').value);" ++
     "const showSE=document.getElementById('seToggle').checked;" ++
-    "const xd=window._xd,yd=window._yd,sx=window._sx,sy=window._sy;" ++
-    "if(!xd||xd.length<deg+1)return;" ++
-    "const coef=polyFit(xd,yd,deg);" ++
-    -- R²
-    "const yMean=yd.reduce((a,b)=>a+b,0)/yd.length;" ++
+    "const orig=document.getElementById('origToggle').checked;" ++
+    "const txd=window._txd,tyd=window._tyd;" ++  -- always fit in transform space
+    "const xf=window._xf,yf=window._yf;" ++
+    "const sx=window._sx,sy=window._sy;" ++
+    "if(!txd||txd.length<deg+1)return;" ++
+    "const coef=polyFit(txd,tyd,deg);" ++
+    -- R² (in transform space)
+    "const yMean=tyd.reduce((a,b)=>a+b,0)/tyd.length;" ++
     "let sst=0,sse=0;" ++
-    "for(let i=0;i<xd.length;i++){let yh=polyEval(coef,xd[i]);sse+=(yd[i]-yh)**2;sst+=(yd[i]-yMean)**2}" ++
+    "for(let i=0;i<txd.length;i++){let yh=polyEval(coef,txd[i]);sse+=(tyd[i]-yh)**2;sst+=(tyd[i]-yMean)**2}" ++
     "const r2=1-sse/sst;" ++
-    "const se=Math.sqrt(sse/(xd.length-deg-1));" ++
-    -- Draw fit line
-    "const nPts=100;const xMin=window._xMin,xMax=window._xMax;" ++
+    "const se=Math.sqrt(sse/(txd.length-deg-1));" ++
+    -- Draw fit curve: sweep through PLOT x-axis, transform to fit space, evaluate, transform back if needed
+    "const nPts=100;" ++
+    "const xMin=window._xMin,xMax=window._xMax;" ++
     "let path='';let bandU='';let bandL='';" ++
     "for(let i=0;i<=nPts;i++){" ++
-      "const x=xMin+i/nPts*(xMax-xMin);" ++
-      "const y=polyEval(coef,x);" ++
-      "const px=sx(x),py=sy(y);" ++
-      "path+=(i===0?'M':'L')+px+','+py;" ++
+      "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
+      -- Convert plot x to transform space
+      "const txI=orig?tx(plotXi,xf):plotXi;" ++
+      "if(isNaN(txI)||!isFinite(txI))continue;" ++
+      -- Evaluate fit in transform space
+      "const tyI=polyEval(coef,txI);" ++
+      -- Convert fit y back to plot space
+      "const plotYi=orig?itx(tyI,yf):tyI;" ++
+      "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
+      "const px=sx(plotXi),py=sy(plotYi);" ++
+      "path+=(path===''?'M':'L')+px+','+py;" ++
       "if(showSE){" ++
-        -- Approximate SE band (simplified: se * sqrt(1 + 1/n + (x-xbar)²/Sxx))
-        "const xbar=xd.reduce((a,b)=>a+b,0)/xd.length;" ++
-        "const Sxx=xd.reduce((a,v)=>a+(v-xbar)**2,0);" ++
-        "const h=1/xd.length+(x-xbar)**2/Sxx;" ++
-        "const band=1.96*se*Math.sqrt(1+h);" ++  -- prediction interval
-        "bandU+=(i===0?'M':'L')+px+','+sy(y+band);" ++
-        "bandL+=(i===0?'M':'L')+px+','+sy(y-band);" ++
+        "const xbar=txd.reduce((a,b)=>a+b,0)/txd.length;" ++
+        "const Sxx=txd.reduce((a,v)=>a+(v-xbar)**2,0);" ++
+        "const h=1/txd.length+(txI-xbar)**2/Sxx;" ++
+        "const band=1.96*se*Math.sqrt(1+h);" ++
+        "const yU=orig?itx(tyI+band,yf):tyI+band;" ++
+        "const yL=orig?itx(tyI-band,yf):tyI-band;" ++
+        "if(!isNaN(yU)&&isFinite(yU)){bandU+=(bandU===''?'M':'L')+px+','+sy(yU)}" ++
+        "if(!isNaN(yL)&&isFinite(yL)){bandL+=(bandL===''?'M':'L')+px+','+sy(yL)}" ++
       "}" ++
     "}" ++
     -- Append to SVG
@@ -136,8 +154,9 @@ private def jmpJs : String :=
   "document.getElementById('xform').addEventListener('change',function(){draw();report()});" ++
   "document.getElementById('yform').addEventListener('change',function(){draw();report()});" ++
   "document.getElementById('fitBtn').addEventListener('click',function(){doFit();report()});" ++
-  "document.getElementById('seToggle').addEventListener('change',function(){if(window._xd)doFit();report()});" ++
-  "document.getElementById('degree').addEventListener('change',function(){if(window._xd)doFit();report()});" ++
+  "document.getElementById('seToggle').addEventListener('change',function(){if(window._txd)doFit();report()});" ++
+  "document.getElementById('degree').addEventListener('change',function(){if(window._txd)doFit();report()});" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){draw();if(window._coef)doFit();report()});" ++
   -- WebSocket connection (l3m starts the server; we just connect)
   "var ws=null;try{ws=new WebSocket('ws://localhost:9147')}catch(e){}" ++
   "function report(){" ++
@@ -250,6 +269,7 @@ def jmpScatter (xs ys : Array Float)
   <label>Degree: <select id='degree'><option value='1'>1 (linear)</option><option value='2'>2 (quadratic)</option><option value='3'>3 (cubic)</option><option value='4'>4 (quartic)</option></select></label>
   <button id='fitBtn'>Fit</button>
   <label><input type='checkbox' id='seToggle'> SE bands</label>
+  <label><input type='checkbox' id='origToggle'> Original</label>
 </div>
 <svg id='plot' width='700' height='500'></svg>
 <div id='stats' class='stats'></div>
