@@ -75,6 +75,7 @@ private def jmpJs : String :=
     -- Points
     "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
     "svg.innerHTML=s;" ++
+    "if(fitLines.length>0)svg.innerHTML+=fitLines.join('');" ++
     "window._xd=xd;window._yd=yd;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;" ++
     "statsEl.textContent=`n=${pairs.length}, x∈[${xMin.toPrecision(4)}, ${xMax.toPrecision(4)}], y∈[${yMin.toPrecision(4)}, ${yMax.toPrecision(4)}]`" ++
   "}" ++
@@ -140,23 +141,26 @@ private def jmpJs : String :=
         "if(!isNaN(yL)&&isFinite(yL)){bandL+=(bandL===''?'M':'L')+px+','+sy(yL)}" ++
       "}" ++
     "}" ++
-    -- Append to SVG
+    -- Append to SVG (accumulate — don't replace previous fits)
     "let extra='';" ++
     "if(showSE&&bandU){extra+=`<path d='${bandU}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/>`}" ++
     "extra+=`<path d='${path}' fill='none' stroke='crimson' stroke-width='2'/>`;" ++
-    "svg.innerHTML+=extra;" ++
+    "fitLines.push(extra);" ++
+    "svg.innerHTML+=fitLines.join('');" ++
     -- Stats
     "let eq='y = ';" ++
     "for(let i=coef.length-1;i>=0;i--){let c=coef[i].toPrecision(4);if(i===0)eq+=c;else if(i===1)eq+=c+'·x + ';else eq+=c+'·x^'+i+' + '}" ++
     "statsEl.textContent=`n=${xd.length}  R²=${r2.toPrecision(4)}  se=${se.toPrecision(4)}\\n${eq}`" ++
   "}" ++
   -- Event listeners + WebSocket reporting
-  "document.getElementById('xform').addEventListener('change',function(){draw();report()});" ++
-  "document.getElementById('yform').addEventListener('change',function(){draw();report()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){doFit();report()});" ++
-  "document.getElementById('seToggle').addEventListener('change',function(){if(window._txd)doFit();report()});" ++
-  "document.getElementById('degree').addEventListener('change',function(){if(window._txd)doFit();report()});" ++
-  "document.getElementById('origToggle').addEventListener('change',function(){draw();if(window._coef)doFit();report()});" ++
+  "var fitActive=false;" ++
+  "var fitLines=[];" ++  -- accumulated SVG paths for multiple fits
+  "document.getElementById('xform').addEventListener('change',function(){fitLines=[];fitActive=false;draw();report()});" ++
+  "document.getElementById('yform').addEventListener('change',function(){fitLines=[];draw();if(fitActive){doFit()}report()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){if(fitActive){fitActive=false;fitLines=[];draw();report()}else{fitActive=true;doFit();report()}});" ++
+  "document.getElementById('seToggle').addEventListener('change',function(){if(fitActive){fitLines.pop();draw();doFit();report()}});" ++
+  "document.getElementById('degree').addEventListener('change',function(){if(fitActive){fitLines.pop();draw();doFit();report()}});" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){draw();if(fitActive)doFit();report()});" ++
   -- WebSocket connection (l3m starts the server; we just connect)
   "var ws=null;try{ws=new WebSocket('ws://localhost:9147')}catch(e){}" ++
   "function report(){" ++
