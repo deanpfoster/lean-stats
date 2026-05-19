@@ -24,4 +24,5 @@ import LeanTab.Manifests.StringOps
 import LeanTab.Manifests.IO
 import LeanTab.Manifests.Sample
 import LeanTab.Manifests.MultiGroup
+import LeanTab.Manifests.Summarize
 import LeanTab.Interface

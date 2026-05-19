@@ -89,7 +89,14 @@ def summarizeTable (t : Table) : TableSummary :=
     nCols := t.nCols
     columns := t.columns.map summarizeCol }
 
-/-- Render a column summary to a compact string. -/
+/-- Truncate a string to at most n characters. -/
+private def trunc (s : String) (n : Nat := 30) : String :=
+  if s.length ≤ n then s else (s.take n) ++ "…"
+
+/-- Maximum characters per column summary line. -/
+private def maxColLineLen : Nat := 120
+
+/-- Render a column summary to a compact string, bounded in length. -/
 private def renderColSummary (cs : ColSummary) : String :=
   let typeStr := match cs.type with
     | .numeric => "Float"
@@ -97,29 +104,36 @@ private def renderColSummary (cs : ColSummary) : String :=
     | .empty => "Empty"
   let stats := match cs.type with
     | .numeric =>
-      let mn := cs.min.getD 0 |> toString
-      let mx := cs.max.getD 0 |> toString
-      let avg := cs.mean.getD 0 |> toString
+      let mn := trunc (toString (cs.min.getD 0)) 15
+      let mx := trunc (toString (cs.max.getD 0)) 15
+      let avg := trunc (toString (cs.mean.getD 0)) 15
       s!"[{mn}–{mx}, μ={avg}]"
     | .categorical =>
       let nd := cs.nDistinct.getD 0
       let top := if cs.topValues.isEmpty then ""
-        else " (" ++ String.intercalate ", " cs.topValues.toList ++ ")"
+        else " (" ++ String.intercalate ", " (cs.topValues.toList.map (trunc · 20)) ++ ")"
       s!"{nd} levels{top}"
     | .empty => "all NA"
   let na := if cs.nMissing > 0 then s!" ({cs.nMissing} NA)" else ""
-  s!"{cs.name}:{typeStr} {stats}{na}"
+  let line := s!"{trunc cs.name}:{typeStr} {stats}{na}"
+  trunc line maxColLineLen
+
+/-- Maximum number of column lines shown. -/
+private def maxColsShown : Nat := 8
+
+/-- The absolute maximum length of a rendered summary. -/
+def maxSummaryLen : Nat := 1200
 
 /-- Render a table summary to a compact multi-line string.
-    This is what the LLM sees instead of raw data. -/
+    GUARANTEED: output length ≤ maxSummaryLen characters. -/
 def TableSummary.render (ts : TableSummary) : String :=
   let header := s!"{ts.nRows} rows × {ts.nCols} cols"
   let colLines := ts.columns.toList.map renderColSummary
-  -- If too many columns, truncate
-  let shown := if colLines.length > 8
-    then colLines.take 6 ++ [s!"... and {colLines.length - 6} more columns"]
+  let shown := if colLines.length > maxColsShown
+    then colLines.take (maxColsShown - 2) ++ [s!"... and {colLines.length - (maxColsShown - 2)} more columns"]
     else colLines
-  header ++ "\n" ++ String.intercalate "\n" shown
+  let result := header ++ "\n" ++ String.intercalate "\n" shown
+  trunc result maxSummaryLen
 
 /-- One-shot: summarize a table and render to string. -/
 def tableSummary (t : Table) : String :=
