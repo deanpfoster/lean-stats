@@ -240,3 +240,82 @@ The rule:
 
 This communicates: "yes I checked, no it's not significant" without
 cluttering the default summary with non-findings.
+
+## Interactive loop: browser → l3m → LLM → user
+
+The JMP-style scatter page (`Plot.Jmp.jmpScatter`) supports a live
+feedback loop where the LLM comments on the user's exploration in
+real time.
+
+### Architecture
+
+```
+┌─────────────┐    WebSocket     ┌─────────┐    summarizeJmpEvent    ┌─────┐
+│   Browser   │ ──────────────→  │   l3m   │ ─────────────────────→  │ LLM │
+│  (HTML/JS)  │  JSON event      │ (server) │  text summary string   │     │
+│             │                  │          │ ←─────────────────────  │     │
+│  User clicks│                  │          │  "looks linear now!"   │     │
+│  "log(Y)"   │                  │          │                        │     │
+└─────────────┘                  └─────────┘                        └─────┘
+```
+
+### What lives where
+
+| Component | Owner | Pure? |
+|-----------|-------|-------|
+| HTML page generation (`jmpScatter`) | lean-stats | ✅ String → String |
+| JS: polynomial fit, transforms, SVG | lean-stats (embedded JS) | N/A (browser) |
+| JS: WebSocket send on user action | lean-stats (embedded JS) | N/A (browser) |
+| WebSocket server (port 9147) | l3m | ❌ IO |
+| JSON → `JmpEvent` parsing | l3m | ❌ IO (receives from socket) |
+| `summarizeJmpEvent` → LLM string | lean-stats | ✅ pure |
+| Feed summary to LLM | l3m | ❌ IO |
+| Route LLM response to user | l3m | ❌ IO |
+
+### The event JSON (sent by browser)
+
+```json
+{
+  "event": "view_change",
+  "xform": "linear",
+  "yform": "log",
+  "degree": 1,
+  "se_bands": false,
+  "n": 32,
+  "x_range": [1.51, 5.42],
+  "y_range": [2.34, 3.52],
+  "pearson_r": 0.9712,
+  "curvature": 0.0234,
+  "r2": 0.9432,
+  "equation": [3.82, -0.31]
+}
+```
+
+### The LLM summary (produced by `summarizeJmpEvent`)
+
+```
+User applied: x=wt, y=log(mpg)
+n: 32, x ∈ [1.51, 5.42], y ∈ [2.34, 3.52]
+pearson_r: 0.9712
+shape: near-perfect linear
+fit (degree 1): -0.31·wt + 3.82, R² = 0.9432
+```
+
+### Port convention
+
+WebSocket server: `ws://localhost:9147`
+
+l3m starts this before opening the HTML page. If the server isn't
+running, the page works fine — it just doesn't report back (the
+`try{ws=new WebSocket(...)}catch(e){}` silently fails).
+
+### What the LLM can do with this
+
+When it receives the summary, the LLM can:
+- Confirm the user's choice: "Good — log(Y) linearized the relationship"
+- Suggest next steps: "Try removing the outlier at wt=5.4"
+- Warn about issues: "R² is high but n=32 with degree 3 — overfitting risk"
+- Compare to previous: "R² improved from 0.75 (linear Y) to 0.94 (log Y)"
+
+The LLM is a real-time statistical consultant watching over the
+user's shoulder as they explore.
