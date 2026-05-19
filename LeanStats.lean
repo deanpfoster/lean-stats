@@ -13,6 +13,7 @@ import LeanStats.Plot.Histogram
 import LeanStats.Plot.FittedLine
 import LeanStats.Plot.Interactive
 import LeanStats.Plot.Terminal
+import LeanStats.Plot.Describe
 
 import LeanStats.Report.Tooltip
 import LeanStats.Report.Interactive
