@@ -263,7 +263,7 @@ private def binaryJs : String :=
         "if(spec.se&&V){const se=1.96*seEta(txI,V,deg);bandU+=(bandU===''?'M':'L')+px+','+sy(invLink(eta+se,spec.link));bandL+=(bandL===''?'M':'L')+px+','+sy(invLink(eta-se,spec.link))}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
-      "if(spec.se&&bandU){var slw=Math.max(0.5,spec.lw*0.6);svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/>`}" ++
+      "if(spec.se&&bandU){var slw=spec.lw;svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/>`}" ++
       "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw||2}'/>`" ++
     "});" ++
     "if(fitSpecs.length>0){" ++
