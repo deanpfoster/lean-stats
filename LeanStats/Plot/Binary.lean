@@ -157,8 +157,12 @@ private def binaryJs : String :=
     "const xd=pairs.map(p=>p.x),yd=pairs.map(p=>p.y);" ++
     "const coef=fitGlm(xd,yd,link);" ++
     "const b0=coef[0],b1=coef[1];" ++
+    -- Information matrix for Wald SE
+    "var I00=0,I01=0,I11=0;" ++
+    "for(var ii=0;ii<xd.length;ii++){var eta2=b0+b1*xd[ii];var mu2=invLink(eta2,link);var muC2=Math.max(1e-6,Math.min(1-1e-6,mu2));var w2=muC2*(1-muC2);I00+=w2;I01+=w2*xd[ii];I11+=w2*xd[ii]*xd[ii]}" ++
+    "var det2=I00*I11-I01*I01;var v00=I11/det2,v01=-I01/det2,v11=I00/det2;" ++
     -- Draw fitted curve
-    "const nPts=100,xMin=window._xMin,xMax=window._xMax;" ++
+    "const nPts=200,xMin=window._xMin,xMax=window._xMax;" ++
     "const orig=window._orig,xf=window._xf;" ++
     "let path='';let bandU='';let bandL='';" ++
     "for(let i=0;i<=nPts;i++){" ++
@@ -170,10 +174,7 @@ private def binaryJs : String :=
       "const px=sx(plotXi),py=sy(p);" ++
       "path+=(path===''?'M':'L')+px+','+py;" ++
       "if(showSE){" ++
-        -- Approximate SE of eta: sqrt(var(b0) + x²*var(b1) + 2x*cov)
-        -- Simplified: use 1/sqrt(n*p*(1-p)) as rough SE
-        "const pC=Math.max(0.01,Math.min(0.99,p));" ++
-        "const seEta=1.96/Math.sqrt(pairs.length*pC*(1-pC));" ++
+        "const seEta=1.96*Math.sqrt(v00+2*txI*v01+txI*txI*v11);" ++
         "const pU=invLink(eta+seEta,link),pL=invLink(eta-seEta,link);" ++
         "bandU+=(bandU===''?'M':'L')+px+','+sy(pU);" ++
         "bandL+=(bandL===''?'M':'L')+px+','+sy(pL)" ++
@@ -210,16 +211,20 @@ private def binaryJs : String :=
     "fitSpecs.forEach(function(spec,idx){" ++
       "const coef=fitGlm(xd,yd,spec.link);" ++
       "const b0=coef[0],b1=coef[1];" ++
+      -- Compute information matrix for proper SE
+      "var I00=0,I01=0,I11=0;" ++
+      "for(var i=0;i<xd.length;i++){var eta=b0+b1*xd[i];var mu=invLink(eta,spec.link);var muC=Math.max(1e-6,Math.min(1-1e-6,mu));var w=muC*(1-muC);I00+=w;I01+=w*xd[i];I11+=w*xd[i]*xd[i]}" ++
+      "var det=I00*I11-I01*I01;var v00=I11/det,v01=-I01/det,v11=I00/det;" ++
       "let path='';let bandU='';let bandL='';" ++
-      "for(let i=0;i<=100;i++){" ++
-        "const plotXi=xMin+i/100*(xMax-xMin);" ++
+      "for(let i=0;i<=200;i++){" ++
+        "const plotXi=xMin+i/200*(xMax-xMin);" ++
         "const txI=orig?tx(plotXi,xf):plotXi;" ++
         "if(isNaN(txI)||!isFinite(txI))continue;" ++
         "const eta=b0+b1*txI;" ++
         "const p=invLink(eta,spec.link);" ++
         "const px=sx(plotXi),py=sy(p);" ++
         "path+=(path===''?'M':'L')+px+','+py;" ++
-        "if(spec.se){const pC=Math.max(0.01,Math.min(0.99,p));const seEta=1.96/Math.sqrt(pairs.length*pC*(1-pC));bandU+=(bandU===''?'M':'L')+px+','+sy(invLink(eta+seEta,spec.link));bandL+=(bandL===''?'M':'L')+px+','+sy(invLink(eta-seEta,spec.link))}" ++
+        "if(spec.se){const seEta=1.96*Math.sqrt(v00+2*txI*v01+txI*txI*v11);bandU+=(bandU===''?'M':'L')+px+','+sy(invLink(eta+seEta,spec.link));bandL+=(bandL===''?'M':'L')+px+','+sy(invLink(eta-seEta,spec.link))}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
       "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/>`}" ++
