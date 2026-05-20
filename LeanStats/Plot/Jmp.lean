@@ -38,8 +38,8 @@ private def jmpJs : String :=
   "const svg=document.getElementById('plot');" ++
   "const statsEl=document.getElementById('stats');" ++
   -- Transform functions (forward and inverse)
-  "function tx(v,f){switch(f){case'log':return v>0?Math.log(v):NaN;case'sqrt':return v>=0?Math.sqrt(v):NaN;case'recip':return v!==0?1/v:NaN;case'square':return v*v;default:return v}}" ++
-  "function itx(v,f){switch(f){case'log':return Math.exp(v);case'sqrt':return v*v;case'recip':return v!==0?1/v:NaN;case'square':return v>=0?Math.sqrt(v):NaN;default:return v}}" ++
+  "function tx(v,f){switch(f){case'recip':return v!==0?1/v:NaN;case'log':return v>0?Math.log(v):NaN;case'sqrt':return v>=0?Math.sqrt(v):NaN;case'square':return v*v;case'exp':return Math.exp(v);default:return v}}" ++
+  "function itx(v,f){switch(f){case'recip':return v!==0?1/v:NaN;case'log':return Math.exp(v);case'sqrt':return v*v;case'square':return v>=0?Math.sqrt(v):NaN;case'exp':return Math.log(v);default:return v}}" ++
   -- Draw function
   "function draw(){" ++
     "const xf=document.getElementById('xform').value;" ++
@@ -316,8 +316,8 @@ def jmpScatter (xs ys : Array Float)
 <style>{jmpCss}</style></head><body>
 <h2>{pageTitle}</h2>
 <div class='controls'>
-  <label>X: <select id='xform'><option value='linear'>linear</option><option value='log'>log</option><option value='sqrt'>√</option><option value='recip'>1/x</option><option value='square'>x²</option></select></label>
-  <label>Y: <select id='yform'><option value='linear'>linear</option><option value='log'>log</option><option value='sqrt'>√</option><option value='recip'>1/y</option><option value='square'>y²</option></select></label>
+  <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
+  <label>Y: <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></label>
   <label>Degree: <select id='degree'><option value='1'>1 (linear)</option><option value='2'>2 (quadratic)</option><option value='3'>3 (cubic)</option><option value='4'>4 (quartic)</option></select></label>
   <button id='fitBtn'>+ Fit</button>
   <button id='clearBtn'>Clear fits</button>
