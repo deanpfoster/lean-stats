@@ -159,34 +159,35 @@ private def binaryJs : String :=
           "const prop=inBin.filter(p=>p.y===1).length/inBin.length;" ++
           "const cx=sx((lo+hi)/2),cy=sy(prop);" ++
           "const r=Math.min(8,Math.max(3,Math.sqrt(inBin.length)*2));" ++
+          -- Flat forecast line spanning the bin
+          "s+=`<line x1='${sx(lo)}' y1='${cy}' x2='${sx(hi)}' y2='${cy}' stroke='#666' stroke-width='1.5' opacity='0.5'/>`;" ++
+          -- Circle at midpoint
           "s+=`<circle cx='${cx}' cy='${cy}' r='${r}' fill='none' stroke='#666' stroke-width='1.5'/>`" ++
         "}" ++
       "}" ++
     "}" ++
-    -- PAV isotonic regression: circles at pool midpoints, area ∝ pool size
+    -- PAV isotonic regression: circles at pool midpoints + flat forecast lines
     "if(document.getElementById('pav').checked){" ++
       "var pavY=pav(pairs.map(function(p){return p.y}));" ++
       -- Find pool boundaries (where pavY changes value)
       "var pools=[];var start=0;" ++
       "for(var i=1;i<=pairs.length;i++){" ++
         "if(i===pairs.length||pavY[i]!==pavY[i-1]){" ++
-          "var sumX=0;for(var k=start;k<i;k++)sumX+=(orig?pairs[k].rx:pairs[k].x);" ++
-          "pools.push({midX:sumX/(i-start),prob:pavY[start],n:i-start});" ++
+          "var sumX=0;var minX=Infinity;var maxX=-Infinity;" ++
+          "for(var k=start;k<i;k++){var px=orig?pairs[k].rx:pairs[k].x;sumX+=px;if(px<minX)minX=px;if(px>maxX)maxX=px}" ++
+          "pools.push({midX:sumX/(i-start),minX:minX,maxX:maxX,prob:pavY[start],n:i-start});" ++
           "start=i" ++
         "}" ++
       "}" ++
       "var maxN=Math.max.apply(null,pools.map(function(p){return p.n}));" ++
       "var maxR=12;" ++
       "pools.forEach(function(pool){" ++
+        -- Flat forecast line spanning the pool
+        "s+=`<line x1='${sx(pool.minX)}' y1='${sy(pool.prob)}' x2='${sx(pool.maxX)}' y2='${sy(pool.prob)}' stroke='#16a34a' stroke-width='2' opacity='0.7'/>`;" ++
+        -- Circle at midpoint, area ∝ n
         "var r=Math.sqrt(pool.n/maxN)*maxR;" ++
-        "var cx=sx(pool.midX),cy=sy(pool.prob);" ++
-        "s+=`<circle cx='${cx}' cy='${cy}' r='${r}' fill='rgba(22,163,74,0.2)' stroke='#16a34a' stroke-width='1.5'/>`" ++
+        "s+=`<circle cx='${sx(pool.midX)}' cy='${sy(pool.prob)}' r='${r}' fill='rgba(22,163,74,0.2)' stroke='#16a34a' stroke-width='1.5'/>`" ++
       "});" ++
-      "var pavPath='';" ++
-      "pools.forEach(function(pool,i){" ++
-        "pavPath+=(i===0?'M':'L')+sx(pool.midX)+','+sy(pool.prob)" ++
-      "});" ++
-      "s+=`<path d='${pavPath}' fill='none' stroke='#16a34a' stroke-width='1.5' opacity='0.6'/>`" ++
     "}" ++
     "svg.innerHTML=s;" ++
     "statsEl.textContent=`n=${pairs.length} (${pairs.filter(p=>p.y===1).length} events, ${pairs.filter(p=>p.y===0).length} non-events)`;renderBinaryFits()" ++
