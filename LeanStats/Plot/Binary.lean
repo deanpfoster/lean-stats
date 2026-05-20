@@ -190,7 +190,7 @@ private def binaryJs : String :=
       "});" ++
     "}" ++
     "svg.innerHTML=s;" ++
-    "statsEl.textContent=`n=${pairs.length} (${pairs.filter(p=>p.y===1).length} events, ${pairs.filter(p=>p.y===0).length} non-events)`;renderBinaryFits()" ++
+    "statsEl.textContent='';renderBinaryFits()" ++
   "}" ++
   -- Fit
   -- Events
@@ -266,7 +266,16 @@ private def binaryJs : String :=
       "if(spec.se&&bandU){var slw=Math.max(0.5,spec.lw*0.6);svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/>`}" ++
       "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw||2}'/>`" ++
     "});" ++
-    "if(fitSpecs.length>0){const last=fitSpecs[fitSpecs.length-1];statsEl.textContent+=`\\n${fitSpecs.length} fit(s). Last: ${last.link}`}" ++
+    "if(fitSpecs.length>0){" ++
+      "var last=fitSpecs[fitSpecs.length-1];" ++
+      "var lxd=[];var lyd=[];for(var i=0;i<rawX.length;i++){var xt=tx(rawX[i],last.xf||xf);if(!isNaN(xt)&&isFinite(xt)){lxd.push(xt);lyd.push(rawY[i])}}" ++
+      "var lcoef=fitGlm(lxd,lyd,last.link,last.deg||1);" ++
+      "var eq=last.link+'(p) = ';" ++
+      "for(var i=(lcoef.length-1);i>=0;i--){var c=lcoef[i];var cs=c>=0&&i<lcoef.length-1?'+'+c.toPrecision(4):c.toPrecision(4);if(i===0)eq+=cs;else if(i===1)eq+=cs+'·x ';else eq+=cs+'·x^'+i+' '}" ++
+      "var xl=last.xf==='linear'?xName:last.xf+'('+xName+')';" ++
+      "eq=eq.replace(/x/g,xl);" ++
+      "statsEl.textContent=eq" ++
+    "}" ++
   "}" ++
   "draw();"
 
