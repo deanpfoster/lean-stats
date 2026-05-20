@@ -43,32 +43,61 @@ private def binaryJs : String :=
   -- Probit (normal CDF approximation)
   "function probitCdf(z){const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;const s=z<0?-1:1;const t=1/(1+p*Math.abs(z));const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-z*z/2);return 0.5*(1+s*y)}" ++
   "function probitInv(p){if(p<=0)return -5;if(p>=1)return 5;const a=[0,-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239e0];const b=[0,-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1];const c=[0,-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838e0,-2.549732539343734e0,4.374664141464968e0,2.938163982698783e0];const d=[0,7.784695709041462e-3,3.224671290700398e-1,2.445134137142996e0,3.754408661907416e0];const pLow=0.02425,pHigh=1-pLow;let q,r;if(p<pLow){q=Math.sqrt(-2*Math.log(p));return(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1)}if(p<=pHigh){q=p-0.5;r=q*q;return(((((a[1]*r+a[2])*r+a[3])*r+a[4])*r+a[5])*r+a[6])*q/(((((b[1]*r+b[2])*r+b[3])*r+b[4])*r+b[5])*r+1)}q=Math.sqrt(-2*Math.log(1-p));return-(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1)}" ++
-  -- IRLS for GLM fitting (returns [intercept, slope])
-  "function fitGlm(x,y,link){" ++
-    "const n=x.length;let b0=0,b1=0;" ++
-    "for(let iter=0;iter<25;iter++){" ++
-      "let XtWX00=0,XtWX01=0,XtWX11=0,XtWz0=0,XtWz1=0;" ++
-      "for(let i=0;i<n;i++){" ++
-        "const eta=b0+b1*x[i];" ++
-        "const mu=invLink(eta,link);" ++
-        "const muC=Math.max(1e-8,Math.min(1-1e-8,mu));" ++
-        -- Variance and derivative depend on link
-        "let w,z;" ++
-        "if(link==='logit'){w=muC*(1-muC);z=eta+(y[i]-muC)/w}" ++
-        "else if(link==='probit'){const phi=Math.exp(-eta*eta/2)/Math.sqrt(2*Math.PI);w=phi*phi/(muC*(1-muC));z=eta+(y[i]-muC)/phi}" ++
-        "else if(link==='cloglog'){const h=Math.exp(eta);const dmu=(1-muC)*h;w=dmu*dmu/(muC*(1-muC));z=eta+(y[i]-muC)/dmu}" ++
-        "else{w=1;z=y[i]}" ++
-        "XtWX00+=w;XtWX01+=w*x[i];XtWX11+=w*x[i]*x[i];" ++
-        "XtWz0+=w*z;XtWz1+=w*z*x[i]" ++
+  -- IRLS for polynomial GLM (returns coefficients [b0, b1, b2, ...])
+  "function fitGlm(x,y,link,deg){" ++
+    "if(!deg)deg=1;" ++
+    "const n=x.length,p=deg+1;" ++
+    "var coef=new Array(p).fill(0);" ++
+    "for(var iter=0;iter<30;iter++){" ++
+      -- Build X'WX and X'Wz
+      "var XtWX=[];for(var i=0;i<p;i++){XtWX[i]=new Array(p).fill(0)}" ++
+      "var XtWz=new Array(p).fill(0);" ++
+      "for(var i=0;i<n;i++){" ++
+        "var eta=0;for(var j=0;j<p;j++)eta+=coef[j]*Math.pow(x[i],j);" ++
+        "var mu=invLink(eta,link);" ++
+        "var muC=Math.max(1e-7,Math.min(1-1e-7,mu));" ++
+        "var w,deriv;" ++
+        "if(link==='logit'){w=muC*(1-muC);deriv=w}" ++
+        "else if(link==='probit'){var phi=Math.exp(-eta*eta/2)/Math.sqrt(2*Math.PI);deriv=phi;w=phi*phi/(muC*(1-muC))}" ++
+        "else if(link==='cloglog'){var h=Math.exp(eta);deriv=(1-muC)*h;w=deriv*deriv/(muC*(1-muC))}" ++
+        "else{w=muC*(1-muC);deriv=1}" ++  -- identity: use variance as weight
+        "var z=eta+(y[i]-muC)/deriv;" ++
+        "for(var j=0;j<p;j++){XtWz[j]+=w*z*Math.pow(x[i],j);for(var k=0;k<p;k++)XtWX[j][k]+=w*Math.pow(x[i],j)*Math.pow(x[i],k)}" ++
       "}" ++
-      "const det=XtWX00*XtWX11-XtWX01*XtWX01;" ++
-      "if(Math.abs(det)<1e-12)break;" ++
-      "const nb0=(XtWX11*XtWz0-XtWX01*XtWz1)/det;" ++
-      "const nb1=(XtWX00*XtWz1-XtWX01*XtWz0)/det;" ++
-      "if(Math.abs(nb0-b0)+Math.abs(nb1-b1)<1e-8){b0=nb0;b1=nb1;break}" ++
-      "b0=nb0;b1=nb1" ++
+      -- Solve via Gaussian elimination
+      "var A=XtWX.map(function(r,i){return r.concat([XtWz[i]])});" ++
+      "for(var i=0;i<p;i++){var mx=i;for(var j=i+1;j<p;j++)if(Math.abs(A[j][i])>Math.abs(A[mx][i]))mx=j;var tmp=A[i];A[i]=A[mx];A[mx]=tmp;" ++
+      "if(Math.abs(A[i][i])<1e-12)continue;" ++
+      "for(var j=i+1;j<p;j++){var f=A[j][i]/A[i][i];for(var k=i;k<=p;k++)A[j][k]-=f*A[i][k]}}" ++
+      "var nc=new Array(p);" ++
+      "for(var i=p-1;i>=0;i--){nc[i]=A[i][p];for(var j=i+1;j<p;j++)nc[i]-=A[i][j]*nc[j];nc[i]/=A[i][i]}" ++
+      "var diff=0;for(var i=0;i<p;i++)diff+=Math.abs(nc[i]-coef[i]);" ++
+      "coef=nc;if(diff<1e-8)break" ++
     "}" ++
-    "return[b0,b1]}" ++
+    "return coef}" ++
+  -- Evaluate polynomial
+  "function polyEvalB(coef,x){var y=0;for(var i=0;i<coef.length;i++)y+=coef[i]*Math.pow(x,i);return y}" ++
+  -- Compute inverse information matrix (for SE)
+  "function infoMatrix(x,coef,link,deg){" ++
+    "if(!deg)deg=1;const p=deg+1,n=x.length;" ++
+    "var I=[];for(var i=0;i<p;i++){I[i]=new Array(p).fill(0)}" ++
+    "for(var i=0;i<n;i++){" ++
+      "var eta=polyEvalB(coef,x[i]);var mu=invLink(eta,link);var muC=Math.max(1e-7,Math.min(1-1e-7,mu));" ++
+      "var w;if(link==='identity'){w=muC*(1-muC)}else if(link==='logit'){w=muC*(1-muC)}else if(link==='probit'){var phi=Math.exp(-eta*eta/2)/Math.sqrt(2*Math.PI);w=phi*phi/(muC*(1-muC))}else{var h=Math.exp(eta);w=((1-muC)*h)**2/(muC*(1-muC))}" ++
+      "for(var j=0;j<p;j++)for(var k=0;k<p;k++)I[j][k]+=w*Math.pow(x[i],j)*Math.pow(x[i],k)" ++
+    "}" ++
+    -- Invert via Gauss-Jordan
+    "var A=I.map(function(r,i){var row=r.slice();for(var j=0;j<p;j++)row.push(i===j?1:0);return row});" ++
+    "for(var i=0;i<p;i++){var mx=i;for(var j=i+1;j<p;j++)if(Math.abs(A[j][i])>Math.abs(A[mx][i]))mx=j;var tmp=A[i];A[i]=A[mx];A[mx]=tmp;" ++
+    "var d=A[i][i];if(Math.abs(d)<1e-12)continue;for(var j=0;j<2*p;j++)A[i][j]/=d;" ++
+    "for(var j=0;j<p;j++){if(j===i)continue;var f=A[j][i];for(var k=0;k<2*p;k++)A[j][k]-=f*A[i][k]}}" ++
+    "var V=[];for(var i=0;i<p;i++){V[i]=[];for(var j=0;j<p;j++)V[i][j]=A[i][j+p]}" ++
+    "return V}" ++
+  -- SE of eta at a point x given inverse info matrix V
+  "function seEta(x,V,deg){" ++
+    "if(!deg)deg=1;var s=0;const p=deg+1;" ++
+    "for(var j=0;j<p;j++)for(var k=0;k<p;k++)s+=Math.pow(x,j)*V[j][k]*Math.pow(x,k);" ++
+    "return Math.sqrt(Math.max(0,s))}" ++
   -- Pool Adjacent Violators (isotonic regression)
   "function pav(y){" ++
     "var n=y.length;var val=y.slice();var cnt=new Array(n).fill(1);" ++
@@ -149,50 +178,10 @@ private def binaryJs : String :=
     "statsEl.textContent=`n=${pairs.length} (${pairs.filter(p=>p.y===1).length} events, ${pairs.filter(p=>p.y===0).length} non-events)`" ++
   "}" ++
   -- Fit
-  "function doFit(){" ++
-    "const link=document.getElementById('link').value;" ++
-    "const showSE=document.getElementById('seToggle').checked;" ++
-    "const pairs=window._pairs,sx=window._sx,sy=window._sy;" ++
-    "if(!pairs||pairs.length<4)return;" ++
-    "const xd=pairs.map(p=>p.x),yd=pairs.map(p=>p.y);" ++
-    "const coef=fitGlm(xd,yd,link);" ++
-    "const b0=coef[0],b1=coef[1];" ++
-    -- Information matrix for Wald SE
-    "var I00=0,I01=0,I11=0;" ++
-    "for(var ii=0;ii<xd.length;ii++){var eta2=b0+b1*xd[ii];var mu2=invLink(eta2,link);var muC2=Math.max(1e-6,Math.min(1-1e-6,mu2));var w2=muC2*(1-muC2);I00+=w2;I01+=w2*xd[ii];I11+=w2*xd[ii]*xd[ii]}" ++
-    "var det2=I00*I11-I01*I01;var v00=I11/det2,v01=-I01/det2,v11=I00/det2;" ++
-    -- Draw fitted curve
-    "const nPts=200,xMin=window._xMin,xMax=window._xMax;" ++
-    "const orig=window._orig,xf=window._xf;" ++
-    "let path='';let bandU='';let bandL='';" ++
-    "for(let i=0;i<=nPts;i++){" ++
-      "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
-      "const txI=orig?tx(plotXi,xf):plotXi;" ++
-      "if(isNaN(txI)||!isFinite(txI))continue;" ++
-      "const eta=b0+b1*txI;" ++
-      "const p=invLink(eta,link);" ++
-      "const px=sx(plotXi),py=sy(p);" ++
-      "path+=(path===''?'M':'L')+px+','+py;" ++
-      "if(showSE){" ++
-        "const seEta=1.96*Math.sqrt(v00+2*txI*v01+txI*txI*v11);" ++
-        "const pU=invLink(eta+seEta,link),pL=invLink(eta-seEta,link);" ++
-        "bandU+=(bandU===''?'M':'L')+px+','+sy(pU);" ++
-        "bandL+=(bandL===''?'M':'L')+px+','+sy(pL)" ++
-      "}" ++
-    "}" ++
-    "let extra='';" ++
-    "if(showSE&&bandU){extra+=`<path d='${bandU}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/>`}" ++
-    "extra+=`<path d='${path}' fill='none' stroke='crimson' stroke-width='2.5'/>`;" ++
-    "svg.innerHTML+=extra;" ++
-    -- Stats
-    "const xbar=xd.reduce((a,b)=>a+b,0)/xd.length;" ++
-    "const p50=invLink(b0+b1*xbar,link);" ++
-    "statsEl.textContent=`link: ${link}, coef: [${b0.toPrecision(4)}, ${b1.toPrecision(4)}]\\nP(${yName}=1 | ${xName}=mean) = ${p50.toPrecision(3)}`" ++
-  "}" ++
   -- Events
   "var fitSpecs=[];" ++
   "document.getElementById('xform').addEventListener('change',function(){fitSpecs=[];draw()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;fitSpecs.push({link:link,se:se});draw();renderBinaryFits()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);fitSpecs.push({link:link,se:se,deg:deg});draw();renderBinaryFits()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw()});" ++
   "document.getElementById('seToggle').addEventListener('change',function(){});" ++
   "document.getElementById('empirical').addEventListener('change',draw);" ++
@@ -209,22 +198,19 @@ private def binaryJs : String :=
     "const colors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2'];" ++
     "const xd=pairs.map(p=>p.x),yd=pairs.map(p=>p.y);" ++
     "fitSpecs.forEach(function(spec,idx){" ++
-      "const coef=fitGlm(xd,yd,spec.link);" ++
-      "const b0=coef[0],b1=coef[1];" ++
-      -- Compute information matrix for proper SE
-      "var I00=0,I01=0,I11=0;" ++
-      "for(var i=0;i<xd.length;i++){var eta=b0+b1*xd[i];var mu=invLink(eta,spec.link);var muC=Math.max(1e-6,Math.min(1-1e-6,mu));var w=muC*(1-muC);I00+=w;I01+=w*xd[i];I11+=w*xd[i]*xd[i]}" ++
-      "var det=I00*I11-I01*I01;var v00=I11/det,v01=-I01/det,v11=I00/det;" ++
+      "const deg=spec.deg||1;" ++
+      "const coef=fitGlm(xd,yd,spec.link,deg);" ++
+      "const V=spec.se?infoMatrix(xd,coef,spec.link,deg):null;" ++
       "let path='';let bandU='';let bandL='';" ++
       "for(let i=0;i<=200;i++){" ++
         "const plotXi=xMin+i/200*(xMax-xMin);" ++
         "const txI=orig?tx(plotXi,xf):plotXi;" ++
         "if(isNaN(txI)||!isFinite(txI))continue;" ++
-        "const eta=b0+b1*txI;" ++
+        "const eta=polyEvalB(coef,txI);" ++
         "const p=invLink(eta,spec.link);" ++
         "const px=sx(plotXi),py=sy(p);" ++
         "path+=(path===''?'M':'L')+px+','+py;" ++
-        "if(spec.se){const seEta=1.96*Math.sqrt(v00+2*txI*v01+txI*txI*v11);bandU+=(bandU===''?'M':'L')+px+','+sy(invLink(eta+seEta,spec.link));bandL+=(bandL===''?'M':'L')+px+','+sy(invLink(eta-seEta,spec.link))}" ++
+        "if(spec.se&&V){const se=1.96*seEta(txI,V,deg);bandU+=(bandU===''?'M':'L')+px+','+sy(invLink(eta+se,spec.link));bandL+=(bandL===''?'M':'L')+px+','+sy(invLink(eta-se,spec.link))}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
       "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/>`}" ++
@@ -247,6 +233,7 @@ def binaryPlot (xs ys : Array Float)
 <h2>{pageTitle}</h2>
 <div class='controls'>
   <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
+  <label>X degree: <select id='xdeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
   <label>Link: <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></label>
   <button id='fitBtn'>+ Fit</button>
   <button id='clearBtn'>Clear fits</button>
