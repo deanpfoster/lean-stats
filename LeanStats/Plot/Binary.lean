@@ -194,8 +194,8 @@ private def binaryJs : String :=
   -- Fit
   -- Events
   "var fitSpecs=[];" ++
-  "document.getElementById('xform').addEventListener('change',function(){fitSpecs=[];draw()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);var lw=parseFloat(document.getElementById('lineW').value);fitSpecs.push({link:link,se:se,deg:deg,lw:lw});draw()});" ++
+  "document.getElementById('xform').addEventListener('change',function(){draw()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);var lw=parseFloat(document.getElementById('lineW').value);var xf=document.getElementById('xform').value;fitSpecs.push({link:link,se:se,deg:deg,lw:lw,xf:xf});draw()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw()});" ++
   "document.getElementById('seToggle').addEventListener('change',function(){});" ++
   "document.getElementById('empirical').addEventListener('change',draw);" ++
@@ -213,12 +213,19 @@ private def binaryJs : String :=
     "const xd=pairs.map(p=>p.x),yd=pairs.map(p=>p.y);" ++
     "fitSpecs.forEach(function(spec,idx){" ++
       "const deg=spec.deg||1;" ++
-      "const coef=fitGlm(xd,yd,spec.link,deg);" ++
-      "const V=spec.se?infoMatrix(xd,coef,spec.link,deg):null;" ++
+      -- Build pairs for THIS fit's transform
+      "var fpairs=[];for(var i=0;i<rawX.length;i++){var xt=tx(rawX[i],spec.xf||xf);if(!isNaN(xt)&&isFinite(xt))fpairs.push({x:xt,y:rawY[i],rx:rawX[i]})}" ++
+      "fpairs.sort(function(a,b){return a.x-b.x});" ++
+      "if(fpairs.length<deg+1)return;" ++
+      "var fxd=fpairs.map(function(p){return p.x}),fyd=fpairs.map(function(p){return p.y});" ++
+      "const coef=fitGlm(fxd,fyd,spec.link,deg);" ++
+      "const V=spec.se?infoMatrix(fxd,coef,spec.link,deg):null;" ++
       "let path='';let bandU='';let bandL='';" ++
       "for(let i=0;i<=200;i++){" ++
         "const plotXi=xMin+i/200*(xMax-xMin);" ++
-        "const txI=orig?tx(plotXi,xf):plotXi;" ++
+        -- Convert current plot x to this fit's transform space
+        "var txI;" ++
+        "if(orig){txI=tx(plotXi,spec.xf||xf)}else{txI=plotXi}" ++
         "if(isNaN(txI)||!isFinite(txI))continue;" ++
         "const eta=polyEvalB(coef,txI);" ++
         "const p=invLink(eta,spec.link);" ++
