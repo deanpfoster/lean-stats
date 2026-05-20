@@ -344,7 +344,7 @@ def binaryPlot (xs ys : Array Float)
   <div class='x-ctrl'>
     <b>{xName}</b>
     <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select>
-    degree <select id='xdeg'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select>
+    degree <select id='xdeg'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select>
     <label class='orig-toggle'><input type='checkbox' id='origToggle'> orig</label>
   </div>
 </div>
