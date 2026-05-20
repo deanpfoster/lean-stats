@@ -39,7 +39,7 @@ private def binaryJs : String :=
   "function tx(v,f){switch(f){case'recip':return v!==0?1/v:NaN;case'log':return v>0?Math.log(v):NaN;case'sqrt':return v>=0?Math.sqrt(v):NaN;case'square':return v*v;case'exp':return Math.exp(v);default:return v}}" ++
   -- Link functions and inverses
   "function linkFn(p,link){switch(link){case'logit':return Math.log(p/(1-p));case'probit':return probitInv(p);case'cloglog':return Math.log(-Math.log(1-p));default:return p}}" ++
-  "function invLink(eta,link){switch(link){case'logit':return 1/(1+Math.exp(-eta));case'probit':return probitCdf(eta);case'cloglog':return 1-Math.exp(-Math.exp(eta));default:return Math.max(0,Math.min(1,eta))}}" ++
+  "function invLink(eta,link){switch(link){case'logit':return 1/(1+Math.exp(-eta));case'probit':return probitCdf(eta);case'cloglog':return 1-Math.exp(-Math.exp(eta));default:return eta}}" ++
   -- Probit (normal CDF approximation)
   "function probitCdf(z){const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;const s=z<0?-1:1;const t=1/(1+p*Math.abs(z));const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-z*z/2);return 0.5*(1+s*y)}" ++
   "function probitInv(p){if(p<=0)return -5;if(p>=1)return 5;const a=[0,-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239e0];const b=[0,-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1];const c=[0,-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838e0,-2.549732539343734e0,4.374664141464968e0,2.938163982698783e0];const d=[0,7.784695709041462e-3,3.224671290700398e-1,2.445134137142996e0,3.754408661907416e0];const pLow=0.02425,pHigh=1-pLow;let q,r;if(p<pLow){q=Math.sqrt(-2*Math.log(p));return(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1)}if(p<=pHigh){q=p-0.5;r=q*q;return(((((a[1]*r+a[2])*r+a[3])*r+a[4])*r+a[5])*r+a[6])*q/(((((b[1]*r+b[2])*r+b[3])*r+b[4])*r+b[5])*r+1)}q=Math.sqrt(-2*Math.log(1-p));return-(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1)}" ++
@@ -60,7 +60,7 @@ private def binaryJs : String :=
         "if(link==='logit'){w=muC*(1-muC);deriv=w}" ++
         "else if(link==='probit'){var phi=Math.exp(-eta*eta/2)/Math.sqrt(2*Math.PI);deriv=phi;w=phi*phi/(muC*(1-muC))}" ++
         "else if(link==='cloglog'){var h=Math.exp(eta);deriv=(1-muC)*h;w=deriv*deriv/(muC*(1-muC))}" ++
-        "else{w=muC*(1-muC);deriv=1}" ++  -- identity: use variance as weight
+        "else{w=1;deriv=1}" ++  -- identity: use variance as weight
         "var z=eta+(y[i]-muC)/deriv;" ++
         "for(var j=0;j<p;j++){XtWz[j]+=w*z*Math.pow(x[i],j);for(var k=0;k<p;k++)XtWX[j][k]+=w*Math.pow(x[i],j)*Math.pow(x[i],k)}" ++
       "}" ++
@@ -83,7 +83,7 @@ private def binaryJs : String :=
     "var I=[];for(var i=0;i<p;i++){I[i]=new Array(p).fill(0)}" ++
     "for(var i=0;i<n;i++){" ++
       "var eta=polyEvalB(coef,x[i]);var mu=invLink(eta,link);var muC=Math.max(1e-7,Math.min(1-1e-7,mu));" ++
-      "var w;if(link==='identity'){w=muC*(1-muC)}else if(link==='logit'){w=muC*(1-muC)}else if(link==='probit'){var phi=Math.exp(-eta*eta/2)/Math.sqrt(2*Math.PI);w=phi*phi/(muC*(1-muC))}else{var h=Math.exp(eta);w=((1-muC)*h)**2/(muC*(1-muC))}" ++
+      "var w;if(link==='identity'){w=1}else if(link==='logit'){w=muC*(1-muC)}else if(link==='probit'){var phi=Math.exp(-eta*eta/2)/Math.sqrt(2*Math.PI);w=phi*phi/(muC*(1-muC))}else{var h=Math.exp(eta);w=((1-muC)*h)**2/(muC*(1-muC))}" ++
       "for(var j=0;j<p;j++)for(var k=0;k<p;k++)I[j][k]+=w*Math.pow(x[i],j)*Math.pow(x[i],k)" ++
     "}" ++
     -- Invert via Gauss-Jordan
