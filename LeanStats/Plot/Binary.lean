@@ -69,17 +69,37 @@ private def binaryJs : String :=
       "b0=nb0;b1=nb1" ++
     "}" ++
     "return[b0,b1]}" ++
+  -- Pool Adjacent Violators (isotonic regression)
+  "function pav(y){" ++
+    "const n=y.length;let out=y.slice();let w=new Array(n).fill(1);" ++
+    "let i=0;while(i<n-1){" ++
+      "if(out[i]>out[i+1]){" ++
+        "let sum=out[i]*w[i]+out[i+1]*w[i+1];let wt=w[i]+w[i+1];" ++
+        "out[i]=sum/wt;w[i]=wt;out.splice(i+1,1);w.splice(i+1,1);n--;" ++  
+        "if(i>0)i--" ++
+      "}else{i++}" ++
+    "}" ++
+    -- Expand back to original length
+    "let result=[];let idx=0;" ++
+    "for(let j=0;j<y.length;j++){" ++
+      "if(idx<out.length-1&&j>=w.slice(0,idx+1).reduce((a,b)=>a+b,0))idx++;" ++
+      "result.push(out[idx])" ++
+    "}" ++
+    "return result}" ++
   -- Draw
   "function draw(){" ++
     "const xf=document.getElementById('xform').value;" ++
+    "const orig=document.getElementById('origToggle').checked;" ++
     "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf);if(!isNaN(xt)&&isFinite(xt))pairs.push({x:xt,y:rawY[i],rx:rawX[i]})}" ++
     "if(pairs.length<4){svg.innerHTML='<text x=\"350\" y=\"250\" text-anchor=\"middle\">Not enough valid points</text>';return}" ++
+    "pairs.sort((a,b)=>a.x-b.x);" ++
     "const xd=pairs.map(p=>p.x);" ++
-    "const xMin=Math.min(...xd),xMax=Math.max(...xd);" ++
+    "const plotX=orig?pairs.map(p=>p.rx):xd;" ++
+    "const xMin=Math.min(...plotX),xMax=Math.max(...plotX);" ++
     "const xR=xMax-xMin||1;" ++
     "const sx=x=>(x-xMin)/xR*pw+M.l;" ++
-    "const sy=p=>M.t+ph*(1-p);" ++  -- Y axis is probability [0,1]
-    "window._pairs=pairs;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;" ++
+    "const sy=p=>M.t+ph*(1-p);" ++
+    "window._pairs=pairs;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._orig=orig;window._xf=xf;" ++
     "let s='';" ++
     -- Axes
     "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
@@ -89,12 +109,12 @@ private def binaryJs : String :=
     -- Y ticks (probability 0 to 1)
     "for(let i=0;i<=4;i++){let v=i/4;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toFixed(2)}</text>`}" ++
     -- Axis labels
-    "let xl=xf==='linear'?xName:xf+'('+xName+')';" ++
+    "let xl=orig?xName:(xf==='linear'?xName:xf+'('+xName+')');" ++
     "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13'>${xl}</text>`;" ++
     "s+=`<text x='15' y='${M.t+ph/2}' text-anchor='middle' font-size='13' transform='rotate(-90,15,${M.t+ph/2})'>P(${yName}=1)</text>`;" ++
     -- Fringe marks: top for Y=1, bottom for Y=0
     "pairs.forEach(function(p){" ++
-      "const px=sx(p.x);" ++
+      "const px=sx(orig?p.rx:p.x);" ++
       "if(p.y===1){s+=`<line x1='${px}' y1='${M.t}' x2='${px}' y2='${M.t+12}' stroke='#2563eb' opacity='0.6'/>`}" ++
       "else{s+=`<line x1='${px}' y1='${H-M.b}' x2='${px}' y2='${H-M.b-12}' stroke='#dc2626' opacity='0.6'/>`}" ++
     "});" ++
@@ -104,7 +124,7 @@ private def binaryJs : String :=
       "const binW=xR/nbins;" ++
       "for(let b=0;b<nbins;b++){" ++
         "const lo=xMin+b*binW,hi=lo+binW;" ++
-        "const inBin=pairs.filter(p=>p.x>=lo&&(b===nbins-1?p.x<=hi:p.x<hi));" ++
+        "const inBin=pairs.filter(p=>{const px=orig?p.rx:p.x;return px>=lo&&(b===nbins-1?px<=hi:px<hi)});" ++
         "if(inBin.length>=1){" ++
           "const prop=inBin.filter(p=>p.y===1).length/inBin.length;" ++
           "const cx=sx((lo+hi)/2),cy=sy(prop);" ++
@@ -114,6 +134,17 @@ private def binaryJs : String :=
       "}" ++
     "}" ++
     "svg.innerHTML=s;" ++
+    -- PAV isotonic regression (drawn after svg.innerHTML set, as overlay)
+    "if(document.getElementById('pav').checked){" ++
+      "const pavY=pav(pairs.map(p=>p.y));" ++
+      "let pavPath='';" ++
+      "for(let i=0;i<pairs.length;i++){" ++
+        "const px=sx(orig?pairs[i].rx:pairs[i].x);" ++
+        "const py=sy(pavY[i]);" ++
+        "pavPath+=(pavPath===''?'M':'L')+px+','+py" ++
+      "}" ++
+      "svg.innerHTML+=`<path d='${pavPath}' fill='none' stroke='#16a34a' stroke-width='2' opacity='0.8'/>`" ++
+    "}" ++
     "statsEl.textContent=`n=${pairs.length} (${pairs.filter(p=>p.y===1).length} events, ${pairs.filter(p=>p.y===0).length} non-events)`" ++
   "}" ++
   -- Fit
@@ -127,12 +158,15 @@ private def binaryJs : String :=
     "const b0=coef[0],b1=coef[1];" ++
     -- Draw fitted curve
     "const nPts=100,xMin=window._xMin,xMax=window._xMax;" ++
+    "const orig=window._orig,xf=window._xf;" ++
     "let path='';let bandU='';let bandL='';" ++
     "for(let i=0;i<=nPts;i++){" ++
-      "const x=xMin+i/nPts*(xMax-xMin);" ++
-      "const eta=b0+b1*x;" ++
+      "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
+      "const txI=orig?tx(plotXi,xf):plotXi;" ++
+      "if(isNaN(txI)||!isFinite(txI))continue;" ++
+      "const eta=b0+b1*txI;" ++
       "const p=invLink(eta,link);" ++
-      "const px=sx(x),py=sy(p);" ++
+      "const px=sx(plotXi),py=sy(p);" ++
       "path+=(path===''?'M':'L')+px+','+py;" ++
       "if(showSE){" ++
         -- Approximate SE of eta: sqrt(var(b0) + x²*var(b1) + 2x*cov)
@@ -160,6 +194,8 @@ private def binaryJs : String :=
   "document.getElementById('empirical').addEventListener('change',draw);" ++
   "document.getElementById('nbins').addEventListener('change',draw);" ++
   "document.getElementById('link').addEventListener('change',function(){draw();doFit()});" ++
+  "document.getElementById('pav').addEventListener('change',draw);" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){draw()});" ++
   "draw();"
 
 /-- Generate a self-contained HTML page for binary response analysis.
@@ -180,6 +216,8 @@ def binaryPlot (xs ys : Array Float)
   <label><input type='checkbox' id='seToggle'> SE bands</label>
   <label><input type='checkbox' id='empirical' checked> Empirical</label>
   <label>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
+  <label><input type='checkbox' id='pav'> PAV</label>
+  <label><input type='checkbox' id='origToggle'> Original</label>
 </div>
 <svg id='plot' width='700' height='500'></svg>
 <div id='stats' class='stats'></div>
