@@ -309,18 +309,18 @@ def binaryPlot (xs ys : Array Float)
 <style>{binaryCss}</style></head><body>
 <h2>{pageTitle}</h2>
 <div class='controls'>
-  <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
-  <label>X degree: <select id='xdeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
-  <label>Link: <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></label>
-  <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer'></svg>
-  <button id='fitBtn'>+ Fit</button>
-  <button id='clearBtn'>Clear fits</button>
+  <label title='Transform X before fitting (Tukey ladder)'>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
+  <label title='Polynomial degree in transformed X'>X degree: <select id='xdeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
+  <label title='Link function: maps probability to linear predictor'>Link: <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></label>
+  <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle CI bands'></svg>
+  <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
+  <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
 </div>
 <div class='controls'>
-  <label><input type='checkbox' id='empirical' checked> Empirical</label>
-  <label>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
-  <label><input type='checkbox' id='pav'> PAV</label>
-  <label><input type='checkbox' id='origToggle'> Original</label>
+  <label title='Show binned empirical proportions'><input type='checkbox' id='empirical' checked> Empirical</label>
+  <label title='Number of bins for empirical proportions'>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
+  <label title='Pool Adjacent Violators — nonparametric monotone estimate'><input type='checkbox' id='pav'> PAV</label>
+  <label title='Show original X axis (fit curves back through raw data)'><input type='checkbox' id='origToggle'> Original</label>
 </div>
 <svg id='plot' width='700' height='500'></svg>
 <div id='stats' class='stats'></div>
