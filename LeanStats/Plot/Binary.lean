@@ -232,6 +232,19 @@ private def binaryJs : String :=
   "document.getElementById('link').addEventListener('change',function(){});" ++
   "document.getElementById('pav').addEventListener('change',draw);" ++
   "document.getElementById('origToggle').addEventListener('change',function(){draw()});" ++
+  -- Keep button: send current state to l3m
+  "document.getElementById('keepBtn').addEventListener('click',function(){" ++
+    "var state={event:'keep',xform:document.getElementById('xform').value," ++
+    "xdeg:parseInt(document.getElementById('xdeg').value)," ++
+    "link:document.getElementById('link').value," ++
+    "pav:document.getElementById('pav').checked," ++
+    "empirical:document.getElementById('empirical').checked," ++
+    "original:document.getElementById('origToggle').checked," ++
+    "fits:fitSpecs.filter(function(s){return !s.hidden})," ++
+    "n:window._pairs?window._pairs.length:0};" ++
+    "if(ws&&ws.readyState===1){ws.send(JSON.stringify(state));document.getElementById('keepBtn').textContent='✓ Kept';setTimeout(function(){document.getElementById('keepBtn').textContent='📌 Keep'},1500)}" ++
+    "else{document.getElementById('keepBtn').textContent='📋 Copied';navigator.clipboard.writeText(JSON.stringify(state,null,2)).catch(function(){});setTimeout(function(){document.getElementById('keepBtn').textContent='📌 Keep'},1500)}" ++
+  "});" ++
   -- Render all stored fits
   "function renderBinaryFits(){" ++
     "const pairs=window._pairs,sx=window._sx,sy=window._sy;" ++
@@ -315,6 +328,7 @@ def binaryPlot (xs ys : Array Float)
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle CI bands'></svg>
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
+  <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer'>📌 Keep</button>
 </div>
 <div class='controls'>
   <label title='Show binned empirical proportions'><input type='checkbox' id='empirical' checked> Empirical</label>

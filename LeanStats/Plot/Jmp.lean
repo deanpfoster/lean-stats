@@ -183,6 +183,15 @@ private def jmpJs : String :=
   "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var deg=parseInt(document.getElementById('degree').value);fits.push({deg:deg,xf:xf,yf:yf,se:seOn,lw:lwCurrent});draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];draw();drawLwPicker()});" ++
   "document.getElementById('origToggle').addEventListener('change',function(){draw()});" ++
+  -- Keep button
+  "document.getElementById('keepBtn').addEventListener('click',function(){" ++
+    "var state={event:'keep',xform:document.getElementById('xform').value," ++
+    "yform:document.getElementById('yform').value," ++
+    "original:document.getElementById('origToggle').checked," ++
+    "fits:fits.filter(function(s){return !s.hidden})};" ++
+    "if(ws&&ws.readyState===1){ws.send(JSON.stringify(state));document.getElementById('keepBtn').textContent='✓ Kept';setTimeout(function(){document.getElementById('keepBtn').textContent='📌 Keep'},1500)}" ++
+    "else{document.getElementById('keepBtn').textContent='📋 Copied';navigator.clipboard.writeText(JSON.stringify(state,null,2)).catch(function(){});setTimeout(function(){document.getElementById('keepBtn').textContent='📌 Keep'},1500)}" ++
+  "});" ++
   -- WebSocket
   "var ws=null;try{ws=new WebSocket('ws://localhost:9147')}catch(e){}" ++
   "function report(){" ++
@@ -259,6 +268,7 @@ def jmpScatter (xs ys : Array Float)
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle SE bands'></svg>
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
+  <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer'>📌 Keep</button>
 </div>
 <div class='controls'>
   <label title='Show original axes (fits recompute in their own transform space)'><input type='checkbox' id='origToggle'> Original</label>
