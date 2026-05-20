@@ -42,7 +42,7 @@ private def jmpCss : String :=
   "svg{border:1px solid #e0e0e0;border-radius:6px}"
 
 private def jmpJs : String :=
-  "const W=600,H=450,M={t:20,r:20,b:40,l:50};" ++
+  "const W=600,H=450,M={t:15,r:15,b:30,l:45};" ++
   "const pw=W-M.l-M.r,ph=H-M.t-M.b;" ++
   "const svg=document.getElementById('plot');" ++
   "const statsEl=document.getElementById('stats');" ++
@@ -100,11 +100,9 @@ private def jmpJs : String :=
     "const yOrig=document.getElementById('yOrig').checked;" ++
     "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf),yt=tx(rawY[i],yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
     "if(pairs.length<2){svg.innerHTML='<text x=\"350\" y=\"250\" text-anchor=\"middle\">Not enough valid points after transform</text>';return}" ++
-    "let plotX,plotY,axLabelX,axLabelY;" ++
+    "var plotX,plotY;" ++
     "if(xOrig){plotX=pairs.map(p=>p.rx)}else{plotX=pairs.map(p=>p.tx)}" ++
     "if(yOrig){plotY=pairs.map(p=>p.ry)}else{plotY=pairs.map(p=>p.ty)}" ++
-    "var axLabelX=xOrig?xName:(xf==='linear'?xName:xf+'('+xName+')');" ++
-    "var axLabelY=yOrig?yName:(yf==='linear'?yName:yf+'('+yName+')');" ++
     "window._pairs=pairs;window._xOrig=xOrig;window._yOrig=yOrig;window._xf=xf;window._yf=yf;" ++
     "let xd=plotX,yd=plotY;" ++
     "const xMin=Math.min(...xd),xMax=Math.max(...xd),yMin=Math.min(...yd),yMax=Math.max(...yd);" ++
@@ -117,8 +115,6 @@ private def jmpJs : String :=
     "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
     "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
-    "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13'>${axLabelX}</text>`;" ++
-    "s+=`<text x='15' y='${M.t+ph/2}' text-anchor='middle' font-size='13' transform='rotate(-90,15,${M.t+ph/2})'>${axLabelY}</text>`;" ++
     "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
     "svg.innerHTML=s;" ++
     "renderFits()" ++
