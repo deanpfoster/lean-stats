@@ -207,11 +207,14 @@ private def binaryJs : String :=
       "var isSelected=(w===lwCurrent);" ++
       "var col=isSelected?nextColor:'#999';" ++
       "var opacity=isSelected?1:0.4;" ++
-      "s+=`<line x1='${x}' y1='${y}' x2='${x+segW}' y2='${y}' stroke='${col}' stroke-width='${w}' opacity='${opacity}' data-lw='${w}' style='cursor:pointer'/>`;" ++
+      -- Invisible wide hit area
+      "s+=`<rect x='${x-2}' y='${y-10}' width='${segW+4}' height='20' fill='transparent' data-lw='${w}' style='cursor:pointer'/>`;" ++
+      -- Visible line
+      "s+=`<line x1='${x}' y1='${y}' x2='${x+segW}' y2='${y}' stroke='${col}' stroke-width='${w}' opacity='${opacity}' pointer-events='none'/>`;" ++
       -- Show SE indicator lines if SE is on and this is selected
       "if(isSelected&&seOn){" ++
-        "s+=`<line x1='${x}' y1='${y-6}' x2='${x+segW}' y2='${y-6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' data-lw='${w}' style='cursor:pointer'/>`;" ++
-        "s+=`<line x1='${x}' y1='${y+6}' x2='${x+segW}' y2='${y+6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' data-lw='${w}' style='cursor:pointer'/>`" ++
+        "s+=`<line x1='${x}' y1='${y-6}' x2='${x+segW}' y2='${y-6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' pointer-events='none'/>`;" ++
+        "s+=`<line x1='${x}' y1='${y+6}' x2='${x+segW}' y2='${y+6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' pointer-events='none'/>`" ++
       "}" ++
     "});" ++
     "pick.innerHTML=s;" ++
