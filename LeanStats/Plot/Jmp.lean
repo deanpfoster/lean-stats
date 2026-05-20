@@ -4,17 +4,14 @@ import LeanStats.Descriptive
 
 Generates a self-contained HTML page with:
 - Scatter plot (SVG)
-- "Fit" button that overlays a polynomial fit
-- Degree dropdown (1–4)
-- SE bands toggle (confidence band around the fit)
-- X transform selector (linear, log, sqrt, reciprocal, square)
-- Y transform selector (same)
+- Polynomial fit with persistent fit specs
+- SVG line thickness picker (click to select, click same to toggle SE)
+- Two-row controls layout
+- Legend at bottom with clickable swatches
 
 All computation (polynomial fitting, transforms, SE bands) happens
 in the browser via inline JS. The Lean function just emits the page
 with the raw data embedded as JSON arrays. No external dependencies.
-
-This is the "throw up a scatter and explore" workflow from JMP.
 -/
 
 set_option autoImplicit false
@@ -37,56 +34,15 @@ private def jmpJs : String :=
   "const pw=W-M.l-M.r,ph=H-M.t-M.b;" ++
   "const svg=document.getElementById('plot');" ++
   "const statsEl=document.getElementById('stats');" ++
-  -- Transform functions (forward and inverse)
+  -- Transform functions
   "function tx(v,f){switch(f){case'recip':return v!==0?1/v:NaN;case'log':return v>0?Math.log(v):NaN;case'sqrt':return v>=0?Math.sqrt(v):NaN;case'square':return v*v;case'exp':return Math.exp(v);default:return v}}" ++
   "function itx(v,f){switch(f){case'recip':return v!==0?1/v:NaN;case'log':return Math.exp(v);case'sqrt':return v*v;case'square':return v>=0?Math.sqrt(v):NaN;case'exp':return Math.log(v);default:return v}}" ++
-  -- Draw function
-  "function draw(){" ++
-    "const xf=document.getElementById('xform').value;" ++
-    "const yf=document.getElementById('yform').value;" ++
-    "const orig=document.getElementById('origToggle').checked;" ++
-    -- Build valid pairs (both transforms must succeed)
-    "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf),yt=tx(rawY[i],yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
-    "if(pairs.length<2){svg.innerHTML='<text x=\"350\" y=\"250\" text-anchor=\"middle\">Not enough valid points after transform</text>';return}" ++
-    -- Choose which coordinates to plot
-    "let plotX,plotY,axLabelX,axLabelY;" ++
-    "if(orig){plotX=pairs.map(p=>p.rx);plotY=pairs.map(p=>p.ry);axLabelX=xName;axLabelY=yName}" ++
-    "else{plotX=pairs.map(p=>p.tx);plotY=pairs.map(p=>p.ty);axLabelX=xf==='linear'?xName:xf+'('+xName+')';axLabelY=yf==='linear'?yName:yf+'('+yName+')'}" ++
-    -- Store transformed coords for fitting (always fit in transform space)
-    "window._txd=pairs.map(p=>p.tx);window._tyd=pairs.map(p=>p.ty);" ++
-    "window._pairs=pairs;window._orig=orig;window._xf=xf;window._yf=yf;" ++
-    "let xd=plotX,yd=plotY;" ++
-    "const xMin=Math.min(...xd),xMax=Math.max(...xd),yMin=Math.min(...yd),yMax=Math.max(...yd);" ++
-    "const xR=xMax-xMin||1,yR=yMax-yMin||1;" ++
-    "const sx=x=>(x-xMin)/xR*pw+M.l;" ++
-    "const sy=y=>H-M.b-(y-yMin)/yR*ph;" ++
-    "window._xd=xd;window._yd=yd;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._yMin=yMin;window._yMax=yMax;" ++
-    -- Build SVG
-    "let s='';" ++
-    -- Axes
-    "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
-    "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
-    -- Tick labels
-    "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
-    "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
-    -- Axis labels
-    "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13'>${axLabelX}</text>`;" ++
-    "s+=`<text x='15' y='${M.t+ph/2}' text-anchor='middle' font-size='13' transform='rotate(-90,15,${M.t+ph/2})'>${axLabelY}</text>`;" ++
-    -- Points
-    "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
-    "svg.innerHTML=s;" ++
-    "window._xd=xd;window._yd=yd;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;" ++
-    "statsEl.textContent=`n=${pairs.length}, x∈[${xMin.toPrecision(4)}, ${xMax.toPrecision(4)}], y∈[${yMin.toPrecision(4)}, ${yMax.toPrecision(4)}]`" ++
-  "}" ++
   -- Polynomial fit via normal equations
   "function polyFit(x,y,deg){" ++
     "const n=x.length;" ++
     "let X=[];for(let i=0;i<n;i++){let row=[];for(let j=0;j<=deg;j++)row.push(Math.pow(x[i],j));X.push(row)}" ++
-    -- X^T X
     "let XtX=[];for(let i=0;i<=deg;i++){XtX[i]=[];for(let j=0;j<=deg;j++){let s=0;for(let k=0;k<n;k++)s+=X[k][i]*X[k][j];XtX[i][j]=s}}" ++
-    -- X^T y
     "let Xty=[];for(let i=0;i<=deg;i++){let s=0;for(let k=0;k<n;k++)s+=X[k][i]*y[k];Xty[i]=s}" ++
-    -- Solve via Gaussian elimination
     "let A=XtX.map((r,i)=>[...r,Xty[i]]);" ++
     "const m=A.length;" ++
     "for(let i=0;i<m;i++){let mx=i;for(let j=i+1;j<m;j++)if(Math.abs(A[j][i])>Math.abs(A[mx][i]))mx=j;[A[i],A[mx]]=[A[mx],A[i]];" ++
@@ -97,162 +53,148 @@ private def jmpJs : String :=
     "return coef}" ++
   -- Evaluate polynomial
   "function polyEval(coef,x){let y=0;for(let i=0;i<coef.length;i++)y+=coef[i]*Math.pow(x,i);return y}" ++
-  -- Fit and draw
-  "function doFit(){" ++
-    "const deg=parseInt(document.getElementById('degree').value);" ++
-    "const showSE=document.getElementById('seToggle').checked;" ++
-    "const orig=document.getElementById('origToggle').checked;" ++
-    "const txd=window._txd,tyd=window._tyd;" ++  -- always fit in transform space
-    "const xf=window._xf,yf=window._yf;" ++
-    "const sx=window._sx,sy=window._sy;" ++
-    "if(!txd||txd.length<deg+1)return;" ++
-    "const coef=polyFit(txd,tyd,deg);" ++
-    -- R² (in transform space)
-    "const yMean=tyd.reduce((a,b)=>a+b,0)/tyd.length;" ++
-    "let sst=0,sse=0;" ++
-    "for(let i=0;i<txd.length;i++){let yh=polyEval(coef,txd[i]);sse+=(tyd[i]-yh)**2;sst+=(tyd[i]-yMean)**2}" ++
-    "const r2=1-sse/sst;" ++
-    "const se=Math.sqrt(sse/(txd.length-deg-1));" ++
-    -- Draw fit curve: sweep through PLOT x-axis, transform to fit space, evaluate, transform back if needed
-    "const nPts=100;" ++
-    "const xMin=window._xMin,xMax=window._xMax;" ++
-    "let path='';let bandU='';let bandL='';" ++
-    "for(let i=0;i<=nPts;i++){" ++
-      "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
-      -- Convert plot x to transform space
-      "const txI=orig?tx(plotXi,xf):plotXi;" ++
-      "if(isNaN(txI)||!isFinite(txI))continue;" ++
-      -- Evaluate fit in transform space
-      "const tyI=polyEval(coef,txI);" ++
-      -- Convert fit y back to plot space
-      "const plotYi=orig?itx(tyI,yf):tyI;" ++
-      "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
-      "const px=sx(plotXi),py=sy(plotYi);" ++
-      "path+=(path===''?'M':'L')+px+','+py;" ++
-      "if(showSE){" ++
-        "const xbar=txd.reduce((a,b)=>a+b,0)/txd.length;" ++
-        "const Sxx=txd.reduce((a,v)=>a+(v-xbar)**2,0);" ++
-        "const h=1/txd.length+(txI-xbar)**2/Sxx;" ++
-        "const band=1.96*se*Math.sqrt(1+h);" ++
-        "const yU=orig?itx(tyI+band,yf):tyI+band;" ++
-        "const yL=orig?itx(tyI-band,yf):tyI-band;" ++
-        "if(!isNaN(yU)&&isFinite(yU)){bandU+=(bandU===''?'M':'L')+px+','+sy(yU)}" ++
-        "if(!isNaN(yL)&&isFinite(yL)){bandL+=(bandL===''?'M':'L')+px+','+sy(yL)}" ++
+  -- Line width picker state
+  "var lwOptions=[1,2,3,5];var lwCurrent=2;var seOn=false;" ++
+  "var colors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2','#4f46e5','#dc2626'];" ++
+  "var fits=[];" ++
+  -- Draw line width picker
+  "function drawLwPicker(){" ++
+    "var pick=document.getElementById('lwPicker');" ++
+    "var s='';var segW=25;var nextColor=colors[fits.length%colors.length];" ++
+    "lwOptions.forEach(function(w,i){" ++
+      "var x=i*30+2;var y=12;" ++
+      "var isSelected=(w===lwCurrent);" ++
+      "var col=isSelected?nextColor:'#999';" ++
+      "var opacity=isSelected?1:0.4;" ++
+      "s+=`<rect x='${x-2}' y='${y-10}' width='${segW+4}' height='20' fill='transparent' data-lw='${w}' style='cursor:pointer'/>`;" ++
+      "s+=`<line x1='${x}' y1='${y}' x2='${x+segW}' y2='${y}' stroke='${col}' stroke-width='${w}' opacity='${opacity}' pointer-events='none'/>`;" ++
+      "if(isSelected&&seOn){" ++
+        "s+=`<line x1='${x}' y1='${y-6}' x2='${x+segW}' y2='${y-6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' pointer-events='none'/>`;" ++
+        "s+=`<line x1='${x}' y1='${y+6}' x2='${x+segW}' y2='${y+6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' pointer-events='none'/>`" ++
       "}" ++
-    "}" ++
-    -- Append to SVG (accumulate — don't replace previous fits)
-    "let extra='';" ++
-    "if(showSE&&bandU){extra+=`<path d='${bandU}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='rgba(220,50,50,0.3)' stroke-dasharray='4'/>`}" ++
-    "extra+=`<path d='${path}' fill='none' stroke='crimson' stroke-width='2'/>`;" ++
-    "svg.innerHTML+=extra;" ++
-    -- Stats
-    "let eq='y = ';" ++
-    "for(let i=coef.length-1;i>=0;i--){let c=coef[i].toPrecision(4);if(i===0)eq+=c;else if(i===1)eq+=c+'·x + ';else eq+=c+'·x^'+i+' + '}" ++
-    "statsEl.textContent=`n=${xd.length}  R²=${r2.toPrecision(4)}  se=${se.toPrecision(4)}\\n${eq}`" ++
+    "});" ++
+    "pick.innerHTML=s;" ++
+    "pick.querySelectorAll('[data-lw]').forEach(function(el){el.addEventListener('click',function(){" ++
+      "var clicked=parseFloat(el.dataset.lw);" ++
+      "if(clicked===lwCurrent){seOn=!seOn}else{lwCurrent=clicked}" ++
+      "drawLwPicker()" ++
+    "})})" ++
   "}" ++
-  -- renderFits: recompute all stored fits against current view
-  "function renderFits(){" ++
+  -- Draw function
+  "function draw(){" ++
+    "const xf=document.getElementById('xform').value;" ++
+    "const yf=document.getElementById('yform').value;" ++
     "const orig=document.getElementById('origToggle').checked;" ++
-    "const colors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2','#4f46e5','#dc2626'];" ++
+    "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf),yt=tx(rawY[i],yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
+    "if(pairs.length<2){svg.innerHTML='<text x=\"350\" y=\"250\" text-anchor=\"middle\">Not enough valid points after transform</text>';return}" ++
+    "let plotX,plotY,axLabelX,axLabelY;" ++
+    "if(orig){plotX=pairs.map(p=>p.rx);plotY=pairs.map(p=>p.ry);axLabelX=xName;axLabelY=yName}" ++
+    "else{plotX=pairs.map(p=>p.tx);plotY=pairs.map(p=>p.ty);axLabelX=xf==='linear'?xName:xf+'('+xName+')';axLabelY=yf==='linear'?yName:yf+'('+yName+')'}" ++
+    "window._pairs=pairs;window._orig=orig;window._xf=xf;window._yf=yf;" ++
+    "let xd=plotX,yd=plotY;" ++
+    "const xMin=Math.min(...xd),xMax=Math.max(...xd),yMin=Math.min(...yd),yMax=Math.max(...yd);" ++
+    "const xR=xMax-xMin||1,yR=yMax-yMin||1;" ++
+    "const sx=x=>(x-xMin)/xR*pw+M.l;" ++
+    "const sy=y=>H-M.b-(y-yMin)/yR*ph;" ++
+    "window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._yMin=yMin;window._yMax=yMax;" ++
+    "let s='';" ++
+    "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
+    "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
+    "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
+    "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
+    "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13'>${axLabelX}</text>`;" ++
+    "s+=`<text x='15' y='${M.t+ph/2}' text-anchor='middle' font-size='13' transform='rotate(-90,15,${M.t+ph/2})'>${axLabelY}</text>`;" ++
+    "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
+    "svg.innerHTML=s;" ++
+    "renderFits()" ++
+  "}" ++
+  -- Render all stored fits
+  "function renderFits(){" ++
+    "const orig=window._orig,xf=window._xf,yf=window._yf;" ++
+    "const sx=window._sx,sy=window._sy,xMin=window._xMin,xMax=window._xMax;" ++
+    "if(!sx)return;" ++
+    "const curXf=document.getElementById('xform').value;" ++
+    "const curYf=document.getElementById('yform').value;" ++
     "fits.forEach(function(spec,idx){" ++
-      -- Build pairs for this fit's transform
+      "if(spec.hidden)return;" ++
       "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],spec.xf),yt=tx(rawY[i],spec.yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
       "if(pairs.length<spec.deg+1)return;" ++
       "const txd=pairs.map(p=>p.tx),tyd=pairs.map(p=>p.ty);" ++
       "const coef=polyFit(txd,tyd,spec.deg);" ++
-      -- Compute R²
       "const yMean=tyd.reduce((a,b)=>a+b,0)/tyd.length;" ++
       "let sst=0,sse=0;for(let i=0;i<txd.length;i++){let yh=polyEval(coef,txd[i]);sse+=(tyd[i]-yh)**2;sst+=(tyd[i]-yMean)**2}" ++
-      "const r2=sst>0?1-sse/sst:1;const se=Math.sqrt(sse/(txd.length-spec.deg-1));" ++
-      -- Draw curve in current view coordinates
-      "const sx=window._sx,sy=window._sy,xMin=window._xMin,xMax=window._xMax;" ++
-      "const curXf=document.getElementById('xform').value;" ++
-      "const curYf=document.getElementById('yform').value;" ++
+      "const se=Math.sqrt(sse/(txd.length-spec.deg-1));" ++
       "let path='';let bandU='';let bandL='';const nPts=100;" ++
       "for(let i=0;i<=nPts;i++){" ++
         "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
-        -- Convert current plot x → this fit's transform space
-        "let txI;" ++
+        "var txI;" ++
         "if(orig){txI=tx(plotXi,spec.xf)}else{txI=tx(itx(plotXi,curXf),spec.xf)}" ++
         "if(isNaN(txI)||!isFinite(txI))continue;" ++
         "const tyI=polyEval(coef,txI);" ++
-        -- Convert fit y back to current plot space
-        "let plotYi;" ++
+        "var plotYi;" ++
         "if(orig){plotYi=itx(tyI,spec.yf)}else{plotYi=tx(itx(tyI,spec.yf),curYf)}" ++
         "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
         "path+=(path===''?'M':'L')+sx(plotXi)+','+sy(plotYi);" ++
-        -- SE bands
         "if(spec.se){" ++
           "const xbar=txd.reduce((a,b)=>a+b,0)/txd.length;" ++
           "const Sxx=txd.reduce((a,v)=>a+(v-xbar)**2,0);" ++
           "const h=1/txd.length+(txI-xbar)**2/Sxx;" ++
           "const band=1.96*se*Math.sqrt(1+h);" ++
-          "let yU,yL;" ++
+          "var yU,yL;" ++
           "if(orig){yU=itx(tyI+band,spec.yf);yL=itx(tyI-band,spec.yf)}else{yU=tx(itx(tyI+band,spec.yf),curYf);yL=tx(itx(tyI-band,spec.yf),curYf)}" ++
           "if(!isNaN(yU)&&isFinite(yU)){bandU+=(bandU===''?'M':'L')+sx(plotXi)+','+sy(yU)}" ++
           "if(!isNaN(yL)&&isFinite(yL)){bandL+=(bandL===''?'M':'L')+sx(plotXi)+','+sy(yL)}" ++
         "}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
-      "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/>`}" ++
-      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='2'/>`" ++
+      "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${spec.lw}' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${spec.lw}' stroke-dasharray='4'/>`}" ++
+      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw}'/>`" ++
     "});" ++
-    -- Show last fit stats
-    "if(fits.length>0){const last=fits[fits.length-1];statsEl.textContent=`${fits.length} fit(s) shown. Last: degree ${last.deg}, x=${last.xf}, y=${last.yf}`}" ++
+    -- Legend
+    "if(fits.length>0){" ++
+      "var legendHtml='';" ++
+      "fits.forEach(function(spec,idx){" ++
+        "var col=spec.hidden?'#999':colors[idx%colors.length];" ++
+        "var fpairs=[];for(var i=0;i<rawX.length;i++){var xt=tx(rawX[i],spec.xf),yt=tx(rawY[i],spec.yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt)){fpairs.push({tx:xt,ty:yt})}}" ++
+        "var lcoef=polyFit(fpairs.map(function(p){return p.tx}),fpairs.map(function(p){return p.ty}),spec.deg);" ++
+        "var eq='y = ';" ++
+        "for(var i=lcoef.length-1;i>=0;i--){var c=lcoef[i];var cs=c>=0&&i<lcoef.length-1?' + '+c.toPrecision(3):c.toPrecision(3);if(i===0)eq+=cs;else if(i===1)eq+=cs+'*x ';else eq+=cs+'*x^'+i+' '}" ++
+        "var xl=spec.xf==='linear'?xName:spec.xf+'('+xName+')';" ++
+        "var yl=spec.yf==='linear'?yName:spec.yf+'('+yName+')';" ++
+        "eq=eq.replace(/y/,'('+yl+')').replace(/x/g,xl);" ++
+        "var swH=20;var swW=30;var svgSw='<svg width=\"'+swW+'\" height=\"'+swH+'\" style=\"vertical-align:middle;margin-right:6px;cursor:pointer\" data-fidx=\"'+idx+'\">';" ++
+        "svgSw+='<rect x=\"0\" y=\"0\" width=\"'+swW+'\" height=\"'+swH+'\" fill=\"transparent\"/>';" ++
+        "svgSw+='<line x1=\"2\" y1=\"'+swH/2+'\" x2=\"'+(swW-2)+'\" y2=\"'+swH/2+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\"/>';" ++
+        "if(spec.se){" ++
+          "svgSw+='<line x1=\"2\" y1=\"'+(swH/2-5)+'\" x2=\"'+(swW-2)+'\" y2=\"'+(swH/2-5)+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\" opacity=\"0.4\" stroke-dasharray=\"3\"/>';" ++
+          "svgSw+='<line x1=\"2\" y1=\"'+(swH/2+5)+'\" x2=\"'+(swW-2)+'\" y2=\"'+(swH/2+5)+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\" opacity=\"0.4\" stroke-dasharray=\"3\"/>'}" ++
+        "svgSw+='</svg>';" ++
+        "var eqStyle=spec.hidden?'font-family:monospace;font-size:12px;color:#999':'font-family:monospace;font-size:12px';" ++
+        "legendHtml+='<div style=\"margin:2px 0\">'+svgSw+'<span style=\"'+eqStyle+'\">'+eq+'</span></div>'" ++
+      "});" ++
+      "statsEl.innerHTML=legendHtml;" ++
+      "statsEl.querySelectorAll('[data-fidx]').forEach(function(el){el.addEventListener('click',function(){var idx=parseInt(el.dataset.fidx);fits[idx].hidden=!fits[idx].hidden;draw()})})" ++
+    "}else{statsEl.innerHTML=''}" ++
   "}" ++
-  -- Event listeners + WebSocket reporting
-  "var fits=[];" ++  -- array of {degree, xf, yf, se} specs
-  "document.getElementById('xform').addEventListener('change',function(){draw();renderFits();report()});" ++
-  "document.getElementById('yform').addEventListener('change',function(){draw();renderFits();report()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var deg=parseInt(document.getElementById('degree').value);var se=document.getElementById('seToggle').checked;fits.push({deg:deg,xf:xf,yf:yf,se:se});draw();renderFits();report()});" ++
-  "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];draw();report()});" ++
-  "document.getElementById('seToggle').addEventListener('change',function(){});" ++
-  "document.getElementById('degree').addEventListener('change',function(){});" ++
-  "document.getElementById('origToggle').addEventListener('change',function(){draw();renderFits();report()});" ++
-  -- WebSocket connection (l3m starts the server; we just connect)
+  -- Event listeners
+  "drawLwPicker();" ++
+  "document.getElementById('xform').addEventListener('change',function(){draw()});" ++
+  "document.getElementById('yform').addEventListener('change',function(){draw()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var deg=parseInt(document.getElementById('degree').value);fits.push({deg:deg,xf:xf,yf:yf,se:seOn,lw:lwCurrent});draw();drawLwPicker()});" ++
+  "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];draw();drawLwPicker()});" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){draw()});" ++
+  -- WebSocket
   "var ws=null;try{ws=new WebSocket('ws://localhost:9147')}catch(e){}" ++
   "function report(){" ++
     "if(!ws||ws.readyState!==1)return;" ++
-    "const xf=document.getElementById('xform').value;" ++
-    "const yf=document.getElementById('yform').value;" ++
-    "const deg=document.getElementById('degree').value;" ++
-    "const se=document.getElementById('seToggle').checked;" ++
-    "const xd=window._xd,yd=window._yd;" ++
-    "if(!xd)return;" ++
-    -- Compute summary stats for current view
-    "const n=xd.length;" ++
-    "const xMin=Math.min(...xd),xMax=Math.max(...xd);" ++
-    "const yMin=Math.min(...yd),yMax=Math.max(...yd);" ++
-    "const xMean=xd.reduce((a,b)=>a+b,0)/n;" ++
-    "const yMean=yd.reduce((a,b)=>a+b,0)/n;" ++
-    "let sxy=0,sxx=0,syy=0;" ++
-    "for(let i=0;i<n;i++){sxy+=(xd[i]-xMean)*(yd[i]-yMean);sxx+=(xd[i]-xMean)**2;syy+=(yd[i]-yMean)**2}" ++
-    "const r=sxx>0&&syy>0?sxy/Math.sqrt(sxx*syy):0;" ++
-    -- Curvature
-    "let sxc=0,src=0;" ++
-    "if(window._coef){const coef=window._coef;let sse=0;for(let i=0;i<n;i++){const res=yd[i]-polyEval(coef,xd[i]);sse+=res*res;const xc=(xd[i]-xMean)**2;sxc+=xc*xc;src+=xc*res}" ++
-    "var curv=sxc>0?src/sxc:0}else{var curv=0}" ++
-    -- Build message
-    "let msg={event:'view_change',xform:xf,yform:yf,degree:parseInt(deg),se_bands:se," ++
-    "n:n,x_range:[xMin,xMax],y_range:[yMin,yMax],pearson_r:+r.toFixed(4),curvature:+curv.toFixed(4)};" ++
-    "if(window._r2!==undefined)msg.r2=+window._r2.toFixed(4);" ++
-    "if(window._coef)msg.equation=window._coef.map(c=>+c.toPrecision(4));" ++
+    "var msg={event:'view_change',xform:document.getElementById('xform').value,yform:document.getElementById('yform').value,fits:fits.length};" ++
     "ws.send(JSON.stringify(msg))" ++
   "}" ++
-  -- Store fit results for reporting
-  "var _origDoFit=doFit;" ++
-  "doFit=function(){_origDoFit();if(window._xd){" ++
-    "const deg=parseInt(document.getElementById('degree').value);" ++
-    "const coef=polyFit(window._xd,window._yd,deg);" ++
-    "window._coef=coef;" ++
-    "const yMean=window._yd.reduce((a,b)=>a+b,0)/window._yd.length;" ++
-    "let sst=0,sse=0;for(let i=0;i<window._xd.length;i++){let yh=polyEval(coef,window._xd[i]);sse+=(window._yd[i]-yh)**2;sst+=(window._yd[i]-yMean)**2}" ++
-    "window._r2=1-sse/sst}};" ++
   "draw();"
 
 /-- A user interaction event from the JMP scatter page. -/
 structure JmpEvent where
-  xform : String       -- "linear", "log", "sqrt", "recip", "square"
+  xform : String
   yform : String
   degree : Nat
   seBands : Bool
@@ -265,32 +207,27 @@ structure JmpEvent where
   equation : Option (Array Float) := none
   deriving Repr
 
-/-- Generate the LLM summary string from a user interaction event.
-    This is what l3m feeds to the LLM when the user changes the plot. -/
+/-- Generate the LLM summary string from a user interaction event. -/
 def summarizeJmpEvent (ev : JmpEvent) (xName yName : String) : String :=
   let xLabel := if ev.xform == "linear" then xName else s!"{ev.xform}({xName})"
   let yLabel := if ev.yform == "linear" then yName else s!"{ev.yform}({yName})"
   let header := s!"User applied: x={xLabel}, y={yLabel}"
   let stats := s!"n: {ev.n}, x ∈ [{ev.xRange.1}, {ev.xRange.2}], y ∈ [{ev.yRange.1}, {ev.yRange.2}]"
   let corr := s!"pearson_r: {ev.pearsonR}"
-  -- Interpret the correlation
   let interp := if ev.pearsonR.abs > 0.95 then "near-perfect linear"
     else if ev.pearsonR.abs > 0.8 then "strong linear"
     else if ev.pearsonR.abs > 0.5 then "moderate linear"
     else if ev.pearsonR.abs > 0.2 then "weak linear"
     else "no linear relationship"
-  -- Curvature assessment
   let curvNote := if ev.curvature.abs > 0.1 then s!", curvature: {ev.curvature} (nonlinear)"
     else if ev.curvature.abs > 0.01 then s!", curvature @ {ev.curvature}σ (borderline)"
     else ""
-  -- Fit info
   let fitNote := match ev.r2, ev.equation with
     | some r2, some coef =>
       let eqStr := formatPoly coef xLabel
       s!"\nfit (degree {ev.degree}): {eqStr}, R² = {r2}"
     | some r2, none => s!"\nfit: R² = {r2}"
     | _, _ => ""
-  -- Shape summary
   let shape := s!"shape: {interp}{curvNote}"
   s!"{header}\n{stats}\n{corr}\n{shape}{fitNote}"
 where
@@ -316,13 +253,15 @@ def jmpScatter (xs ys : Array Float)
 <style>{jmpCss}</style></head><body>
 <h2>{pageTitle}</h2>
 <div class='controls'>
-  <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
-  <label>Y: <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></label>
-  <label>Degree: <select id='degree'><option value='1'>1 (linear)</option><option value='2'>2 (quadratic)</option><option value='3'>3 (cubic)</option><option value='4'>4 (quartic)</option></select></label>
-  <button id='fitBtn'>+ Fit</button>
-  <button id='clearBtn'>Clear fits</button>
-  <label><input type='checkbox' id='seToggle'> SE bands</label>
-  <label><input type='checkbox' id='origToggle'> Original</label>
+  <label title='Transform X before fitting'>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
+  <label title='Transform Y before fitting'>Y: <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></label>
+  <label title='Polynomial degree for fit'>Degree: <select id='degree'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
+  <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle SE bands'></svg>
+  <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
+  <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
+</div>
+<div class='controls'>
+  <label title='Show original axes (fits recompute in their own transform space)'><input type='checkbox' id='origToggle'> Original</label>
 </div>
 <svg id='plot' width='700' height='500'></svg>
 <div id='stats' class='stats'></div>
