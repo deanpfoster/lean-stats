@@ -154,9 +154,14 @@ private def binaryJs : String :=
       "if(p.y===1){s+=`<line x1='${px}' y1='${M.t}' x2='${px}' y2='${M.t+12}' stroke='#2563eb' opacity='0.6'/>`}" ++
       "else{s+=`<line x1='${px}' y1='${H-M.b}' x2='${px}' y2='${H-M.b-12}' stroke='#dc2626' opacity='0.6'/>`}" ++
     "});" ++
-    -- Empirical proportions (binned)
-    "if(document.getElementById('empirical').checked){" ++
-      "const nbins=parseInt(document.getElementById('nbins').value)||10;" ++
+    -- Empirical proportions (binned); bins=0 hides, bins=1 shows grand mean
+    "{const nbins=parseInt(document.getElementById('nbins').value)||0;" ++
+    "if(nbins===1){" ++
+      "const prop=pairs.filter(p=>p.y===1).length/pairs.length;" ++
+      "const cy=sy(prop);" ++
+      "s+=`<line x1='${sx(xMin)}' y1='${cy}' x2='${sx(xMax)}' y2='${cy}' stroke='#666' stroke-width='1.5' opacity='0.5'/>`;" ++
+      "s+=`<circle cx='${sx((xMin+xMax)/2)}' cy='${cy}' r='6' fill='none' stroke='#666' stroke-width='1.5'/>`" ++
+    "}else if(nbins>1){" ++
       "const binW=xR/nbins;" ++
       "for(let b=0;b<nbins;b++){" ++
         "const lo=xMin+b*binW,hi=lo+binW;" ++
@@ -165,13 +170,11 @@ private def binaryJs : String :=
           "const prop=inBin.filter(p=>p.y===1).length/inBin.length;" ++
           "const cx=sx((lo+hi)/2),cy=sy(prop);" ++
           "const r=Math.min(8,Math.max(3,Math.sqrt(inBin.length)*2));" ++
-          -- Flat forecast line spanning the bin
           "s+=`<line x1='${sx(lo)}' y1='${cy}' x2='${sx(hi)}' y2='${cy}' stroke='#666' stroke-width='1.5' opacity='0.5'/>`;" ++
-          -- Circle at midpoint
           "s+=`<circle cx='${cx}' cy='${cy}' r='${r}' fill='none' stroke='#666' stroke-width='1.5'/>`" ++
         "}" ++
       "}" ++
-    "}" ++
+    "}}" ++
     -- PAV isotonic regression: circles at pool midpoints + flat forecast lines
     "if(document.getElementById('pav').checked){" ++
       "var pavY=pav(pairs.map(function(p){return p.y}));" ++
@@ -233,7 +236,6 @@ private def binaryJs : String :=
   "drawLwPicker();" ++
   "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var deg=parseInt(document.getElementById('xdeg').value);var xf=document.getElementById('xform').value;fitSpecs.push({link:link,se:seOn,deg:deg,lw:lwCurrent,xf:xf});draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw();drawLwPicker()});" ++
-  "document.getElementById('empirical').addEventListener('change',draw);" ++
   "document.getElementById('nbins').addEventListener('change',draw);" ++
   "document.getElementById('link').addEventListener('change',function(){});" ++
   "document.getElementById('pav').addEventListener('change',draw);" ++
@@ -244,7 +246,7 @@ private def binaryJs : String :=
     "xdeg:parseInt(document.getElementById('xdeg').value)," ++
     "link:document.getElementById('link').value," ++
     "pav:document.getElementById('pav').checked," ++
-    "empirical:document.getElementById('empirical').checked," ++
+    "nbins:parseInt(document.getElementById('nbins').value)," ++
     "original:document.getElementById('origToggle').checked," ++
     "fits:fitSpecs.filter(function(s){return !s.hidden})," ++
     "n:window._pairs?window._pairs.length:0};" ++
@@ -331,8 +333,7 @@ def binaryPlot (xs ys : Array Float)
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle CI bands'></svg>
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
-  <label title='Show binned empirical proportions'><input type='checkbox' id='empirical' checked> Empirical</label>
-  <label title='Number of bins'>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
+  <label title='Number of bins (0=hide)'>Bins: <input type='number' id='nbins' value='10' min='0' max='50' style='width:50px'></label>
   <label title='Pool Adjacent Violators'><input type='checkbox' id='pav'> PAV</label>
 </div>
 <div class='plot-grid'>
