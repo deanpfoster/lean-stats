@@ -71,20 +71,21 @@ private def binaryJs : String :=
     "return[b0,b1]}" ++
   -- Pool Adjacent Violators (isotonic regression)
   "function pav(y){" ++
-    "const n=y.length;let out=y.slice();let w=new Array(n).fill(1);" ++
-    "let i=0;while(i<n-1){" ++
-      "if(out[i]>out[i+1]){" ++
-        "let sum=out[i]*w[i]+out[i+1]*w[i+1];let wt=w[i]+w[i+1];" ++
-        "out[i]=sum/wt;w[i]=wt;out.splice(i+1,1);w.splice(i+1,1);n--;" ++  
-        "if(i>0)i--" ++
-      "}else{i++}" ++
+    "var n=y.length;var val=y.slice();var cnt=new Array(n).fill(1);" ++
+    "var len=n;" ++
+    -- Forward pass: merge violations
+    "var j=0;" ++
+    "for(var i=1;i<n;i++){" ++
+      "val[j+1]=y[i];cnt[j+1]=1;" ++
+      "j++;" ++
+      "while(j>0&&val[j]<val[j-1]){" ++
+        "val[j-1]=(val[j-1]*cnt[j-1]+val[j]*cnt[j])/(cnt[j-1]+cnt[j]);" ++
+        "cnt[j-1]+=cnt[j];" ++
+        "j--" ++
+      "}" ++
     "}" ++
-    -- Expand back to original length
-    "let result=[];let idx=0;" ++
-    "for(let j=0;j<y.length;j++){" ++
-      "if(idx<out.length-1&&j>=w.slice(0,idx+1).reduce((a,b)=>a+b,0))idx++;" ++
-      "result.push(out[idx])" ++
-    "}" ++
+    -- Expand blocks back to original length
+    "var result=[];for(var k=0;k<=j;k++){for(var m=0;m<cnt[k];m++)result.push(val[k])}" ++
     "return result}" ++
   -- Draw
   "function draw(){" ++
