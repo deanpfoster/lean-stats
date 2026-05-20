@@ -77,6 +77,11 @@ private def multiRegJs : String :=
     "let xMin=Math.min(...xArr),xMax=Math.max(...xArr),yMin=Math.min(...yArr),yMax=Math.max(...yArr);" ++
     "let xR=xMax-xMin||1,yR=yMax-yMin||1;" ++
     "xMin-=xR*0.05;xMax+=xR*0.05;yMin-=yR*0.05;yMax+=yR*0.05;" ++
+    -- Lock Y range: use global Y range across all plots
+    "if(document.getElementById('lockY').checked&&plotIdx>0){" ++
+      "let allResid=[];for(let p=0;p<=nPred;p++){let ps=plotState[p];if(ps)allResid.push(...ps.plotY)}" ++
+      "if(allResid.length>0){let gMin=Math.min(...allResid),gMax=Math.max(...allResid);let gR=gMax-gMin||1;yMin=gMin-gR*0.05;yMax=gMax+gR*0.05}" ++
+    "}" ++
     "xR=xMax-xMin;yR=yMax-yMin;" ++
     "const sx=x=>(x-xMin)/xR*pw+M.l;" ++
     "const sy=y=>H-M.b-(y-yMin)/yR*ph;" ++
@@ -86,6 +91,22 @@ private def multiRegJs : String :=
     "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
     "for(let i=0;i<=3;i++){let v=xMin+i/3*xR;s+=`<text x='${sx(v)}' y='${H-M.b+13}' text-anchor='middle' font-size='9'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=3;i++){let v=yMin+i/3*yR;s+=`<text x='${M.l-5}' y='${sy(v)+3}' text-anchor='end' font-size='9'>${v.toPrecision(3)}</text>`}" ++
+    -- Draw CI band for the regression line (if plotIdx > 0, it's an AV plot)
+    "if(plotIdx>0&&xArr.length>2){" ++
+      "let n=xArr.length;let xm=xArr.reduce((a,b)=>a+b,0)/n;" ++
+      "let Sxx=xArr.reduce((a,v)=>a+(v-xm)**2,0);" ++
+      "let num=0,den=0;for(let i=0;i<n;i++){num+=xArr[i]*yArr[i];den+=xArr[i]*xArr[i]}" ++
+      "let slope=den>0?num/den:0;" ++
+      "let sse=0;for(let i=0;i<n;i++){let r=yArr[i]-slope*xArr[i];sse+=r*r}" ++
+      "let se=Math.sqrt(sse/(n-2));" ++
+      "let bandU='',bandL='';const nPts=60;" ++
+      "for(let i=0;i<=nPts;i++){let xi=xMin+i/nPts*xR;let yi=slope*xi;let h=1/n+(xi-xm)**2/Sxx;let band=1.96*se*Math.sqrt(h);" ++
+        "bandU+=(bandU===''?'M':'L')+sx(xi)+','+sy(yi+band);bandL+=(bandL===''?'M':'L')+sx(xi)+','+sy(yi-band)}" ++
+      "s+=`<path d='${bandU}' fill='none' stroke='rgba(100,100,100,0.3)' stroke-dasharray='3' stroke-width='1'/>`;" ++
+      "s+=`<path d='${bandL}' fill='none' stroke='rgba(100,100,100,0.3)' stroke-dasharray='3' stroke-width='1'/>`;" ++
+      -- Regression line
+      "s+=`<line x1='${sx(xMin)}' y1='${sy(slope*xMin)}' x2='${sx(xMax)}' y2='${sy(slope*xMax)}' stroke='#666' stroke-width='1.5'/>`" ++
+    "}" ++
     "for(let i=0;i<xArr.length;i++){s+=`<circle cx='${sx(xArr[i])}' cy='${sy(yArr[i])}' r='3' fill='steelblue' opacity='0.7'/>`}" ++
     "if(annotation)s+=`<text x='${M.l+4}' y='${M.t+12}' font-size='10' fill='#333'>${annotation}</text>`;" ++
     "svgEl.innerHTML=s;renderFitsForPlot(svgEl,plotIdx)}" ++
@@ -167,6 +188,7 @@ private def multiRegJs : String :=
     "fits.push({deg:deg,lw:lwCurrent,se:seOn,plot:plot});draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){let plot=parseInt(document.getElementById('fitPlot').value);fits=fits.filter(s=>s.plot!==plot);draw();drawLwPicker()});" ++
   "document.getElementById('yform').addEventListener('change',draw);" ++
+  "document.getElementById('lockY').addEventListener('change',draw);" ++
   "for(let p=0;p<nPred;p++){document.getElementById('tf_'+p).addEventListener('change',draw);document.getElementById('deg_'+p).addEventListener('change',draw)}" ++
   "document.getElementById('keepBtn').addEventListener('click',function(){" ++
     "var state={event:'keep',yform:document.getElementById('yform').value,fits:fits};" ++
@@ -209,8 +231,9 @@ def multiRegPlot (xs : Array (String × Array Float)) (ys : Array Float)
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness'></svg>
   plot <select id='fitPlot'>{fitPlotOpts}</select>
   degree <select id='fitDeg'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select>
-  <button id='fitBtn'>+ Fit</button>
+  <button id='fitBtn'>+ Checkpoint</button>
   <button id='clearBtn'>Clear</button>
+  <label title='Lock Y range across all plots'><input type='checkbox' id='lockY'> lock Y</label>
 </div>
 <div id='legend' class='stats'></div>
 <script>
