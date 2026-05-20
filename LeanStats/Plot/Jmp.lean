@@ -24,6 +24,7 @@ private def jmpCss : String :=
   ".controls{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}" ++
   ".controls label{font-size:13px}" ++
   ".controls select,.controls button{padding:4px 8px;font-size:13px}" ++
+  ".axis-ctrl{background:#f0f4f8;padding:4px 8px;border-radius:4px;font-size:13px}" ++
   "#fitBtn{background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer}" ++
   "#fitBtn:hover{background:#2563eb}" ++
   ".stats{font-family:monospace;font-size:13px;margin-top:12px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
@@ -262,16 +263,13 @@ def jmpScatter (xs ys : Array Float)
 <style>{jmpCss}</style></head><body>
 <h2>{pageTitle}</h2>
 <div class='controls'>
-  <label title='Transform X before fitting'>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
-  <label title='Transform Y before fitting'>Y: <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></label>
-  <label title='Polynomial degree for fit'>Degree: <select id='degree'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
+  <span class='axis-ctrl' title='X axis: variable, transform, polynomial degree'><b>{xName}</b> <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> degree <select id='degree'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></span>
+  <span class='axis-ctrl' title='Y axis: variable and transform'><b>{yName}</b> <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></span>
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle SE bands'></svg>
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
   <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer'>📌 Keep</button>
-</div>
-<div class='controls'>
-  <label title='Show original axes (fits recompute in their own transform space)'><input type='checkbox' id='origToggle'> Original</label>
+  <label title='Show original axes'><input type='checkbox' id='origToggle'> Original</label>
 </div>
 <svg id='plot' width='700' height='500'></svg>
 <div id='stats' class='stats'></div>
