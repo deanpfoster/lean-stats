@@ -168,7 +168,7 @@ private def jmpJs : String :=
       "const sx=window._sx,sy=window._sy,xMin=window._xMin,xMax=window._xMax;" ++
       "const curXf=document.getElementById('xform').value;" ++
       "const curYf=document.getElementById('yform').value;" ++
-      "let path='';const nPts=100;" ++
+      "let path='';let bandU='';let bandL='';const nPts=100;" ++
       "for(let i=0;i<=nPts;i++){" ++
         "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
         -- Convert current plot x → this fit's transform space
@@ -180,9 +180,21 @@ private def jmpJs : String :=
         "let plotYi;" ++
         "if(orig){plotYi=itx(tyI,spec.yf)}else{plotYi=tx(itx(tyI,spec.yf),curYf)}" ++
         "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
-        "path+=(path===''?'M':'L')+sx(plotXi)+','+sy(plotYi)" ++
+        "path+=(path===''?'M':'L')+sx(plotXi)+','+sy(plotYi);" ++
+        -- SE bands
+        "if(spec.se){" ++
+          "const xbar=txd.reduce((a,b)=>a+b,0)/txd.length;" ++
+          "const Sxx=txd.reduce((a,v)=>a+(v-xbar)**2,0);" ++
+          "const h=1/txd.length+(txI-xbar)**2/Sxx;" ++
+          "const band=1.96*se*Math.sqrt(1+h);" ++
+          "let yU,yL;" ++
+          "if(orig){yU=itx(tyI+band,spec.yf);yL=itx(tyI-band,spec.yf)}else{yU=tx(itx(tyI+band,spec.yf),curYf);yL=tx(itx(tyI-band,spec.yf),curYf)}" ++
+          "if(!isNaN(yU)&&isFinite(yU)){bandU+=(bandU===''?'M':'L')+sx(plotXi)+','+sy(yU)}" ++
+          "if(!isNaN(yL)&&isFinite(yL)){bandL+=(bandL===''?'M':'L')+sx(plotXi)+','+sy(yL)}" ++
+        "}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
+      "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/>`}" ++
       "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='2'/>`" ++
     "});" ++
     -- Show last fit stats
