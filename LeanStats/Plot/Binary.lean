@@ -22,17 +22,22 @@ namespace LeanStats.Plot
 private def binaryCss : String :=
   "body{font-family:system-ui,sans-serif;margin:20px;color:#333}" ++
   "h2{margin-bottom:8px}" ++
-  ".controls{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}" ++
-  ".controls label{font-size:13px}" ++
-  ".controls select,.controls button,.controls input{padding:4px 8px;font-size:13px}" ++
-  ".axis-ctrl{background:#f0f4f8;padding:4px 8px;border-radius:4px;font-size:13px}" ++
+  ".toolbar{margin:12px 0 12px 64px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
+  ".toolbar select,.toolbar button,.toolbar input,.toolbar label{padding:4px 8px;font-size:13px}" ++
   "#fitBtn{background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer}" ++
   "#fitBtn:hover{background:#2563eb}" ++
-  ".stats{font-family:monospace;font-size:13px;margin-top:12px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
-  "svg{border:1px solid #e0e0e0;border-radius:6px}"
+  ".plot-grid{display:grid;grid-template-columns:60px 600px;grid-template-rows:450px auto;gap:0;margin:8px 0}" ++
+  ".y-ctrl{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}" ++
+  ".y-label{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:bold;font-size:13px;letter-spacing:1px}" ++
+  ".y-ctrl select{font-size:11px;width:55px}" ++
+  ".x-ctrl{grid-column:2;grid-row:2;text-align:center;font-size:13px;padding:8px 0}" ++
+  ".x-ctrl select{font-size:12px}" ++
+  ".x-ctrl .orig-toggle{font-size:11px;margin-left:8px}" ++
+  "#plot{grid-column:2;grid-row:1;border:1px solid #e0e0e0;border-radius:6px}" ++
+  ".stats{font-family:monospace;font-size:13px;margin:12px 0 0 64px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}"
 
 private def binaryJs : String :=
-  "const W=700,H=500,M={t:40,r:30,b:50,l:60};" ++
+  "const W=600,H=450,M={t:15,r:15,b:30,l:45};" ++
   "const pw=W-M.l-M.r,ph=H-M.t-M.b;" ++
   "const svg=document.getElementById('plot');" ++
   "const statsEl=document.getElementById('stats');" ++
@@ -322,21 +327,28 @@ def binaryPlot (xs ys : Array Float)
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
 <style>{binaryCss}</style></head><body>
 <h2>{pageTitle}</h2>
-<div class='controls'>
-  <span class='axis-ctrl' title='X axis: variable, transform, polynomial degree'><b>{xName}</b> <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> degree <select id='xdeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></span>
-  <span class='axis-ctrl' title='Y axis: link function mapping probability to linear predictor'><b>P({yName}=1)</b> <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></span>
+<div class='toolbar'>
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle CI bands'></svg>
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
   <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer'>📌 Keep</button>
-</div>
-<div class='controls'>
   <label title='Show binned empirical proportions'><input type='checkbox' id='empirical' checked> Empirical</label>
-  <label title='Number of bins for empirical proportions'>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
-  <label title='Pool Adjacent Violators — nonparametric monotone estimate'><input type='checkbox' id='pav'> PAV</label>
-  <label title='Show original X axis (fit curves back through raw data)'><input type='checkbox' id='origToggle'> Original</label>
+  <label title='Number of bins'>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
+  <label title='Pool Adjacent Violators'><input type='checkbox' id='pav'> PAV</label>
 </div>
-<svg id='plot' width='700' height='500'></svg>
+<div class='plot-grid'>
+  <div class='y-ctrl'>
+    <div class='y-label'>P({yName}=1)</div>
+    <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select>
+  </div>
+  <svg id='plot' width='600' height='450'></svg>
+  <div class='x-ctrl'>
+    <b>{xName}</b>
+    <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select>
+    degree <select id='xdeg'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select>
+    <label class='orig-toggle'><input type='checkbox' id='origToggle'> orig</label>
+  </div>
+</div>
 <div id='stats' class='stats'></div>
 <script>
 const rawX = {xJson};
