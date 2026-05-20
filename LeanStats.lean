@@ -16,6 +16,7 @@ import LeanStats.Plot.Terminal
 import LeanStats.Plot.Describe
 import LeanStats.Plot.Jmp
 import LeanStats.Plot.Binary
+import LeanStats.Plot.MultiReg
 
 import LeanStats.Report.Tooltip
 import LeanStats.Report.Interactive
