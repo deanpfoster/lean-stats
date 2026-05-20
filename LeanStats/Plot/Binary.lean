@@ -188,14 +188,44 @@ private def binaryJs : String :=
     "statsEl.textContent=`link: ${link}, coef: [${b0.toPrecision(4)}, ${b1.toPrecision(4)}]\\nP(${yName}=1 | ${xName}=mean) = ${p50.toPrecision(3)}`" ++
   "}" ++
   -- Events
-  "document.getElementById('xform').addEventListener('change',draw);" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){draw();doFit()});" ++
-  "document.getElementById('seToggle').addEventListener('change',function(){draw();doFit()});" ++
+  "var fitSpecs=[];" ++
+  "document.getElementById('xform').addEventListener('change',function(){fitSpecs=[];draw()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;fitSpecs.push({link:link,se:se});draw();renderBinaryFits()});" ++
+  "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw()});" ++
+  "document.getElementById('seToggle').addEventListener('change',function(){});" ++
   "document.getElementById('empirical').addEventListener('change',draw);" ++
   "document.getElementById('nbins').addEventListener('change',draw);" ++
-  "document.getElementById('link').addEventListener('change',function(){draw();doFit()});" ++
+  "document.getElementById('link').addEventListener('change',function(){});" ++
   "document.getElementById('pav').addEventListener('change',draw);" ++
-  "document.getElementById('origToggle').addEventListener('change',function(){draw()});" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){draw();renderBinaryFits()});" ++
+  -- Render all stored fits
+  "function renderBinaryFits(){" ++
+    "const pairs=window._pairs,sx=window._sx,sy=window._sy;" ++
+    "const orig=window._orig,xf=window._xf;" ++
+    "const xMin=window._xMin,xMax=window._xMax;" ++
+    "if(!pairs)return;" ++
+    "const colors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2'];" ++
+    "const xd=pairs.map(p=>p.x),yd=pairs.map(p=>p.y);" ++
+    "fitSpecs.forEach(function(spec,idx){" ++
+      "const coef=fitGlm(xd,yd,spec.link);" ++
+      "const b0=coef[0],b1=coef[1];" ++
+      "let path='';let bandU='';let bandL='';" ++
+      "for(let i=0;i<=100;i++){" ++
+        "const plotXi=xMin+i/100*(xMax-xMin);" ++
+        "const txI=orig?tx(plotXi,xf):plotXi;" ++
+        "if(isNaN(txI)||!isFinite(txI))continue;" ++
+        "const eta=b0+b1*txI;" ++
+        "const p=invLink(eta,spec.link);" ++
+        "const px=sx(plotXi),py=sy(p);" ++
+        "path+=(path===''?'M':'L')+px+','+py;" ++
+        "if(spec.se){const pC=Math.max(0.01,Math.min(0.99,p));const seEta=1.96/Math.sqrt(pairs.length*pC*(1-pC));bandU+=(bandU===''?'M':'L')+px+','+sy(invLink(eta+seEta,spec.link));bandL+=(bandL===''?'M':'L')+px+','+sy(invLink(eta-seEta,spec.link))}" ++
+      "}" ++
+      "const col=colors[idx%colors.length];" ++
+      "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/>`}" ++
+      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='2.5'/>`" ++
+    "});" ++
+    "if(fitSpecs.length>0){const last=fitSpecs[fitSpecs.length-1];statsEl.textContent+=`\\n${fitSpecs.length} fit(s). Last: ${last.link}`}" ++
+  "}" ++
   "draw();"
 
 /-- Generate a self-contained HTML page for binary response analysis.
@@ -212,7 +242,8 @@ def binaryPlot (xs ys : Array Float)
 <div class='controls'>
   <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
   <label>Link: <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></label>
-  <button id='fitBtn'>Fit</button>
+  <button id='fitBtn'>+ Fit</button>
+  <button id='clearBtn'>Clear fits</button>
   <label><input type='checkbox' id='seToggle'> SE bands</label>
   <label><input type='checkbox' id='empirical' checked> Empirical</label>
   <label>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
