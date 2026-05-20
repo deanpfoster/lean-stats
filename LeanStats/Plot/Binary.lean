@@ -267,15 +267,28 @@ private def binaryJs : String :=
       "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw||2}'/>`" ++
     "});" ++
     "if(fitSpecs.length>0){" ++
-      "var last=fitSpecs[fitSpecs.length-1];" ++
-      "var lxd=[];var lyd=[];for(var i=0;i<rawX.length;i++){var xt=tx(rawX[i],last.xf||xf);if(!isNaN(xt)&&isFinite(xt)){lxd.push(xt);lyd.push(rawY[i])}}" ++
-      "var lcoef=fitGlm(lxd,lyd,last.link,last.deg||1);" ++
-      "var eq=last.link+'(p) = ';" ++
-      "for(var i=(lcoef.length-1);i>=0;i--){var c=lcoef[i];var cs=c>=0&&i<lcoef.length-1?'+'+c.toPrecision(4):c.toPrecision(4);if(i===0)eq+=cs;else if(i===1)eq+=cs+'·x ';else eq+=cs+'·x^'+i+' '}" ++
-      "var xl=last.xf==='linear'?xName:last.xf+'('+xName+')';" ++
-      "eq=eq.replace(/x/g,xl);" ++
-      "statsEl.textContent=eq" ++
-    "}" ++
+      "var legendHtml='';" ++
+      "var lwColors2=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2'];" ++
+      "fitSpecs.forEach(function(spec,idx){" ++
+        "var col=lwColors2[idx%lwColors2.length];" ++
+        -- Compute equation for this fit
+        "var lxd=[];var lyd=[];for(var i=0;i<rawX.length;i++){var xt=tx(rawX[i],spec.xf||'linear');if(!isNaN(xt)&&isFinite(xt)){lxd.push(xt);lyd.push(rawY[i])}}" ++
+        "var lcoef=fitGlm(lxd,lyd,spec.link,spec.deg||1);" ++
+        "var eq=spec.link+'(p) = ';" ++
+        "for(var i=(lcoef.length-1);i>=0;i--){var c=lcoef[i];var cs=c>=0&&i<lcoef.length-1?' +'+c.toPrecision(3):c.toPrecision(3);if(i===0)eq+=cs;else if(i===1)eq+=cs+'·x ';else eq+=cs+'·x^'+i+' '}" ++
+        "var xl=spec.xf==='linear'?xName:spec.xf+'('+xName+')';" ++
+        "eq=eq.replace(/x/g,xl);" ++
+        -- Build SVG swatch (line + optional CI lines)
+        "var swH=20;var swW=30;var svgSw='<svg width=\"'+swW+'\" height=\"'+swH+'\" style=\"vertical-align:middle;margin-right:6px\">';" ++
+        "svgSw+='<line x1=\"2\" y1=\"'+swH/2+'\" x2=\"'+(swW-2)+'\" y2=\"'+swH/2+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\"/>';" ++
+        "if(spec.se){" ++
+          "svgSw+='<line x1=\"2\" y1=\"'+(swH/2-5)+'\" x2=\"'+(swW-2)+'\" y2=\"'+(swH/2-5)+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\" opacity=\"0.4\" stroke-dasharray=\"3\"/>';" ++
+          "svgSw+='<line x1=\"2\" y1=\"'+(swH/2+5)+'\" x2=\"'+(swW-2)+'\" y2=\"'+(swH/2+5)+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\" opacity=\"0.4\" stroke-dasharray=\"3\"/>'}" ++
+        "svgSw+='</svg>';" ++
+        "legendHtml+='<div style=\"margin:2px 0\">'+svgSw+'<span style=\"font-family:monospace;font-size:12px\">'+eq+'</span></div>'" ++
+      "});" ++
+      "statsEl.innerHTML=legendHtml" ++
+    "}else{statsEl.innerHTML=''}" ++
   "}" ++
   "draw();"
 
