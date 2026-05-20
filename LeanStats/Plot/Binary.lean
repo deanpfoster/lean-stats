@@ -257,7 +257,7 @@ def binaryPlot (xs ys : Array Float)
   <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
   <label>X degree: <select id='xdeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
   <label>Link: <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></label>
-  <select id='lineW' title='Line thickness'><option value='0.5'>╌</option><option value='1'>─</option><option value='2' selected>━</option><option value='3'>┃</option><option value='5'>█</option></select>
+  <select id='lineW' title='Line thickness' style='font-size:11px'><option value='1'>1px</option><option value='2' selected>2px</option><option value='3'>3px</option><option value='5'>5px</option></select>
   <button id='fitBtn'>+ Fit</button>
   <button id='clearBtn'>Clear fits</button>
 </div>
