@@ -195,7 +195,7 @@ private def binaryJs : String :=
   -- Events
   "var fitSpecs=[];" ++
   "document.getElementById('xform').addEventListener('change',function(){fitSpecs=[];draw()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);fitSpecs.push({link:link,se:se,deg:deg});draw()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);var lw=parseInt(document.getElementById('lineW').value);fitSpecs.push({link:link,se:se,deg:deg,lw:lw});draw()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw()});" ++
   "document.getElementById('seToggle').addEventListener('change',function(){});" ++
   "document.getElementById('empirical').addEventListener('change',draw);" ++
@@ -228,7 +228,7 @@ private def binaryJs : String :=
       "}" ++
       "const col=colors[idx%colors.length];" ++
       "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.3' stroke-dasharray='4'/>`}" ++
-      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='2.5'/>`" ++
+      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw||2}'/>`" ++
     "});" ++
     "if(fitSpecs.length>0){const last=fitSpecs[fitSpecs.length-1];statsEl.textContent+=`\\n${fitSpecs.length} fit(s). Last: ${last.link}`}" ++
   "}" ++
@@ -249,8 +249,11 @@ def binaryPlot (xs ys : Array Float)
   <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
   <label>X degree: <select id='xdeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
   <label>Link: <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></label>
+  <label>Line: <select id='lineW'><option value='1'>thin</option><option value='2' selected>medium</option><option value='3'>thick</option><option value='4'>heavy</option></select></label>
   <button id='fitBtn'>+ Fit</button>
   <button id='clearBtn'>Clear fits</button>
+</div>
+<div class='controls'>
   <label><input type='checkbox' id='seToggle'> SE bands</label>
   <label><input type='checkbox' id='empirical' checked> Empirical</label>
   <label>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
