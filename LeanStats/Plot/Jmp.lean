@@ -25,7 +25,7 @@ private def jmpCss : String :=
   ".controls label{font-size:13px}" ++
   ".controls select,.controls button{padding:4px 8px;font-size:13px}" ++
   ".axis-ctrl{background:#f0f4f8;padding:4px 8px;border-radius:4px;font-size:13px}" ++
-  ".toolbar{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
+  ".toolbar{margin:12px 0 12px 64px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
   ".toolbar select,.toolbar button,.toolbar label{font-size:13px}" ++
   ".plot-grid{display:grid;grid-template-columns:60px 600px;grid-template-rows:450px auto;gap:0;margin:8px 0}" ++
   ".y-ctrl{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}" ++
@@ -38,7 +38,7 @@ private def jmpCss : String :=
   "#plot{grid-column:2;grid-row:1;border:1px solid #e0e0e0;border-radius:6px}" ++
   "#fitBtn{background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer}" ++
   "#fitBtn:hover{background:#2563eb}" ++
-  ".stats{font-family:monospace;font-size:13px;margin-top:12px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
+  ".stats{font-family:monospace;font-size:13px;margin:12px 0 0 64px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
   "svg{border:1px solid #e0e0e0;border-radius:6px}"
 
 private def jmpJs : String :=
