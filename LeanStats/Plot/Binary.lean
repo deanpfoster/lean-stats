@@ -192,20 +192,20 @@ private def binaryJs : String :=
       "});" ++
       "s+=`<path d='${pavPath}' fill='none' stroke='#16a34a' stroke-width='1.5' opacity='0.6'/>`" ++
     "}" ++
-    "statsEl.textContent=`n=${pairs.length} (${pairs.filter(p=>p.y===1).length} events, ${pairs.filter(p=>p.y===0).length} non-events)`" ++
+    "statsEl.textContent=`n=${pairs.length} (${pairs.filter(p=>p.y===1).length} events, ${pairs.filter(p=>p.y===0).length} non-events)`;renderBinaryFits()" ++
   "}" ++
   -- Fit
   -- Events
   "var fitSpecs=[];" ++
   "document.getElementById('xform').addEventListener('change',function(){fitSpecs=[];draw()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);fitSpecs.push({link:link,se:se,deg:deg});draw();renderBinaryFits()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);fitSpecs.push({link:link,se:se,deg:deg});draw()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw()});" ++
   "document.getElementById('seToggle').addEventListener('change',function(){});" ++
   "document.getElementById('empirical').addEventListener('change',draw);" ++
   "document.getElementById('nbins').addEventListener('change',draw);" ++
   "document.getElementById('link').addEventListener('change',function(){});" ++
   "document.getElementById('pav').addEventListener('change',draw);" ++
-  "document.getElementById('origToggle').addEventListener('change',function(){draw();renderBinaryFits()});" ++
+  "document.getElementById('origToggle').addEventListener('change',function(){draw()});" ++
   -- Render all stored fits
   "function renderBinaryFits(){" ++
     "const pairs=window._pairs,sx=window._sx,sy=window._sy;" ++
