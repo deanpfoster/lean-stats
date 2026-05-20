@@ -196,25 +196,34 @@ private def binaryJs : String :=
   -- Events
   "var fitSpecs=[];" ++
   "document.getElementById('xform').addEventListener('change',function(){draw()});" ++
-  -- Line width picker (SVG swatches)
-  "var lwOptions=[1,2,3,5];var lwCurrent=2;" ++
+  -- Line width picker (SVG swatches) — click to select, double-click same to toggle SE
+  "var lwOptions=[1,2,3,5];var lwCurrent=2;var seOn=false;" ++
   "var lwColors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2'];" ++
   "function drawLwPicker(){" ++
     "var pick=document.getElementById('lwPicker');" ++
     "var s='';var segW=25;var nextColor=lwColors[fitSpecs.length%lwColors.length];" ++
     "lwOptions.forEach(function(w,i){" ++
       "var x=i*30+2;var y=12;" ++
-      "var col=(w===lwCurrent)?nextColor:'#999';" ++
-      "var opacity=(w===lwCurrent)?1:0.4;" ++
-      "s+=`<line x1='${x}' y1='${y}' x2='${x+segW}' y2='${y}' stroke='${col}' stroke-width='${w}' opacity='${opacity}' data-lw='${w}' style='cursor:pointer'/>`" ++
+      "var isSelected=(w===lwCurrent);" ++
+      "var col=isSelected?nextColor:'#999';" ++
+      "var opacity=isSelected?1:0.4;" ++
+      "s+=`<line x1='${x}' y1='${y}' x2='${x+segW}' y2='${y}' stroke='${col}' stroke-width='${w}' opacity='${opacity}' data-lw='${w}' style='cursor:pointer'/>`;" ++
+      -- Show SE indicator lines if SE is on and this is selected
+      "if(isSelected&&seOn){" ++
+        "s+=`<line x1='${x}' y1='${y-6}' x2='${x+segW}' y2='${y-6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' data-lw='${w}' style='cursor:pointer'/>`;" ++
+        "s+=`<line x1='${x}' y1='${y+6}' x2='${x+segW}' y2='${y+6}' stroke='${col}' stroke-width='${Math.max(0.5,w*0.6)}' opacity='0.4' stroke-dasharray='3' data-lw='${w}' style='cursor:pointer'/>`" ++
+      "}" ++
     "});" ++
     "pick.innerHTML=s;" ++
-    "pick.querySelectorAll('line').forEach(function(el){el.addEventListener('click',function(){lwCurrent=parseFloat(el.dataset.lw);drawLwPicker()})})" ++
+    "pick.querySelectorAll('[data-lw]').forEach(function(el){el.addEventListener('click',function(){" ++
+      "var clicked=parseFloat(el.dataset.lw);" ++
+      "if(clicked===lwCurrent){seOn=!seOn}else{lwCurrent=clicked}" ++
+      "drawLwPicker()" ++
+    "})})" ++
   "}" ++
   "drawLwPicker();" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);var xf=document.getElementById('xform').value;fitSpecs.push({link:link,se:se,deg:deg,lw:lwCurrent,xf:xf});draw();drawLwPicker()});" ++
-  "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw()});" ++
-  "document.getElementById('seToggle').addEventListener('change',function(){});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var deg=parseInt(document.getElementById('xdeg').value);var xf=document.getElementById('xform').value;fitSpecs.push({link:link,se:seOn,deg:deg,lw:lwCurrent,xf:xf});draw();drawLwPicker()});" ++
+  "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw();drawLwPicker()});" ++
   "document.getElementById('empirical').addEventListener('change',draw);" ++
   "document.getElementById('nbins').addEventListener('change',draw);" ++
   "document.getElementById('link').addEventListener('change',function(){});" ++
@@ -278,7 +287,6 @@ def binaryPlot (xs ys : Array Float)
   <button id='clearBtn'>Clear fits</button>
 </div>
 <div class='controls'>
-  <label><input type='checkbox' id='seToggle'> SE bands</label>
   <label><input type='checkbox' id='empirical' checked> Empirical</label>
   <label>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
   <label><input type='checkbox' id='pav'> PAV</label>
