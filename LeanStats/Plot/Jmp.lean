@@ -27,12 +27,15 @@ private def jmpCss : String :=
   ".axis-ctrl{background:#f0f4f8;padding:4px 8px;border-radius:4px;font-size:13px}" ++
   ".toolbar{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
   ".toolbar select,.toolbar button,.toolbar label{font-size:13px}" ++
-  ".plot-grid{display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr auto;gap:4px;align-items:center;margin:8px 0}" ++
-  ".y-ctrl{grid-column:1;grid-row:1;writing-mode:vertical-lr;transform:rotate(180deg);text-align:center;font-size:12px;padding:4px}" ++
-  ".y-ctrl select{writing-mode:horizontal-tb;transform:rotate(180deg);font-size:11px;margin-top:4px}" ++
-  ".x-ctrl{grid-column:2;grid-row:2;text-align:center;font-size:12px;padding:4px}" ++
-  ".x-ctrl select{font-size:11px}" ++
-  "#plot{grid-column:2;grid-row:1}" ++
+  ".plot-grid{display:grid;grid-template-columns:60px 600px;grid-template-rows:450px auto;gap:0;margin:8px 0}" ++
+  ".y-ctrl{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}" ++
+  ".y-label{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:bold;font-size:14px;letter-spacing:1px}" ++
+  ".y-ctrl select{font-size:11px;width:50px}" ++
+  ".y-ctrl .orig-toggle{font-size:10px}" ++
+  ".x-ctrl{grid-column:2;grid-row:2;text-align:center;font-size:13px;padding:8px 0}" ++
+  ".x-ctrl select{font-size:12px}" ++
+  ".x-ctrl .orig-toggle{font-size:11px;margin-left:8px}" ++
+  "#plot{grid-column:2;grid-row:1;border:1px solid #e0e0e0;border-radius:6px}" ++
   "#fitBtn{background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer}" ++
   "#fitBtn:hover{background:#2563eb}" ++
   ".stats{font-family:monospace;font-size:13px;margin-top:12px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
@@ -93,13 +96,16 @@ private def jmpJs : String :=
   "function draw(){" ++
     "const xf=document.getElementById('xform').value;" ++
     "const yf=document.getElementById('yform').value;" ++
-    "const orig=document.getElementById('origToggle').checked;" ++
+    "const xOrig=document.getElementById('xOrig').checked;" ++
+    "const yOrig=document.getElementById('yOrig').checked;" ++
     "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf),yt=tx(rawY[i],yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
     "if(pairs.length<2){svg.innerHTML='<text x=\"350\" y=\"250\" text-anchor=\"middle\">Not enough valid points after transform</text>';return}" ++
     "let plotX,plotY,axLabelX,axLabelY;" ++
-    "if(orig){plotX=pairs.map(p=>p.rx);plotY=pairs.map(p=>p.ry);axLabelX=xName;axLabelY=yName}" ++
-    "else{plotX=pairs.map(p=>p.tx);plotY=pairs.map(p=>p.ty);axLabelX=xf==='linear'?xName:xf+'('+xName+')';axLabelY=yf==='linear'?yName:yf+'('+yName+')'}" ++
-    "window._pairs=pairs;window._orig=orig;window._xf=xf;window._yf=yf;" ++
+    "if(xOrig){plotX=pairs.map(p=>p.rx)}else{plotX=pairs.map(p=>p.tx)}" ++
+    "if(yOrig){plotY=pairs.map(p=>p.ry)}else{plotY=pairs.map(p=>p.ty)}" ++
+    "var axLabelX=xOrig?xName:(xf==='linear'?xName:xf+'('+xName+')');" ++
+    "var axLabelY=yOrig?yName:(yf==='linear'?yName:yf+'('+yName+')');" ++
+    "window._pairs=pairs;window._xOrig=xOrig;window._yOrig=yOrig;window._xf=xf;window._yf=yf;" ++
     "let xd=plotX,yd=plotY;" ++
     "const xMin=Math.min(...xd),xMax=Math.max(...xd),yMin=Math.min(...yd),yMax=Math.max(...yd);" ++
     "const xR=xMax-xMin||1,yR=yMax-yMin||1;" ++
@@ -119,7 +125,7 @@ private def jmpJs : String :=
   "}" ++
   -- Render all stored fits
   "function renderFits(){" ++
-    "const orig=window._orig,xf=window._xf,yf=window._yf;" ++
+    "const xOrig=window._xOrig,yOrig=window._yOrig,xf=window._xf,yf=window._yf;" ++
     "const sx=window._sx,sy=window._sy,xMin=window._xMin,xMax=window._xMax;" ++
     "if(!sx)return;" ++
     "const curXf=document.getElementById('xform').value;" ++
@@ -137,11 +143,11 @@ private def jmpJs : String :=
       "for(let i=0;i<=nPts;i++){" ++
         "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
         "var txI;" ++
-        "if(orig){txI=tx(plotXi,spec.xf)}else{txI=tx(itx(plotXi,curXf),spec.xf)}" ++
+        "if(xOrig){txI=tx(plotXi,spec.xf)}else{txI=tx(itx(plotXi,curXf),spec.xf)}" ++
         "if(isNaN(txI)||!isFinite(txI))continue;" ++
         "const tyI=polyEval(coef,txI);" ++
         "var plotYi;" ++
-        "if(orig){plotYi=itx(tyI,spec.yf)}else{plotYi=tx(itx(tyI,spec.yf),curYf)}" ++
+        "if(yOrig){plotYi=itx(tyI,spec.yf)}else{plotYi=tx(itx(tyI,spec.yf),curYf)}" ++
         "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
         "path+=(path===''?'M':'L')+sx(plotXi)+','+sy(plotYi);" ++
         "if(spec.se){" ++
@@ -150,7 +156,7 @@ private def jmpJs : String :=
           "const h=1/txd.length+(txI-xbar)**2/Sxx;" ++
           "const band=1.96*se*Math.sqrt(1+h);" ++
           "var yU,yL;" ++
-          "if(orig){yU=itx(tyI+band,spec.yf);yL=itx(tyI-band,spec.yf)}else{yU=tx(itx(tyI+band,spec.yf),curYf);yL=tx(itx(tyI-band,spec.yf),curYf)}" ++
+          "if(yOrig){yU=itx(tyI+band,spec.yf);yL=itx(tyI-band,spec.yf)}else{yU=tx(itx(tyI+band,spec.yf),curYf);yL=tx(itx(tyI-band,spec.yf),curYf)}" ++
           "if(!isNaN(yU)&&isFinite(yU)){bandU+=(bandU===''?'M':'L')+sx(plotXi)+','+sy(yU)}" ++
           "if(!isNaN(yL)&&isFinite(yL)){bandL+=(bandL===''?'M':'L')+sx(plotXi)+','+sy(yL)}" ++
         "}" ++
@@ -191,12 +197,14 @@ private def jmpJs : String :=
   "document.getElementById('yform').addEventListener('change',function(){draw()});" ++
   "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var deg=parseInt(document.getElementById('degree').value);fits.push({deg:deg,xf:xf,yf:yf,se:seOn,lw:lwCurrent});draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];draw();drawLwPicker()});" ++
-  "document.getElementById('origToggle').addEventListener('change',function(){draw()});" ++
+  "document.getElementById('xOrig').addEventListener('change',function(){draw()});" ++
+  "document.getElementById('yOrig').addEventListener('change',function(){draw()});" ++
   -- Keep button
   "document.getElementById('keepBtn').addEventListener('click',function(){" ++
     "var state={event:'keep',xform:document.getElementById('xform').value," ++
     "yform:document.getElementById('yform').value," ++
-    "original:document.getElementById('origToggle').checked," ++
+    "xOrig:document.getElementById('xOrig').checked," ++
+    "yOrig:document.getElementById('yOrig').checked," ++
     "fits:fits.filter(function(s){return !s.hidden})};" ++
     "if(ws&&ws.readyState===1){ws.send(JSON.stringify(state));document.getElementById('keepBtn').textContent='✓ Kept';setTimeout(function(){document.getElementById('keepBtn').textContent='📌 Keep'},1500)}" ++
     "else{document.getElementById('keepBtn').textContent='📋 Copied';navigator.clipboard.writeText(JSON.stringify(state,null,2)).catch(function(){});setTimeout(function(){document.getElementById('keepBtn').textContent='📌 Keep'},1500)}" ++
@@ -275,12 +283,20 @@ def jmpScatter (xs ys : Array Float)
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
   <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer'>📌 Keep</button>
-  <label title='Show original axes'><input type='checkbox' id='origToggle'> Original</label>
 </div>
 <div class='plot-grid'>
-  <div class='y-ctrl' title='Y axis transform'><b>{yName}</b><br><select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></div>
+  <div class='y-ctrl'>
+    <div class='y-label'>{yName}</div>
+    <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select>
+    <label class='orig-toggle'><input type='checkbox' id='yOrig'> orig</label>
+  </div>
   <svg id='plot' width='600' height='450'></svg>
-  <div class='x-ctrl' title='X axis: transform and polynomial degree'><b>{xName}</b> <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> degree <select id='degree'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></div>
+  <div class='x-ctrl'>
+    <b>{xName}</b>
+    <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select>
+    degree <select id='degree'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select>
+    <label class='orig-toggle'><input type='checkbox' id='xOrig'> orig</label>
+  </div>
 </div>
 <div id='stats' class='stats'></div>
 <script>
