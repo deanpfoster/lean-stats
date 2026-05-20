@@ -116,8 +116,8 @@ private def multiRegJs : String :=
     "const{sx,sy,xMin,xMax,plotX,plotY}=ps;" ++
     "fits.forEach(function(spec,idx){" ++
       "if(spec.hidden||spec.plot!==plotIdx)return;" ++
-      "if(plotX.length<spec.deg+1)return;" ++
-      "const coef=polyFit(plotX,plotY,spec.deg);" ++
+      "let coef;" ++
+      "if(spec.frozen&&spec.coef){coef=spec.coef}else{if(plotX.length<spec.deg+1)return;coef=polyFit(plotX,plotY,spec.deg)}" ++
       "let path='';const nPts=80;" ++
       "for(let i=0;i<=nPts;i++){const xi=xMin+i/nPts*(xMax-xMin);const yi=polyEval(coef,xi);path+=(path===''?'M':'L')+sx(xi)+','+sy(yi)}" ++
       "const col=colors[idx%colors.length];" ++
@@ -183,9 +183,13 @@ private def multiRegJs : String :=
   -- Events
   "drawLwPicker();" ++
   "document.getElementById('fitBtn').addEventListener('click',function(){" ++
-    "let deg=parseInt(document.getElementById('fitDeg').value);" ++
-    "let plot=parseInt(document.getElementById('fitPlot').value);" ++
-    "fits.push({deg:deg,lw:lwCurrent,se:seOn,plot:plot});draw();drawLwPicker()});" ++
+    -- Checkpoint: freeze current regression lines on ALL plots with their current data
+    "for(let p=0;p<=nPred;p++){" ++
+      "let ps=plotState[p];if(!ps||ps.plotX.length<2)continue;" ++
+      "let coef=polyFit(ps.plotX,ps.plotY,1);" ++
+      "fits.push({deg:1,lw:lwCurrent,se:seOn,plot:p,frozen:true,coef:coef,xMin:ps.xMin,xMax:ps.xMax})" ++
+    "}" ++
+    "draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){let plot=parseInt(document.getElementById('fitPlot').value);fits=fits.filter(s=>s.plot!==plot);draw();drawLwPicker()});" ++
   "document.getElementById('yform').addEventListener('change',draw);" ++
   "document.getElementById('lockY').addEventListener('change',draw);" ++
