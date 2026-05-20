@@ -163,35 +163,32 @@ private def binaryJs : String :=
         "}" ++
       "}" ++
     "}" ++
-    "svg.innerHTML=s;" ++
     -- PAV isotonic regression: circles at pool midpoints, area ∝ pool size
     "if(document.getElementById('pav').checked){" ++
-      "const pavY=pav(pairs.map(p=>p.y));" ++
+      "var pavY=pav(pairs.map(function(p){return p.y}));" ++
       -- Find pool boundaries (where pavY changes value)
       "var pools=[];var start=0;" ++
       "for(var i=1;i<=pairs.length;i++){" ++
         "if(i===pairs.length||pavY[i]!==pavY[i-1]){" ++
-          -- Pool from start to i-1
           "var sumX=0;for(var k=start;k<i;k++)sumX+=(orig?pairs[k].rx:pairs[k].x);" ++
           "pools.push({midX:sumX/(i-start),prob:pavY[start],n:i-start});" ++
           "start=i" ++
         "}" ++
       "}" ++
-      -- Draw circles: radius = sqrt(n) * scale (area principle: area ∝ n)
-      "var maxN=Math.max(...pools.map(p=>p.n));" ++
+      "var maxN=Math.max.apply(null,pools.map(function(p){return p.n}));" ++
       "var maxR=12;" ++
       "pools.forEach(function(pool){" ++
         "var r=Math.sqrt(pool.n/maxN)*maxR;" ++
         "var cx=sx(pool.midX),cy=sy(pool.prob);" ++
         "s+=`<circle cx='${cx}' cy='${cy}' r='${r}' fill='rgba(22,163,74,0.2)' stroke='#16a34a' stroke-width='1.5'/>`" ++
       "});" ++
-      -- Also draw step line connecting pools
       "var pavPath='';" ++
       "pools.forEach(function(pool,i){" ++
         "pavPath+=(i===0?'M':'L')+sx(pool.midX)+','+sy(pool.prob)" ++
       "});" ++
       "s+=`<path d='${pavPath}' fill='none' stroke='#16a34a' stroke-width='1.5' opacity='0.6'/>`" ++
     "}" ++
+    "svg.innerHTML=s;" ++
     "statsEl.textContent=`n=${pairs.length} (${pairs.filter(p=>p.y===1).length} events, ${pairs.filter(p=>p.y===0).length} non-events)`;renderBinaryFits()" ++
   "}" ++
   -- Fit
