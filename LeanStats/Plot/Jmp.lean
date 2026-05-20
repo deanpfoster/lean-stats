@@ -150,7 +150,7 @@ private def jmpJs : String :=
           "const xbar=txd.reduce((a,b)=>a+b,0)/txd.length;" ++
           "const Sxx=txd.reduce((a,v)=>a+(v-xbar)**2,0);" ++
           "const h=1/txd.length+(txI-xbar)**2/Sxx;" ++
-          "const band=1.96*se*Math.sqrt(1+h);" ++
+          "const band=1.96*se*Math.sqrt(h);" ++
           "var yU,yL;" ++
           "if(yOrig){yU=itx(tyI+band,spec.yf);yL=itx(tyI-band,spec.yf)}else{yU=tx(itx(tyI+band,spec.yf),curYf);yL=tx(itx(tyI-band,spec.yf),curYf)}" ++
           "if(!isNaN(yU)&&isFinite(yU)){bandU+=(bandU===''?'M':'L')+sx(plotXi)+','+sy(yU)}" ++
