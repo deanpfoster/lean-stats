@@ -28,10 +28,10 @@ private def jmpCss : String :=
   ".toolbar{margin:12px 0 12px 64px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
   ".toolbar select,.toolbar button,.toolbar label{font-size:13px}" ++
   ".plot-grid{display:grid;grid-template-columns:60px 600px;grid-template-rows:450px auto;gap:0;margin:8px 0}" ++
-  ".y-ctrl{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}" ++
-  ".y-label{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:bold;font-size:14px;letter-spacing:1px}" ++
-  ".y-ctrl select{font-size:11px;width:50px}" ++
-  ".y-ctrl .orig-toggle{font-size:10px}" ++
+  ".y-ctrl{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;writing-mode:vertical-rl;transform:rotate(180deg)}" ++
+  ".y-label{font-weight:bold;font-size:14px}" ++
+  ".y-ctrl select{font-size:11px;writing-mode:horizontal-tb;transform:rotate(180deg)}" ++
+  ".y-ctrl .orig-toggle{font-size:10px;writing-mode:horizontal-tb;transform:rotate(180deg)}" ++
   ".x-ctrl{grid-column:2;grid-row:2;text-align:center;font-size:13px;padding:8px 0}" ++
   ".x-ctrl select{font-size:12px}" ++
   ".x-ctrl .orig-toggle{font-size:11px;margin-left:8px}" ++
