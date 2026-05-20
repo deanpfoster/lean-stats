@@ -25,13 +25,21 @@ private def jmpCss : String :=
   ".controls label{font-size:13px}" ++
   ".controls select,.controls button{padding:4px 8px;font-size:13px}" ++
   ".axis-ctrl{background:#f0f4f8;padding:4px 8px;border-radius:4px;font-size:13px}" ++
+  ".toolbar{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
+  ".toolbar select,.toolbar button,.toolbar label{font-size:13px}" ++
+  ".plot-grid{display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr auto;gap:4px;align-items:center;margin:8px 0}" ++
+  ".y-ctrl{grid-column:1;grid-row:1;writing-mode:vertical-lr;transform:rotate(180deg);text-align:center;font-size:12px;padding:4px}" ++
+  ".y-ctrl select{writing-mode:horizontal-tb;transform:rotate(180deg);font-size:11px;margin-top:4px}" ++
+  ".x-ctrl{grid-column:2;grid-row:2;text-align:center;font-size:12px;padding:4px}" ++
+  ".x-ctrl select{font-size:11px}" ++
+  "#plot{grid-column:2;grid-row:1}" ++
   "#fitBtn{background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer}" ++
   "#fitBtn:hover{background:#2563eb}" ++
   ".stats{font-family:monospace;font-size:13px;margin-top:12px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
   "svg{border:1px solid #e0e0e0;border-radius:6px}"
 
 private def jmpJs : String :=
-  "const W=700,H=500,M={t:30,r:30,b:50,l:60};" ++
+  "const W=600,H=450,M={t:20,r:20,b:40,l:50};" ++
   "const pw=W-M.l-M.r,ph=H-M.t-M.b;" ++
   "const svg=document.getElementById('plot');" ++
   "const statsEl=document.getElementById('stats');" ++
@@ -262,16 +270,18 @@ def jmpScatter (xs ys : Array Float)
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
 <style>{jmpCss}</style></head><body>
 <h2>{pageTitle}</h2>
-<div class='controls'>
-  <span class='axis-ctrl' title='X axis: variable, transform, polynomial degree'><b>{xName}</b> <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> degree <select id='degree'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></span>
-  <span class='axis-ctrl' title='Y axis: variable and transform'><b>{yName}</b> <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></span>
+<div class='toolbar'>
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle SE bands'></svg>
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
   <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer'>📌 Keep</button>
   <label title='Show original axes'><input type='checkbox' id='origToggle'> Original</label>
 </div>
-<svg id='plot' width='700' height='500'></svg>
+<div class='plot-grid'>
+  <div class='y-ctrl' title='Y axis transform'><b>{yName}</b><br><select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></div>
+  <svg id='plot' width='600' height='450'></svg>
+  <div class='x-ctrl' title='X axis: transform and polynomial degree'><b>{xName}</b> <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> degree <select id='degree'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></div>
+</div>
 <div id='stats' class='stats'></div>
 <script>
 const rawX = {xJson};
