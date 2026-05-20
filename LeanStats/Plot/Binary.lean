@@ -196,7 +196,23 @@ private def binaryJs : String :=
   -- Events
   "var fitSpecs=[];" ++
   "document.getElementById('xform').addEventListener('change',function(){draw()});" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);var lw=parseFloat(document.getElementById('lineW').value);var xf=document.getElementById('xform').value;fitSpecs.push({link:link,se:se,deg:deg,lw:lw,xf:xf});draw()});" ++
+  -- Line width picker (SVG swatches)
+  "var lwOptions=[1,2,3,5];var lwCurrent=2;" ++
+  "var lwColors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2'];" ++
+  "function drawLwPicker(){" ++
+    "var pick=document.getElementById('lwPicker');" ++
+    "var s='';var segW=25;var nextColor=lwColors[fitSpecs.length%lwColors.length];" ++
+    "lwOptions.forEach(function(w,i){" ++
+      "var x=i*30+2;var y=12;" ++
+      "var col=(w===lwCurrent)?nextColor:'#999';" ++
+      "var opacity=(w===lwCurrent)?1:0.4;" ++
+      "s+=`<line x1='${x}' y1='${y}' x2='${x+segW}' y2='${y}' stroke='${col}' stroke-width='${w}' opacity='${opacity}' data-lw='${w}' style='cursor:pointer'/>`" ++
+    "});" ++
+    "pick.innerHTML=s;" ++
+    "pick.querySelectorAll('line').forEach(function(el){el.addEventListener('click',function(){lwCurrent=parseFloat(el.dataset.lw);drawLwPicker()})})" ++
+  "}" ++
+  "drawLwPicker();" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var link=document.getElementById('link').value;var se=document.getElementById('seToggle').checked;var deg=parseInt(document.getElementById('xdeg').value);var xf=document.getElementById('xform').value;fitSpecs.push({link:link,se:se,deg:deg,lw:lwCurrent,xf:xf});draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fitSpecs=[];draw()});" ++
   "document.getElementById('seToggle').addEventListener('change',function(){});" ++
   "document.getElementById('empirical').addEventListener('change',draw);" ++
@@ -257,7 +273,7 @@ def binaryPlot (xs ys : Array Float)
   <label>X: <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select></label>
   <label>X degree: <select id='xdeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option></select></label>
   <label>Link: <select id='link'><option value='logit' selected>logit</option><option value='probit'>probit</option><option value='cloglog'>cloglog</option><option value='identity'>identity</option></select></label>
-  <select id='lineW' title='Line thickness' style='width:45px'><option value='1'>1</option><option value='2' selected>2</option><option value='3'>3</option><option value='5'>5</option></select>
+  <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer'></svg>
   <button id='fitBtn'>+ Fit</button>
   <button id='clearBtn'>Clear fits</button>
 </div>
