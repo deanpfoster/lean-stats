@@ -241,6 +241,7 @@ private def binaryJs : String :=
     "const colors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2'];" ++
     "const xd=pairs.map(p=>p.x),yd=pairs.map(p=>p.y);" ++
     "fitSpecs.forEach(function(spec,idx){" ++
+      "if(spec.hidden)return;" ++
       "const deg=spec.deg||1;" ++
       -- Build pairs for THIS fit's transform
       "var fpairs=[];for(var i=0;i<rawX.length;i++){var xt=tx(rawX[i],spec.xf||xf);if(!isNaN(xt)&&isFinite(xt))fpairs.push({x:xt,y:rawY[i],rx:rawX[i]})}" ++
@@ -270,7 +271,7 @@ private def binaryJs : String :=
       "var legendHtml='';" ++
       "var lwColors2=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2'];" ++
       "fitSpecs.forEach(function(spec,idx){" ++
-        "var col=lwColors2[idx%lwColors2.length];" ++
+        "var col=spec.hidden?'#999':lwColors2[idx%lwColors2.length];" ++
         -- Compute equation for this fit
         "var lxd=[];var lyd=[];for(var i=0;i<rawX.length;i++){var xt=tx(rawX[i],spec.xf||'linear');if(!isNaN(xt)&&isFinite(xt)){lxd.push(xt);lyd.push(rawY[i])}}" ++
         "var lcoef=fitGlm(lxd,lyd,spec.link,spec.deg||1);" ++
@@ -278,16 +279,20 @@ private def binaryJs : String :=
         "for(var i=(lcoef.length-1);i>=0;i--){var c=lcoef[i];var cs=c>=0&&i<lcoef.length-1?' +'+c.toPrecision(3):c.toPrecision(3);if(i===0)eq+=cs;else if(i===1)eq+=cs+'·x ';else eq+=cs+'·x^'+i+' '}" ++
         "var xl=spec.xf==='linear'?xName:spec.xf+'('+xName+')';" ++
         "eq=eq.replace(/x/g,xl);" ++
-        -- Build SVG swatch (line + optional CI lines)
-        "var swH=20;var swW=30;var svgSw='<svg width=\"'+swW+'\" height=\"'+swH+'\" style=\"vertical-align:middle;margin-right:6px\">';" ++
+        -- Build SVG swatch
+        "var swH=20;var swW=30;var svgSw='<svg width=\"'+swW+'\" height=\"'+swH+'\" style=\"vertical-align:middle;margin-right:6px;cursor:pointer\" data-fidx=\"'+idx+'\">';" ++
+        "svgSw+='<rect x=\"0\" y=\"0\" width=\"'+swW+'\" height=\"'+swH+'\" fill=\"transparent\"/>';" ++
         "svgSw+='<line x1=\"2\" y1=\"'+swH/2+'\" x2=\"'+(swW-2)+'\" y2=\"'+swH/2+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\"/>';" ++
         "if(spec.se){" ++
           "svgSw+='<line x1=\"2\" y1=\"'+(swH/2-5)+'\" x2=\"'+(swW-2)+'\" y2=\"'+(swH/2-5)+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\" opacity=\"0.4\" stroke-dasharray=\"3\"/>';" ++
           "svgSw+='<line x1=\"2\" y1=\"'+(swH/2+5)+'\" x2=\"'+(swW-2)+'\" y2=\"'+(swH/2+5)+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\" opacity=\"0.4\" stroke-dasharray=\"3\"/>'}" ++
         "svgSw+='</svg>';" ++
-        "legendHtml+='<div style=\"margin:2px 0\">'+svgSw+'<span style=\"font-family:monospace;font-size:12px\">'+eq+'</span></div>'" ++
+        "var eqStyle=spec.hidden?'font-family:monospace;font-size:12px;color:#999':'font-family:monospace;font-size:12px';" ++
+        "legendHtml+='<div style=\"margin:2px 0\">'+svgSw+'<span style=\"'+eqStyle+'\">'+eq+'</span></div>'" ++
       "});" ++
-      "statsEl.innerHTML=legendHtml" ++
+      "statsEl.innerHTML=legendHtml;" ++
+      -- Add click handlers to legend swatches
+      "statsEl.querySelectorAll('[data-fidx]').forEach(function(el){el.addEventListener('click',function(){var idx=parseInt(el.dataset.fidx);fitSpecs[idx].hidden=!fitSpecs[idx].hidden;draw()})})" ++
     "}else{statsEl.innerHTML=''}" ++
   "}" ++
   "draw();"
