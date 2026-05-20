@@ -326,12 +326,11 @@ def binaryPlot (xs ys : Array Float)
   let pageTitle := if title != "" then title else s!"P({yName}=1) vs {xName}"
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
 <style>{binaryCss}</style></head><body>
-<h2>{pageTitle}</h2>
+<h2>{pageTitle} <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>
 <div class='toolbar'>
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle CI bands'></svg>
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
-  <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer'>📌 Keep</button>
   <label title='Show binned empirical proportions'><input type='checkbox' id='empirical' checked> Empirical</label>
   <label title='Number of bins'>Bins: <input type='number' id='nbins' value='10' min='3' max='50' style='width:50px'></label>
   <label title='Pool Adjacent Violators'><input type='checkbox' id='pav'> PAV</label>
