@@ -113,4 +113,127 @@ def terminalResidPlot (diag : LeanStats.RegressionDiag)
   let data := diag.fitted.zip diag.residuals
   terminalScatter data width height
 
+/-- Dotplot: each observation as a dot stacked at its value.
+    Good for small n (< 50) where you want to see every point. -/
+def terminalDotplot (data : Array Float) (width : Nat := 60) : String :=
+  if data.isEmpty then "(empty)"
+  else
+    let mn := data.foldl (fun a b => if b < a then b else a) data[0]!
+    let mx := data.foldl (fun a b => if b > a then b else a) data[0]!
+    let range := if mx == mn then 1.0 else mx - mn
+    -- Bin each value into a column
+    let bins := data.foldl (init := Array.mkArray width 0) fun acc v =>
+      let idx := ((v - mn) / range * (width - 1).toFloat).toUInt64.toNat
+      let idx := if idx >= width then width - 1 else idx
+      acc.set! idx (acc.getD idx 0 + 1)
+    let maxStack := bins.foldl Nat.max 0
+    if maxStack == 0 then "(no data)"
+    else
+      -- Render top-down: each row shows dots where count >= row level
+      let rows := (List.range maxStack).reverse.map fun row =>
+        String.mk (bins.toList.map fun c =>
+          if c > row then '•' else ' ')
+      let axis := String.mk (List.replicate width '─')
+      let label := s!"  {mn}                                              {mx}"
+      String.intercalate "\n" (rows ++ [axis, label])
+
+/-- Boxplot: five-number summary as ASCII art.
+    Shows median, quartiles, whiskers, and outliers (*). -/
+def terminalBoxplot (data : Array Float) (width : Nat := 60) (label : String := "") : String :=
+  if data.isEmpty then "(empty)"
+  else
+    let sorted := data.qsort (· < ·)
+    let n := sorted.size
+    let q1 := sorted[n / 4]!
+    let med := sorted[n / 2]!
+    let q3 := sorted[3 * n / 4]!
+    let iqr := q3 - q1
+    let wLo := q1 - 1.5 * iqr
+    let wHi := q3 + 1.5 * iqr
+    -- Actual whisker endpoints (nearest data within fence)
+    let lo := sorted.foldl (fun best v => if v >= wLo && v < best then v else best) q1
+    let hi := sorted.foldl (fun best v => if v <= wHi && v > best then v else best) q3
+    let mn := sorted[0]!
+    let mx := sorted[n - 1]!
+    let dispMin := if mn < wLo then mn else lo
+    let dispMax := if mx > wHi then mx else hi
+    let range := if dispMax == dispMin then 1.0 else dispMax - dispMin
+    let pos (v : Float) : Nat :=
+      let p := ((v - dispMin) / range * (width - 1).toFloat).toUInt64.toNat
+      if p >= width then width - 1 else p
+    -- Build the line using folds
+    let line := (Array.range width).map fun i =>
+      let pLo := pos lo
+      let pQ1 := pos q1
+      let pQ3 := pos q3
+      let pHi := pos hi
+      let pMed := pos med
+      -- Check outliers
+      let isOutlier := sorted.any fun v => (v < wLo || v > wHi) && pos v == i
+      if isOutlier then '*'
+      else if i == pMed then '┃'
+      else if i == pQ1 then '├'
+      else if i == pQ3 then '┤'
+      else if i >= pLo && i <= pHi then '─'
+      else ' '
+    let lbl := if label == "" then "  " else s!"  {label} "
+    lbl ++ String.mk line.toList
+
+/-- Side-by-side dotplots for comparing groups.
+    Each group gets its own row, all on the same scale. -/
+def terminalGroupDotplot (groups : Array (String × Array Float)) (width : Nat := 50) : String :=
+  if groups.isEmpty then "(empty)"
+  else
+    -- Find global min/max
+    let allVals := groups.foldl (fun acc (_, vs) => acc ++ vs) #[]
+    if allVals.isEmpty then "(no data)"
+    else
+      let mn := allVals.foldl (fun a b => if b < a then b else a) allVals[0]!
+      let mx := allVals.foldl (fun a b => if b > a then b else a) allVals[0]!
+      let range := if mx == mn then 1.0 else mx - mn
+      -- Find max label width for alignment
+      let maxLabelW := groups.foldl (fun best (name, _) => Nat.max best name.length) 0
+      let pad (s : String) : String := s ++ String.mk (List.replicate (maxLabelW - s.length) ' ')
+      -- Render each group
+      let rows := groups.toList.map fun (name, vals) =>
+        let dots := Array.mkArray width ' '
+        let dots := vals.foldl (fun acc v =>
+          let idx := ((v - mn) / range * (width - 1).toFloat).toUInt64.toNat
+          let idx := if idx >= width then width - 1 else idx
+          acc.set! idx '•') dots
+        s!"  {pad name} │{String.mk dots.toList}│"
+      let axis := s!"  {pad ""} └{String.mk (List.replicate width '─')}┘"
+      let label := s!"  {pad ""} {mn}{String.mk (List.replicate (width - 12) ' ')}{mx}"
+      String.intercalate "\n" (rows ++ [axis, label])
+
+/-- Side-by-side boxplots for comparing groups. -/
+def terminalGroupBoxplot (groups : Array (String × Array Float)) (width : Nat := 50) : String :=
+  if groups.isEmpty then "(empty)"
+  else
+    let allVals := groups.foldl (fun acc (_, vs) => acc ++ vs) #[]
+    if allVals.isEmpty then "(no data)"
+    else
+      let mn := allVals.foldl (fun a b => if b < a then b else a) allVals[0]!
+      let mx := allVals.foldl (fun a b => if b > a then b else a) allVals[0]!
+      let maxLabelW := groups.foldl (fun best (name, _) => Nat.max best name.length) 0
+      let pad (s : String) : String := s ++ String.mk (List.replicate (maxLabelW - s.length) ' ')
+      let rows := groups.toList.map fun (name, vals) =>
+        let bp := terminalBoxplot vals width name
+        bp
+      let label := s!"  {pad ""}{mn}{String.mk (List.replicate (width - 12) ' ')}{mx}"
+      String.intercalate "\n" (rows ++ [label])
+
+/-- Formatted regression summary (Minitab-style). -/
+def regressionTable (diag : LeanStats.RegressionDiag) (xName : String := "x") (yName : String := "y") : String :=
+  let eq := s!"  {yName} = {diag.intercept} + {diag.slope} {xName}"
+  let n := diag.n
+  let adjR2 := 1.0 - (1.0 - diag.r2) * (n.toFloat - 1.0) / (n.toFloat - 2.0)
+  let header := s!"The regression equation is\n{eq}\n"
+  let table := s!"Predictor      Coef       SE\n" ++
+    s!"Constant   {diag.intercept}   {diag.se}\n" ++
+    s!"{xName}         {diag.slope}   {diag.se}\n"
+  let summary := s!"\nS = {diag.se}   R² = {diag.r2}   R²(adj) = {adjR2}\n" ++
+    s!"n = {n}   Durbin-Watson = {diag.durbinWatson}"
+  header ++ "\n" ++ table ++ summary
+
 end LeanStats.Plot.Terminal
