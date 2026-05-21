@@ -77,4 +77,7 @@ def summary (xs : Array Float) : Summary :=
     q75 := quantile xs 0.75
     max := if s.isEmpty then 0 else s[s.size - 1]! }
 
+def iqr (xs : Array Float) : Float :=
+  quantile xs 0.75 - quantile xs 0.25
+
 end LeanStats

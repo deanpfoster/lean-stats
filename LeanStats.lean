@@ -4,6 +4,7 @@ import LeanStats.Transform
 import LeanStats.Diagnostics
 import LeanStats.Eval
 import LeanStats.Tests
+import LeanStats.Anova
 
 import LeanStats.Plot.Svg
 import LeanStats.Plot.Scale

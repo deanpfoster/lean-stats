@@ -33,4 +33,10 @@ def tTestTwoSample (xs ys : Array Float) : Float :=
     let se := (v1 / n1.toFloat + v2 / n2.toFloat).sqrt
     if se == 0 then 0 else (m1 - m2) / se
 
+def tTestPaired (xs ys : Array Float) : Float :=
+  if xs.size != ys.size || xs.size < 2 then 0
+  else
+    let d := xs.zipWith ys (· - ·)
+    tTestOneSample d 0
+
 end LeanStats
