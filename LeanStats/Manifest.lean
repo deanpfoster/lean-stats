@@ -1,4 +1,5 @@
 import DeanLean.Basic
+import DeanLean.LibraryTame
 import LeanStats.Manifests.Util
 import LeanStats.Manifests.Descriptive
 import LeanStats.Manifests.Regression
@@ -10,6 +11,13 @@ import LeanStats.Manifests.Report
 import LeanStats.Manifests.Interactive
 import LeanStats.Manifests.Eval
 import LeanStats.Manifests.PlotDescribe
+-- Imports for the auditEntryPoint at end of file: pull in every
+-- major surface so the LibraryTame audit walks the whole library.
+import LeanStats.Plot.Jmp
+import LeanStats.Plot.MultiReg
+import LeanStats.Plot.Binary
+import LeanStats.Plot.Histogram
+import LeanStats.Plot.Terminal
 
 /-! # Manifest — headline claims about LeanStats
 
@@ -134,3 +142,50 @@ ManifestAxiom float_only : True
 ManifestAxiom pure_no_io : True
 
 end LeanStats.Manifest
+
+-- ════════════════════════════════════════════════════════════
+-- § Headline 7: Structural library tameness
+-- ════════════════════════════════════════════════════════════
+
+/-! Structural audit: walk every reachable constant from a root
+    that touches all major LeanStats surfaces (descriptive,
+    regression, tests, plot, report) and verify the library has:
+
+      - no `initialize` blocks
+      - no `unsafe def` declarations
+      - no `@[extern]` declarations outside Lean's stdlib
+      - no axioms outside Lean's kernel set + @[manifest_axiom]
+
+    On success, emits theorem `auditEntryPoint_library_tame : True`
+    as a kernel-checked artifact. The audit re-runs at every
+    consumer build (when l3m or another consumer pins lean-stats
+    to this commit, the consumer's build re-runs LibraryTame and
+    re-derives the artifact). This means the audit is automatic
+    and tied to the source bytes; if the bytes change, the audit
+    re-runs.
+
+    See `docs/design/incubated-extraction.md` in l3m for the
+    four-phase library lifecycle this implements.
+-/
+
+/-- Audit entry point: a single function that touches every major
+    LeanStats surface, used as the `LibraryTame` root so the
+    audit's reachable set is comprehensive. The function itself
+    is pure and unused at runtime — it exists only to anchor the
+    structural check. -/
+def auditEntryPoint : Bool :=
+  let xs : Array Float := #[1.0, 2.0, 3.0]
+  let ys : Array Float := #[2.0, 4.0, 6.0]
+  let _summary := LeanStats.summary xs
+  let _corr := LeanStats.correlation xs ys
+  let _reg := LeanStats.linearRegression xs ys
+  let _diag := LeanStats.regressionDiag xs ys
+  let _tt := LeanStats.tTestOneSample xs 0.0
+  let _jmpHtml := LeanStats.Plot.jmpScatter xs ys "x" "y" ""
+  let _multiHtml := LeanStats.Plot.multiRegPlot #[("x", xs)] ys "y" ""
+  let _binHtml := LeanStats.Plot.binaryPlot xs #[1.0, 0.0, 1.0] "x" "y" ""
+  let _hist := LeanStats.Plot.histogram xs 10 {}
+  let _terminal := LeanStats.Plot.Terminal.terminalScatter (xs.zip ys) 60 20
+  true
+
+LibraryTame LeanStats from auditEntryPoint
