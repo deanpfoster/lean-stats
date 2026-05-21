@@ -22,6 +22,7 @@ import LeanStats.Plot.MultiReg
 import LeanStats.Plot.MultiRegTabbed
 import LeanStats.Plot.Explorer
 import LeanStats.Plot.Dashboard
+import LeanStats.Plot.ScatterMatrix
 
 import LeanStats.Report.Tooltip
 import LeanStats.Report.Interactive
