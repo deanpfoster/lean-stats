@@ -8,6 +8,8 @@ import LeanStats.Manifests.Diagnostics
 import LeanStats.Manifests.Plot
 import LeanStats.Manifests.Report
 import LeanStats.Manifests.Interactive
+import LeanStats.Manifests.Eval
+import LeanStats.Manifests.PlotDescribe
 
 /-! # Manifest — headline claims about LeanStats
 

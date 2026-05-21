@@ -25,4 +25,6 @@ import LeanTab.Manifests.IO
 import LeanTab.Manifests.Sample
 import LeanTab.Manifests.MultiGroup
 import LeanTab.Manifests.Summarize
+import LeanTab.Manifests.Parse
+import LeanTab.Manifests.Query
 import LeanTab.Interface
