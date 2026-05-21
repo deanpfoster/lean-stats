@@ -46,15 +46,16 @@ def tukeyHSD (groups : Array (Array Float)) (_level : Float := 0.95) : Array (Na
   | some res =>
     let q := 2.8
     let msW := res.msWithin
-    let mut results : Array (Nat × Nat × Float × Bool) := #[]
-    for i in [:groups.size] do
-      for j in [i+1:groups.size] do
-        let diff := res.groupMeans[i]! - res.groupMeans[j]!
-        let ni := res.groupNs[i]!.toFloat
-        let nj := res.groupNs[j]!.toFloat
-        let se := Float.sqrt (msW * (1/ni + 1/nj) / 2)
-        let crit := q * se
-        results := results.push (i, j, diff, diff.abs > crit)
-    results
+    Id.run do
+      let mut results : Array (Nat × Nat × Float × Bool) := #[]
+      for i in [:groups.size] do
+        for j in [i+1:groups.size] do
+          let diff := res.groupMeans[i]! - res.groupMeans[j]!
+          let ni := res.groupNs[i]!.toFloat
+          let nj := res.groupNs[j]!.toFloat
+          let se := Float.sqrt (msW * (1/ni + 1/nj) / 2)
+          let crit := q * se
+          results := results.push (i, j, diff, diff.abs > crit)
+      return results
 
 end LeanStats
