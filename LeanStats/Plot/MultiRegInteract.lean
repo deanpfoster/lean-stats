@@ -165,7 +165,7 @@ private def mriJs3 : String :=
         -- Draw stored points as small circles (they scatter when transforms change)
         "spec.points.forEach(function(pt){" ++
           "var px=sx(pt.x),py=sy(pt.y);" ++
-          "if(px>=M.l&&px<=M.l+cw&&py>=M.t&&py<=M.t+ch){" ++
+          "if(px>=M.l&&px<=M.l+pw&&py>=M.t&&py<=M.t+ph){" ++
             "svgEl.innerHTML+=`<circle cx='${px}' cy='${py}' r='2' fill='${col}' opacity='0.5'/>`}" ++
         "})" ++
       "}else{" ++
