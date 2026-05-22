@@ -118,4 +118,32 @@ def empty (names : Array String) : Table :=
   { columns := names.map fun name => { name, data := #[] } }
 
 end Table
+
+/-- Convert a categorical (String) column into k-1 dummy/indicator columns,
+    dropping the first level as reference. Removes the original column. -/
+def Table.dummyCode (t : Table) (col : String) : Table :=
+  let vals := t.colStrings col
+  let levels := vals.foldl (fun acc v => if acc.contains v then acc else acc.push v) #[]
+  -- drop first level (reference category)
+  let dummyLevels := levels.extract 1 levels.size
+  -- remove original column
+  let baseCols := t.columns.filter (·.name != col)
+  -- create indicator columns
+  let newCols := dummyLevels.map fun lv =>
+    let data := vals.map fun v => Cell.float (if v == lv then 1.0 else 0.0)
+    ({ name := col ++ "_" ++ lv, data } : Column)
+  { columns := baseCols ++ newCols }
+
+/-- Apply dummyCode to multiple columns. -/
+def Table.dummyCodeAll (t : Table) (cols : Array String) : Table :=
+  cols.foldl (fun acc c => acc.dummyCode c) t
+
+/-- Create an interaction column "col1×col2" as element-wise product of two Float columns. -/
+def Table.interactionCol (t : Table) (col1 col2 : String) : Table :=
+  let xs := t.colFloats col1
+  let ys := t.colFloats col2
+  let data := xs.zipWith ys (fun a b => Cell.float (a * b))
+  let newCol : Column := { name := col1 ++ "×" ++ col2, data }
+  { columns := t.columns.push newCol }
+
 end LeanTab
