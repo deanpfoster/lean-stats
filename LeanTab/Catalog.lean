@@ -128,6 +128,89 @@ def assessQuality (t : Table) : DataQuality :=
   { completeness := some completeness,
     suspiciousColumns := suspicious.map id }
 
+/-- Enhanced quality assessment with outlier, cardinality, and duplicate detection. -/
+def assessQualityFull (t : Table) : DataQuality :=
+  let base := assessQuality t
+  -- Type conflicts: columns where >5% of non-NA values don't match majority type
+  let typeConflicts := t.columns.filterMap fun col =>
+    let nonNa := col.data.filter (· != .na)
+    if nonNa.isEmpty then none
+    else
+      let nFloat := nonNa.filter (fun c => match c with | .float _ => true | _ => false) |>.size
+      let nStr := nonNa.filter (fun c => match c with | .str _ => true | _ => false) |>.size
+      let n := nonNa.size.toFloat
+      let minority := Float.min nFloat.toFloat nStr.toFloat
+      if minority / n > 0.05 then some s!"{col.name}: {minority.toUInt64}/{nonNa.size} values conflict"
+      else none
+  -- High cardinality: string columns with distinct/n > 0.9
+  let highCard := t.columns.filterMap fun col =>
+    let nonNa := col.data.filter (· != .na)
+    let isStr := nonNa.all (fun c => match c with | .str _ => true | _ => false)
+    if !isStr || nonNa.isEmpty then none
+    else
+      let distinct := nonNa.foldl (init := #[]) fun acc c =>
+        if acc.contains c then acc else acc.push c
+      if distinct.size.toFloat / nonNa.size.toFloat > 0.9 then some col.name
+      else none
+  -- Low cardinality: numeric columns with < 5 distinct values
+  let lowCard := t.columns.filterMap fun col =>
+    let nonNa := col.data.filter (· != .na)
+    let isNum := nonNa.all (fun c => match c with | .float _ => true | _ => false)
+    if !isNum || nonNa.isEmpty then none
+    else
+      let distinct := nonNa.foldl (init := #[]) fun acc c =>
+        if acc.contains c then acc else acc.push c
+      if distinct.size < 5 then some col.name
+      else none
+  -- Outliers: numeric columns where any value > 4 SD from mean
+  let outliers := t.columns.filterMap fun col =>
+    let nonNa := col.data.filter (· != .na)
+    let floats := nonNa.filterMap Cell.toFloat?
+    if floats.size < 2 then none
+    else
+      let n := floats.size.toFloat
+      let mu := floats.foldl (· + ·) 0.0 / n
+      let variance := floats.foldl (fun acc x => acc + (x - mu) * (x - mu)) 0.0 / n
+      let sd := Float.sqrt variance
+      if sd == 0.0 then none
+      else if floats.any (fun x => Float.abs (x - mu) > 4.0 * sd) then some col.name
+      else none
+  -- Duplicate rows
+  let nDups := if t.nRows == 0 then 0
+    else
+      let rows := (List.range t.nRows).toArray.map t.row
+      let unique := rows.foldl (init := #[]) fun acc r =>
+        if acc.contains r then acc else acc.push r
+      t.nRows - unique.size
+  { base with
+    typeConflicts := base.typeConflicts ++ typeConflicts,
+    outlierColumns := outliers,
+    highCardinality := highCard,
+    lowCardinality := lowCard,
+    nDuplicateRows := some nDups }
+
+/-- Human-readable quality report. -/
+def qualityReport (q : DataQuality) : String :=
+  let lines : Array String := #[]
+  let lines := match q.completeness with
+    | some c => lines.push s!"Completeness: {(c * 100).toUInt64}%"
+    | none => lines
+  let lines := match q.nDuplicateRows with
+    | some n => if n > 0 then lines.push s!"Duplicate rows: {n}" else lines
+    | none => lines
+  let lines := if q.typeConflicts.isEmpty then lines
+    else lines.push s!"Type conflicts: {String.intercalate ", " q.typeConflicts.toList}"
+  let lines := if q.outlierColumns.isEmpty then lines
+    else lines.push s!"Outlier columns (>4 SD): {String.intercalate ", " q.outlierColumns.toList}"
+  let lines := if q.highCardinality.isEmpty then lines
+    else lines.push s!"High cardinality (likely IDs): {String.intercalate ", " q.highCardinality.toList}"
+  let lines := if q.lowCardinality.isEmpty then lines
+    else lines.push s!"Low cardinality (likely categorical): {String.intercalate ", " q.lowCardinality.toList}"
+  let lines := if q.suspiciousColumns.isEmpty then lines
+    else lines.push s!"Suspicious: {String.intercalate ", " q.suspiciousColumns.toList}"
+  if lines.isEmpty then "No quality issues detected."
+  else String.intercalate "\n" lines.toList
+
 /-- Build a catalog entry from a fetched table. Pure — just analyzes what we have. -/
 def catalogFromTable (t : Table) (name : String) (origin : String := "unknown") : DataSource :=
   let schema := t.columns.map fun col =>
