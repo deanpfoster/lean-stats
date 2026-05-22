@@ -2,6 +2,7 @@ import LeanStats.Descriptive
 import LeanStats.Regression
 import LeanStats.Transform
 import LeanStats.Diagnostics
+import LeanStats.AlphaInvesting
 import LeanStats.Eval
 import LeanStats.Tests
 import LeanStats.Anova
