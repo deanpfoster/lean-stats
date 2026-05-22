@@ -35,6 +35,7 @@ import LeanStats.Report.Html
 
 import LeanStats.Manifest
 import LeanStats.Interface
+import LeanStats.Audit
 
 /-! # LeanStats — pure-Lean statistics, plotting, and reporting
 
