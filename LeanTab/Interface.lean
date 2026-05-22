@@ -89,6 +89,6 @@ Restate where_reduces
 Restate unknown_table
 
 /-- No IO, no mutation. Every function returns a new Table. -/
-ManifestAxiom pure_no_mutation : True
+Sketch pure_no_mutation
 
 end LeanTab.Interface

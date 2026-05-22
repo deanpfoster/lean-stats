@@ -108,10 +108,10 @@ ProvenTheorem attr_render :
 
 /-- KNOWN GAP: attribute-value escaping. The renderer concatenates raw
     strings into `key='value'` without escaping quotes, `<`, `>`, or `&`. -/
-ManifestAxiom attr_escaping_known_gap : True
+Sketch attr_escaping_known_gap
 
 /-- KNOWN GAP: Svg.render is `partial def`. Structurally decreasing on
     the List of children, but termination is not formally proven. -/
-ManifestAxiom svg_render_partial : True
+Sketch svg_render_partial
 
 end LeanStats.Manifests.Plot

@@ -72,9 +72,9 @@ Signature bestResponseTransform : Array Float → Array Float → TransformKind 
     - `ttest_one_positive`: mean > μ₀ → t > 0
     - `diag_perfect_r2`: perfect fit → R²=1, se=0
 -/
-ManifestAxiom trust_chain_documented : True
+Sketch trust_chain_documented
 
 /-- No IO in any function signature. -/
-ManifestAxiom pure_no_io : True
+Sketch pure_no_io
 
 end LeanStats.Interface
