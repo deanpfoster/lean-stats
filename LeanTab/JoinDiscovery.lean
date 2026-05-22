@@ -15,12 +15,12 @@ private def cellToKey : Cell → Option String
   | .na => none
 
 private def computeMatchRate (c1 c2 : Column) : JoinCandidate :=
-  let t2Set := c2.data.foldl (fun s c =>
-    match cellToKey c with | some k => s.insert k | none => s) (Std.HashSet.empty)
+  let t2Vals := c2.data.foldl (fun s c =>
+    match cellToKey c with | some k => if s.contains k then s else s.push k | none => s) #[]
   let (matched, total, samples) := c1.data.foldl (fun (m, t, samps) c =>
     match cellToKey c with
     | some k =>
-      if t2Set.contains k then
+      if t2Vals.contains k then
         let samps' := if samps.size < 3 then samps.push k else samps
         (m + 1, t + 1, samps')
       else (m, t + 1, samps)

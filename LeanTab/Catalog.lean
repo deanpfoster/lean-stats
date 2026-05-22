@@ -139,7 +139,7 @@ def assessQualityFull (t : Table) : DataQuality :=
       let nFloat := nonNa.filter (fun c => match c with | .float _ => true | _ => false) |>.size
       let nStr := nonNa.filter (fun c => match c with | .str _ => true | _ => false) |>.size
       let n := nonNa.size.toFloat
-      let minority := Float.min nFloat.toFloat nStr.toFloat
+      let minority := if nFloat.toFloat < nStr.toFloat then nFloat.toFloat else nStr.toFloat
       if minority / n > 0.05 then some s!"{col.name}: {minority.toUInt64}/{nonNa.size} values conflict"
       else none
   -- High cardinality: string columns with distinct/n > 0.9
