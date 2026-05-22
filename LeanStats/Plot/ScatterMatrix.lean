@@ -97,8 +97,8 @@ private def splomJs : String :=
   "    drawAll();return;\n" ++
   "  }\n" ++
   "  if(e.target.classList.contains('bg')){\n" ++
-  "    for(var i=0;i<nObs;i++)pointState[i].selected=false;drawAll();\n" ++
-  "    sendWs({event:'selection',text:'selection cleared'});\n" ++
+  "    if(!e.shiftKey){for(var i=0;i<nObs;i++)pointState[i].selected=false;drawAll();\n" ++
+  "    sendWs({event:'selection',text:'selection cleared'})}\n" ++
   "  }\n" ++
   "});\n" ++
   "document.querySelector('.grid').addEventListener('mousemove',function(e){\n" ++
