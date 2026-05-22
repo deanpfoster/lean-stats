@@ -35,6 +35,7 @@ import LeanStats.Report.Literate
 import LeanStats.Report.Html
 
 import LeanStats.Manifest
+import LeanStats.Manifests.NewFunctions
 import LeanStats.Interface
 import LeanStats.Audit
 
