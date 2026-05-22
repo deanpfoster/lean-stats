@@ -141,4 +141,35 @@ def predictPI (xs ys : Array Float) (xNew : Float) : Option (Float × Float × F
         let margin := t * s * (1 + 1 / n.toFloat + (xNew - mx) ^ 2 / sxx).sqrt
         some (yhat, yhat - margin, yhat + margin)
 
+/-- Variance Inflation Factor for predictor `idx`. VIF = 1/(1-R²) where R² is from
+    regressing predictor `idx` on all other predictors. Returns 1e10 if R²=1, returns 1
+    if fewer than 2 predictors. -/
+def vif (xs : Array (Array Float)) (idx : Nat) : Float :=
+  let p := xs.size
+  if p < 2 then 1.0
+  else
+    let y := xs[idx]!
+    let others := (Array.range p).filterMap (fun j => if j == idx then none else some xs[j]!)
+    let n := y.size
+    if n < 2 then 1.0
+    else
+      let my := mean y
+      let ssTotal := (y.map (fun v => (v - my) ^ 2)).foldl (· + ·) 0
+      if ssTotal == 0 then 1e10
+      else
+        -- Regress y on all other predictors: compute fitted values
+        let fitted := Array.mkArray n 0.0
+        let fitted := others.foldl (fun acc xj =>
+          match linearRegression xj y with
+          | some fit => acc.mapIdx (fun i v => v + fit.slope * xj[i]! + fit.intercept / (p - 1).toFloat)
+          | none => acc) fitted
+        let ssRes := (Array.zipWith y fitted (fun yi fi => (yi - fi) ^ 2)).foldl (· + ·) 0
+        let r2 := 1.0 - ssRes / ssTotal
+        if r2 >= 1.0 then 1e10
+        else 1.0 / (1.0 - r2)
+
+/-- VIF for every predictor. -/
+def vifAll (xs : Array (Array Float)) : Array Float :=
+  (Array.range xs.size).map (fun i => vif xs i)
+
 end LeanStats
