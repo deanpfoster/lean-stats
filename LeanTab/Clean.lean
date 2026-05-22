@@ -36,10 +36,22 @@ private def tryParseFloat (s : String) : Option Float :=
   let s := s.trim
   if s.isEmpty then none
   else
-    let f := s.toFloat!
-    -- toFloat! returns 0 for unparseable; distinguish from actual "0"
-    if f == 0.0 && s != "0" && s != "0.0" && s != "0.00" && s != ".0" && s != "0." then none
-    else some f
+    let (neg, s) := if s.startsWith "-" then (true, s.drop 1) else (false, s)
+    let parts := s.splitOn "."
+    match parts with
+    | [intPart] =>
+      match intPart.toNat? with
+      | some n => some (if neg then -(n.toFloat) else n.toFloat)
+      | none => none
+    | [intPart, fracPart] =>
+      if fracPart.isEmpty then none
+      else match intPart.toNat?, fracPart.toNat? with
+        | some i, some f =>
+          let denom := (10 : Float) ^ fracPart.length.toFloat
+          let v := i.toFloat + f.toFloat / denom
+          some (if neg then -v else v)
+        | _, _ => none
+    | _ => none
 
 private def floatParseRatio (col : Column) : Float :=
   let strs := col.data.filter fun c => match c with | .str _ => true | _ => false
