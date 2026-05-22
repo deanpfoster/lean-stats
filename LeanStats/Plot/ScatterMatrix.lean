@@ -73,6 +73,12 @@ private def splomJs : String :=
   "    var idx=+c.dataset.i;\n" ++
   "    if(!e.shiftKey)for(var i=0;i<nObs;i++)pointState[i].selected=false;\n" ++
   "    pointState[idx].selected=!pointState[idx].selected;\n" ++
+  "    var nSel=pointState.filter(function(p){return p.selected}).length;\n" ++
+  "    if(pointState[idx].selected){\n" ++
+  "      var desc='obs '+idx+': '+vars.map(function(v){return v.name+'='+v.values[idx].toPrecision(4)}).join(', ');\n" ++
+  "      if(e.shiftKey)sendWs({event:'selection',text:'added '+desc+' (now '+nSel+' selected)'});\n" ++
+  "      else sendWs({event:'selection',text:'selected '+desc})\n" ++
+  "    }else{sendWs({event:'selection',text:'deselected obs '+idx+' (now '+nSel+' selected)'})}\n" ++
   "    drawAll();return;\n" ++
   "  }\n" ++
   "  var bar=e.target.closest('[data-bin]');\n" ++
@@ -82,14 +88,17 @@ private def splomJs : String :=
   "    var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);\n" ++
   "    var range=mx-mn||1,nBins=10,bw=range/nBins;\n" ++
   "    if(!e.shiftKey)for(var i=0;i<nObs;i++)pointState[i].selected=false;\n" ++
-  "    for(var i=0;i<nObs;i++){\n" ++
+  "    var cnt=0;for(var i=0;i<nObs;i++){\n" ++
   "      var b=Math.floor((vals[i]-mn)/bw);if(b>=nBins)b=nBins-1;\n" ++
-  "      if(b===binIdx)pointState[i].selected=true;\n" ++
+  "      if(b===binIdx){pointState[i].selected=true;cnt++}\n" ++
   "    }\n" ++
+  "    var lo=(mn+binIdx*bw).toPrecision(3),hi=(mn+(binIdx+1)*bw).toPrecision(3);\n" ++
+  "    sendWs({event:'selection',text:cnt+' points selected with '+vars[varIdx].name+' in ['+lo+', '+hi+']'});\n" ++
   "    drawAll();return;\n" ++
   "  }\n" ++
   "  if(e.target.classList.contains('bg')){\n" ++
   "    for(var i=0;i<nObs;i++)pointState[i].selected=false;drawAll();\n" ++
+  "    sendWs({event:'selection',text:'selection cleared'});\n" ++
   "  }\n" ++
   "});\n" ++
   "document.querySelector('.grid').addEventListener('mousemove',function(e){\n" ++
