@@ -10,6 +10,7 @@ import LeanTab.GroupBy
 import LeanTab.Reshape
 import LeanTab.Stats
 import LeanTab.Summarize
+import LeanTab.Catalog
 import LeanTab.Join
 import LeanTab.Sql.Ast
 import LeanTab.Sql.Parse
