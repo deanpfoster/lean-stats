@@ -140,10 +140,10 @@ ProvenTheorem qq_dataid_count :
 
 /-- KNOWN GAP: data-tooltip values are not HTML-escaped. Adversarial
     float-to-string output could theoretically inject attributes. -/
-ManifestAxiom tooltip_escaping_gap : True
+Sketch tooltip_escaping_gap
 
 /-- KNOWN GAP: lasso point-in-polygon correctness is not formally verified.
     The ray-casting algorithm is standard but we don't prove it in Lean. -/
-ManifestAxiom lasso_pip_unverified : True
+Sketch lasso_pip_unverified
 
 end LeanStats.Manifests.Interactive

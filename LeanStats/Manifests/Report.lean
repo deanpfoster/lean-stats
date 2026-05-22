@@ -110,9 +110,9 @@ ProvenTheorem section_svg :
 
 /-- KNOWN GAP: HTML escaping is not performed. Section prose, titles,
     and headings are inserted raw. A `<script>` in prose will execute. -/
-ManifestAxiom html_escaping_known_gap : True
+Sketch html_escaping_known_gap
 
 /-- KNOWN GAP: No ARIA attributes or accessibility features. -/
-ManifestAxiom accessibility_known_gap : True
+Sketch accessibility_known_gap
 
 end LeanStats.Manifests.Report
