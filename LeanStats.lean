@@ -4,6 +4,7 @@ import LeanStats.Transform
 import LeanStats.Diagnostics
 import LeanStats.LinAlg
 import LeanStats.AlphaInvesting
+import LeanStats.VIFRegression
 import LeanStats.Eval
 import LeanStats.Tests
 import LeanStats.Anova
