@@ -52,7 +52,8 @@ private def splomJs : String :=
   "  var vmin=Math.min.apply(null,vals),vmax=Math.max.apply(null,vals);\n" ++
   "  var nBins=10,bw=(vmax-vmin)/nBins||1;\n" ++
   "  var bins=new Array(nBins).fill(0);\n" ++
-  "  for(var i=0;i<nObs;i++){if(pointState[i].hidden)continue;var b=Math.min(Math.floor((vals[i]-vmin)/bw),nBins-1);bins[b]++}\n" ++
+  "  var selBins=new Array(nBins).fill(0);\n" ++
+  "  for(var i=0;i<nObs;i++){if(pointState[i].hidden)continue;var b=Math.min(Math.floor((vals[i]-vmin)/bw),nBins-1);bins[b]++;if(pointState[i].selected)selBins[b]++}\n" ++
   "  var bmax=Math.max.apply(null,bins)||1;\n" ++
   "  var svg='<svg width=\"'+CW+'\" height=\"'+CH+'\">';\n" ++
   "  svg+='<rect width=\"'+CW+'\" height=\"'+CH+'\" fill=\"#fafafa\" class=\"bg\"/>';\n" ++
@@ -60,7 +61,8 @@ private def splomJs : String :=
   "  var barW=cw/nBins;\n" ++
   "  for(var i=0;i<nBins;i++){\n" ++
   "    var h=bins[i]/bmax*(ch-20),x=M.l+i*barW,y=M.t+20+(ch-20)-h;\n" ++
-  "    svg+='<rect x=\"'+x+'\" y=\"'+y+'\" width=\"'+(barW-1)+'\" height=\"'+h+'\" fill=\"steelblue\" opacity=\"0.6\" data-bin=\"'+i+'\" data-var=\"'+idx+'\" style=\"cursor:pointer\"/>';\n" ++
+  "    svg+='<rect x=\"'+x+'\" y=\"'+y+'\" width=\"'+(barW-1)+'\" height=\"'+h+'\" fill=\"steelblue\" opacity=\"0.5\" data-bin=\"'+i+'\" data-var=\"'+idx+'\" style=\"cursor:pointer\"/>';\n" ++
+  "    if(selBins[i]>0){var sh=h*(selBins[i]/bins[i]);svg+='<rect x=\"'+x+'\" y=\"'+(y+h-sh)+'\" width=\"'+(barW-1)+'\" height=\"'+sh+'\" fill=\"#f59e0b\" opacity=\"0.8\" data-bin=\"'+i+'\" data-var=\"'+idx+'\" style=\"cursor:pointer\"/>'}\n" ++
   "  }\n" ++
   "  svg+='</svg>';el.innerHTML=svg;\n" ++
   "}\n" ++
