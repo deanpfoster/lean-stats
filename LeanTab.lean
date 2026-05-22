@@ -18,6 +18,7 @@ import LeanTab.Sql.Parse
 import LeanTab.Sql.Eval
 import LeanTab.Sql.Manifest
 import LeanTab.Query
+import LeanTab.TwoEyed
 import LeanTab.Manifest
 import LeanTab.Manifests.Join
 import LeanTab.Manifests.Window
@@ -29,4 +30,7 @@ import LeanTab.Manifests.MultiGroup
 import LeanTab.Manifests.Summarize
 import LeanTab.Manifests.Parse
 import LeanTab.Manifests.Query
+import LeanTab.Clean
 import LeanTab.Interface
+import LeanTab.JoinDiscovery
+import LeanTab.SchemaValidation
