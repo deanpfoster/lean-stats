@@ -160,12 +160,21 @@ private def mriJs3 : String :=
     "const{sx,sy,xMin,xMax,plotX,plotY}=ps;" ++
     "fits.forEach(function(spec,idx){" ++
       "if(spec.hidden||spec.plot!==plotIdx)return;" ++
-      "let coef;" ++
-      "if(spec.frozen&&spec.coef){coef=spec.coef}else{if(plotX.length<spec.deg+1)return;coef=polyFit(plotX,plotY,spec.deg)}" ++
-      "let path='';const nPts=80;" ++
-      "for(let i=0;i<=nPts;i++){const xi=xMin+i/nPts*(xMax-xMin);const yi=polyEval(coef,xi);path+=(path===''?'M':'L')+sx(xi)+','+sy(yi)}" ++
       "const col=colors[idx%colors.length];" ++
-      "svgEl.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw}'/>`" ++
+      "if(spec.points){" ++
+        -- Draw stored points as small circles (they scatter when transforms change)
+        "spec.points.forEach(function(pt){" ++
+          "var px=sx(pt.x),py=sy(pt.y);" ++
+          "if(px>=M.l&&px<=M.l+cw&&py>=M.t&&py<=M.t+ch){" ++
+            "svgEl.innerHTML+=`<circle cx='${px}' cy='${py}' r='2' fill='${col}' opacity='0.5'/>`}" ++
+        "})" ++
+      "}else{" ++
+        -- Legacy: draw from coefficients
+        "if(plotX.length<(spec.deg||1)+1)return;var coef=polyFit(plotX,plotY,spec.deg||1);" ++
+        "let path='';const nPts=80;" ++
+        "for(let i=0;i<=nPts;i++){const xi=xMin+i/nPts*(xMax-xMin);const yi=polyEval(coef,xi);path+=(path===''?'M':'L')+sx(xi)+','+sy(yi)}" ++
+        "svgEl.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw}'/>`" ++
+      "}" ++
     "})}"
 
 private def mriJs4 : String :=
@@ -225,9 +234,9 @@ private def mriJs5 : String :=
   "document.getElementById('fitBtn').addEventListener('click',function(){" ++
     "for(let p=0;p<terms.length+1;p++){" ++
       "let ps=plotState[p];if(!ps||ps.plotX.length<2)continue;" ++
-      "let coef=polyFit(ps.plotX,ps.plotY,1);" ++
       "let lbl=p===0?'Y vs Ŷ':(document.getElementById('lbl_'+(p-1))?document.getElementById('lbl_'+(p-1)).textContent:predNames[terms[p-1].idx]);" ++
-      "fits.push({deg:1,lw:lwCurrent,se:seOn,plot:p,frozen:true,coef:coef,label:lbl})" ++
+      -- Store the actual data points (not coefficients) — these are the residual pairs at this moment
+      "fits.push({plot:p,lw:lwCurrent,se:seOn,label:lbl,points:ps.plotX.map(function(x,i){return{x:x,y:ps.plotY[i]}})})" ++
     "}" ++
     "drawAll();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];drawAll();drawLwPicker()});" ++
