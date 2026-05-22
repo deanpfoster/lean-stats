@@ -133,7 +133,10 @@ UnprovenConjecture stddev_nonneg :
   ∀ (xs : Array Float), stdDev xs ≥ 0
 
 /-- Summary n equals input size for all inputs. -/
-UnprovenConjecture summary_n_general :
+theorem summary_n_general_proof :
+  ∀ (xs : Array Float), (summary xs).n = xs.size := by intro xs; rfl
+
+ProvenTheorem summary_n_general :
   ∀ (xs : Array Float), (summary xs).n = xs.size
 
 end LeanStats.Manifests.Descriptive
