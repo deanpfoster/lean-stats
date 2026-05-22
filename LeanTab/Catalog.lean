@@ -58,6 +58,22 @@ structure DataQuality where
   nDuplicateRows : Option Nat := none
   deriving Repr
 
+/-- An upstream table dependency (who feeds this table). -/
+structure UpstreamDependency where
+  tableName : String             -- "unified_inventory_costs"
+  pipelineStep : String := "unknown"  -- "InventoryWaitOn"
+  cti : String := "unknown"      -- ticket system path for issues
+  oncallRotation : String := "unknown"  -- "avengersde", "aft-bi"
+  deriving Repr
+
+/-- Where a table lives in a specific environment. -/
+structure Environment where
+  name : String                  -- "test", "preprod", "prod"
+  accountId : String := "unknown"
+  s3Root : String := "unknown"   -- "s3://scot-rl-prod-na-2-0/us/placement"
+  region : String := "us-east-1"
+  deriving Repr
+
 /-- A data source in the catalog. -/
 structure DataSource where
   /-- Human-readable name for this dataset. -/
@@ -91,6 +107,19 @@ structure DataSource where
   tags : Array String := #[]
   /-- Confidence: how much do we trust this entry? -/
   confidence : String := "low"  -- "high", "medium", "low", "unknown"
+
+  -- Pipeline/infrastructure fields (Amazon-style):
+
+  /-- Upstream tables this depends on (the dependency graph). -/
+  upstreamDeps : Array UpstreamDependency := #[]
+  /-- Where this table lives in each environment (test/preprod/prod). -/
+  environments : Array Environment := #[]
+  /-- URL to the pipeline definition (Step Functions, Airflow, etc.). -/
+  pipelineUrl : String := "unknown"
+  /-- When the pipeline last completed successfully. -/
+  lastSuccessfulRun : String := "unknown"
+  /-- The pipeline step that produces this table. -/
+  pipelineStep : String := "unknown"
   deriving Repr
 
 def DataSource.getOrigin (src : DataSource) (key : Option String := none) : String :=
