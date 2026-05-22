@@ -4,6 +4,7 @@ import LeanStats.Anova
 import LeanStats.Proportion
 import LeanStats.Regression
 import LeanStats.LinAlg
+import LeanStats.VIFRegression
 import LeanStats.Tests
 import LeanTab.Table
 
@@ -113,5 +114,16 @@ private def pairedIdentical : Float := tTestPaired #[1,2,3] #[1,2,3]
 theorem paired_t_identical_proof : pairedIdentical = 0 := by native_decide
 
 ProvenTheorem paired_t_identical : pairedIdentical = 0
+
+-- VIF-Regression conformance: selects only the signal variable
+private def vifY : Array Float := #[2.1, 4.0, 5.9, 8.1, 10.0]
+private def vifXs : Array (Array Float) := #[#[1.0, 2.0, 3.0, 4.0, 5.0], #[5.0, 3.0, 1.0, 4.0, 2.0], #[2.0, 2.0, 2.0, 2.0, 2.0]]
+
+/-- VIF-Regression correctly identifies the signal (x0) and rejects noise. -/
+theorem vif_regression_selects_signal_proof :
+  (vifRegression vifY vifXs { w0 := 0.5, dw := 0.1, subsize := 5 }).selected = #[0] := by native_decide
+
+ProvenTheorem vif_regression_selects_signal :
+  (vifRegression vifY vifXs { w0 := 0.5, dw := 0.1, subsize := 5 }).selected = #[0]
 
 end LeanStats.Manifests.NewFunctions
