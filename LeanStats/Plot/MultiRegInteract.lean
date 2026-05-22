@@ -161,15 +161,22 @@ private def mriJs3 : String :=
     "fits.forEach(function(spec,idx){" ++
       "if(spec.hidden||spec.plot!==plotIdx)return;" ++
       "const col=colors[idx%colors.length];" ++
-      "if(spec.points){" ++
-        -- Draw stored points as small circles (they scatter when transforms change)
+      "if(spec.eY){" ++
+        -- Draw checkpointed points: current eX (horizontal), frozen eY (vertical)
+        "var eX=plotX;" ++  -- current X residuals from plotState
+        "for(var i=0;i<Math.min(spec.eY.length,eX.length);i++){" ++
+          "var px=sx(eX[i]),py=sy(spec.eY[i]);" ++
+          "if(px>=M.l&&px<=M.l+pw&&py>=M.t&&py<=M.t+ph){" ++
+            "svgEl.innerHTML+=`<circle cx='${px}' cy='${py}' r='2.5' fill='${col}' opacity='0.5'/>`}" ++
+        "}" ++
+      "}else if(spec.points){" ++
+        -- Legacy: frozen x,y pairs
         "spec.points.forEach(function(pt){" ++
           "var px=sx(pt.x),py=sy(pt.y);" ++
           "if(px>=M.l&&px<=M.l+pw&&py>=M.t&&py<=M.t+ph){" ++
             "svgEl.innerHTML+=`<circle cx='${px}' cy='${py}' r='2' fill='${col}' opacity='0.5'/>`}" ++
         "})" ++
       "}else{" ++
-        -- Legacy: draw from coefficients
         "if(plotX.length<(spec.deg||1)+1)return;var coef=polyFit(plotX,plotY,spec.deg||1);" ++
         "let path='';const nPts=80;" ++
         "for(let i=0;i<=nPts;i++){const xi=xMin+i/nPts*(xMax-xMin);const yi=polyEval(coef,xi);path+=(path===''?'M':'L')+sx(xi)+','+sy(yi)}" ++
@@ -232,11 +239,11 @@ private def mriJs4 : String :=
 private def mriJs5 : String :=
   "drawLwPicker();" ++
   "document.getElementById('fitBtn').addEventListener('click',function(){" ++
-    "for(let p=0;p<terms.length+1;p++){" ++
+    "for(let p=1;p<terms.length+1;p++){" ++
       "let ps=plotState[p];if(!ps||ps.plotX.length<2)continue;" ++
-      "let lbl=p===0?'Y vs Ŷ':(document.getElementById('lbl_'+(p-1))?document.getElementById('lbl_'+(p-1)).textContent:predNames[terms[p-1].idx]);" ++
-      -- Store the actual data points (not coefficients) — these are the residual pairs at this moment
-      "fits.push({plot:p,lw:lwCurrent,se:seOn,label:lbl,points:ps.plotX.map(function(x,i){return{x:x,y:ps.plotY[i]}})})" ++
+      "let lbl=document.getElementById('lbl_'+(p-1))?document.getElementById('lbl_'+(p-1)).textContent:'';" ++
+      -- Store only the Y residuals (fixed) and the term index
+      "fits.push({plot:p,lw:lwCurrent,label:lbl,eY:ps.plotY.slice()})" ++
     "}" ++
     "drawAll();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];drawAll();drawLwPicker()});" ++
