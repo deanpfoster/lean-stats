@@ -130,6 +130,12 @@ private def splomJs : String :=
   "document.getElementById('keepBtn').onclick=function(){\n" ++
   "  var sel=[];for(var i=0;i<nObs;i++)if(pointState[i].selected)sel.push(i);\n" ++
   "  sendWs({cmd:'keep',indices:sel});\n" ++
+  "};\n" ++
+  "document.getElementById('invertBtn').onclick=function(){\n" ++
+  "  for(var i=0;i<nObs;i++)if(!pointState[i].hidden)pointState[i].selected=!pointState[i].selected;\n" ++
+  "  var nSel=pointState.filter(function(p){return p.selected}).length;\n" ++
+  "  sendWs({event:'selection',text:'selection inverted (now '+nSel+' selected)'});\n" ++
+  "  drawAll();\n" ++
   "};\n"
 
 private def floatArrayToJs (arr : Array Float) : String :=
@@ -150,7 +156,7 @@ def scatterMatrix (vars : Array (String × Array Float))
       "<div class=\"cell\" data-row=\"" ++ toString r ++ "\" data-col=\"" ++ toString c ++ "\"></div>").flatten)
   "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>" ++ title ++ "</title>" ++
   "<style>" ++ splomCss n ++ "</style></head><body>" ++
-  "<div class=\"title-bar\"><h2>" ++ title ++ "</h2><button id=\"keepBtn\">📌 Keep</button></div>" ++
+  "<div class=\"title-bar\"><h2>" ++ title ++ "</h2><button id=\"keepBtn\">📌 Keep</button><button id=\"invertBtn\" style=\"font-size:13px;padding:4px 8px;border:1px solid #ccc;border-radius:4px;cursor:pointer;margin-left:8px\">⇄ Invert</button></div>" ++
   "<div class=\"grid\">" ++ gridHtml ++ "</div>" ++
   "<div id=\"tt\" class=\"tooltip\"></div>" ++
   "<script>\nvar vars=" ++ varsJs ++ ";\nvar labels=" ++ labelsJs ++ ";\n" ++
