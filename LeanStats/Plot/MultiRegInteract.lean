@@ -263,9 +263,7 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
   let termsJs := "[" ++ String.intercalate "," allTerms ++ "]"
   -- Panel 0: calibration
   let panel0 := "<div class='panel'><svg id='panel_0' width='280' height='240'></svg>" ++
-    "<div class='panel-ctrl'><b>Y vs Ŷ</b> <select id='yform'>" ++
-    "<option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option>" ++
-    "<option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></div></div>"
+    "<div class='panel-ctrl'><b>Y vs Ŷ</b> deg <select id='caldeg'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option></select></div></div>"
   -- Main effect panels
   let mainPanels := String.join (xs.toList.enum.map fun (i, (name, _)) =>
     s!"<div class='panel'><svg id='panel_{i+1}' width='280' height='240'></svg>" ++
@@ -283,7 +281,7 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
     s!"deg <select id='deg_{idx}'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>\n<style>{mriCss}</style></head><body>\n" ++
   s!"<h2>{pageTitle} <button id='keepBtn' title='Pin this view' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>\n" ++
-  s!"<div class='plots-row'>{panel0}{mainPanels}{interPanels}</div>\n" ++
+  s!"<div style='display:flex;align-items:stretch'><div class='y-ctrl'><div class='y-label'>{yName}</div><select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></div><div class='plots-row'>{panel0}{mainPanels}{interPanels}</div></div>\n" ++
   s!"<div class='toolbar'>\n" ++
   s!"  <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness'></svg>\n" ++
   s!"  <button id='fitBtn'>+ Checkpoint</button>\n" ++
