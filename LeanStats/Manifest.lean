@@ -126,11 +126,14 @@ Restate report_has_style from LeanStats.Manifests.Report
 -- § Known gaps (permanent axioms — design decisions)
 -- ════════════════════════════════════════════════════════════
 
-/-- IEEE 754 binary64 is the only numeric representation. -/
-ManifestAxiom float_only : True
+/-- IEEE 754 binary64 is the only numeric representation.
+    Falsifying observation: a function signature containing Real, Rat, or Int128. -/
+UnprovenConjecture float_only :
+  True  -- TODO: convert to LibraryTame audit or WorldClaim
 
-/-- Library is pure: no IO in any function signature. Verified by
-    grep-audit (not by Lean's type system). -/
-ManifestAxiom pure_no_io : True
+/-- Library is pure: no IO in any function signature.
+    Falsifying observation: grep for IO.FS, IO.Process, IO.getEnv in source. -/
+UnprovenConjecture pure_no_io :
+  True  -- TODO: convert to LibraryTame audit
 
 end LeanStats.Manifest
