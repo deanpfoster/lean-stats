@@ -60,7 +60,7 @@ private def splomJs : String :=
   "  var barW=cw/nBins;\n" ++
   "  for(var i=0;i<nBins;i++){\n" ++
   "    var h=bins[i]/bmax*(ch-20),x=M.l+i*barW,y=M.t+20+(ch-20)-h;\n" ++
-  "    svg+='<rect x=\"'+x+'\" y=\"'+y+'\" width=\"'+(barW-1)+'\" height=\"'+h+'\" fill=\"steelblue\" opacity=\"0.6\"/>';\n" ++
+  "    svg+='<rect x=\"'+x+'\" y=\"'+y+'\" width=\"'+(barW-1)+'\" height=\"'+h+'\" fill=\"steelblue\" opacity=\"0.6\" data-bin=\"'+i+'\" data-var=\"'+idx+'\" style=\"cursor:pointer\"/>';\n" ++
   "  }\n" ++
   "  svg+='</svg>';el.innerHTML=svg;\n" ++
   "}\n" ++
@@ -71,6 +71,19 @@ private def splomJs : String :=
   "    var idx=+c.dataset.i;\n" ++
   "    if(!e.shiftKey)for(var i=0;i<nObs;i++)pointState[i].selected=false;\n" ++
   "    pointState[idx].selected=!pointState[idx].selected;\n" ++
+  "    drawAll();return;\n" ++
+  "  }\n" ++
+  "  var bar=e.target.closest('[data-bin]');\n" ++
+  "  if(bar){\n" ++
+  "    var binIdx=+bar.dataset.bin,varIdx=+bar.dataset.var;\n" ++
+  "    var vals=vars[varIdx].values;\n" ++
+  "    var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);\n" ++
+  "    var range=mx-mn||1,nBins=10,bw=range/nBins;\n" ++
+  "    if(!e.shiftKey)for(var i=0;i<nObs;i++)pointState[i].selected=false;\n" ++
+  "    for(var i=0;i<nObs;i++){\n" ++
+  "      var b=Math.floor((vals[i]-mn)/bw);if(b>=nBins)b=nBins-1;\n" ++
+  "      if(b===binIdx)pointState[i].selected=true;\n" ++
+  "    }\n" ++
   "    drawAll();return;\n" ++
   "  }\n" ++
   "  if(e.target.classList.contains('bg')){\n" ++
