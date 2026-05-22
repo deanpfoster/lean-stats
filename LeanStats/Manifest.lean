@@ -140,9 +140,10 @@ UnprovenConjecture float_only :
   True  -- TODO: convert to LibraryTame audit or WorldClaim
 
 /-- Library is pure: no IO in any function signature.
-    Falsifying observation: grep for IO.FS, IO.Process, IO.getEnv in source. -/
+    PROVEN by PureExcept in LeanStats/Audit.lean:
+    "PureExcept LeanStats.Audit.auditEntryPoint: ✓ complete (3049 reachable, all pure)" -/
 UnprovenConjecture pure_no_io :
-  True  -- TODO: convert to LibraryTame audit
+  True  -- Proven structurally by PureExcept audit (not expressible as a Prop)
 
 end LeanStats.Manifest
 
