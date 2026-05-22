@@ -161,21 +161,13 @@ private def mriJs3 : String :=
     "fits.forEach(function(spec,idx){" ++
       "if(spec.hidden||spec.plot!==plotIdx)return;" ++
       "const col=colors[idx%colors.length];" ++
-      "if(spec.eY){" ++
-        -- Draw checkpointed points: current eX (horizontal), frozen eY (vertical)
-        "var eX=plotX;" ++  -- current X residuals from plotState
-        "for(var i=0;i<Math.min(spec.eY.length,eX.length);i++){" ++
-          "var px=sx(eX[i]),py=sy(spec.eY[i]);" ++
+      "if(spec.fittedY){" ++
+        -- Checkpoint points: current eX (horizontal, moves), frozen fitted Y (vertical, fixed)
+        "for(var i=0;i<Math.min(spec.fittedY.length,plotX.length);i++){" ++
+          "var px=sx(plotX[i]),py=sy(spec.fittedY[i]);" ++
           "if(px>=M.l&&px<=M.l+pw&&py>=M.t&&py<=M.t+ph){" ++
-            "svgEl.innerHTML+=`<circle cx='${px}' cy='${py}' r='2.5' fill='${col}' opacity='0.5'/>`}" ++
+            "svgEl.innerHTML+=`<circle cx='${px}' cy='${py}' r='2.5' fill='${col}' opacity='0.6'/>`}" ++
         "}" ++
-      "}else if(spec.points){" ++
-        -- Legacy: frozen x,y pairs
-        "spec.points.forEach(function(pt){" ++
-          "var px=sx(pt.x),py=sy(pt.y);" ++
-          "if(px>=M.l&&px<=M.l+pw&&py>=M.t&&py<=M.t+ph){" ++
-            "svgEl.innerHTML+=`<circle cx='${px}' cy='${py}' r='2' fill='${col}' opacity='0.5'/>`}" ++
-        "})" ++
       "}else{" ++
         "if(plotX.length<(spec.deg||1)+1)return;var coef=polyFit(plotX,plotY,spec.deg||1);" ++
         "let path='';const nPts=80;" ++
@@ -242,8 +234,12 @@ private def mriJs5 : String :=
     "for(let p=1;p<terms.length+1;p++){" ++
       "let ps=plotState[p];if(!ps||ps.plotX.length<2)continue;" ++
       "let lbl=document.getElementById('lbl_'+(p-1))?document.getElementById('lbl_'+(p-1)).textContent:'';" ++
-      -- Store only the Y residuals (fixed) and the term index
-      "fits.push({plot:p,lw:lwCurrent,label:lbl,eY:ps.plotY.slice()})" ++
+      -- Compute the fitted values ON the regression line: yHat = slope * eX for each point
+      "let n=ps.plotX.length,sx2=0,sxy=0;" ++
+      "for(let i=0;i<n;i++){sx2+=ps.plotX[i]*ps.plotX[i];sxy+=ps.plotX[i]*ps.plotY[i]}" ++
+      "let slope=sx2>0?sxy/sx2:0;" ++
+      "let fittedY=ps.plotX.map(function(x){return slope*x});" ++
+      "fits.push({plot:p,lw:lwCurrent,label:lbl,fittedY:fittedY})" ++
     "}" ++
     "drawAll();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];drawAll();drawLwPicker()});" ++
