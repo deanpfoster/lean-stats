@@ -1,5 +1,6 @@
 import LeanTab.Table
 import LeanTab.Summarize
+import LeanTab.Crypto
 
 /-! # LeanTab.Catalog — data source registry with provenance and sociology
 
@@ -51,6 +52,10 @@ structure DataQuality where
   suspiciousColumns : Array String := #[]  -- columns that look wrong
   typeConflicts : Array String := #[]  -- "column 'age' has strings in numeric"
   staleness : String := "unknown"  -- "fresh", "1 week old", "unknown"
+  outlierColumns : Array String := #[]
+  highCardinality : Array String := #[]
+  lowCardinality : Array String := #[]
+  nDuplicateRows : Option Nat := none
   deriving Repr
 
 /-- A data source in the catalog. -/
@@ -59,6 +64,7 @@ structure DataSource where
   name : String
   /-- Where it lives (connection string, S3 path, file path, API endpoint). -/
   origin : String := "unknown"
+  encryptedOrigin : Option Crypto.EncryptedField := none
   /-- When we last fetched/validated it. -/
   fetchedAt : String := "unknown"
   /-- Schema: what columns exist. -/
@@ -86,6 +92,16 @@ structure DataSource where
   /-- Confidence: how much do we trust this entry? -/
   confidence : String := "low"  -- "high", "medium", "low", "unknown"
   deriving Repr
+
+def DataSource.getOrigin (src : DataSource) (key : Option String := none) : String :=
+  match src.encryptedOrigin, key with
+  | some enc, some k => match Crypto.decryptCatalogField k enc with
+    | .ok s => s
+    | .error _ => "[decryption failed]"
+  | _, _ => src.origin
+
+def DataSource.setEncryptedOrigin (src : DataSource) (key : String) (connStr : String) (hint : String := "") : DataSource :=
+  { src with encryptedOrigin := some (Crypto.encryptForCatalog key connStr hint) }
 
 /-- The catalog: all known data sources. -/
 structure DataCatalog where
