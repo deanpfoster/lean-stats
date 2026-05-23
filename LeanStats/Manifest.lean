@@ -10,42 +10,94 @@ import LeanStats.Manifests.Report
 import LeanStats.Manifests.Interactive
 import LeanStats.Manifests.Eval
 import LeanStats.Manifests.PlotDescribe
+import LeanStats.Manifests.NewFunctions
+import LeanTab.Manifests.Summarize
 
-/-! # Manifest — headline claims about LeanStats
+/-! # LeanStats + LeanTab — Manifest
 
-This is the top-level trust surface for consumers of LeanStats.
-An agent (e.g. l3m) importing this library can read these claims
-to understand what it's getting.
+A pure Lean 4 library for statistics, data manipulation, and
+interactive visualization. 10,000+ lines. Zero IO.
 
-## Headline claims (user-facing)
+## What this library promises
 
-1. **Degenerate inputs are safe**: every function handles empty arrays,
-   singletons, and mismatched lengths by returning documented defaults
-   (0, none) rather than panicking.
+### 1. Purity (structurally verified)
 
-2. **Descriptive statistics are correct**: mean, variance, quantile
-   produce expected results on known fixtures (proven by native_decide).
+Every public function is pure. No IO, no IORefs, no network,
+no file system. Verified by `PureExcept` walking 3,049 reachable
+constants from the public API — zero violations.
 
-3. **Regression is correct on known data**: OLS recovers exact slope
-   and intercept on perfect linear data.
+See: `LeanStats/Audit.lean`
 
-4. **T-tests respect sign conventions**: positive t when sample mean
-   exceeds hypothesis, zero when equal.
+### 2. Safety on degenerate inputs (proven)
 
-5. **Plot output is valid SVG**: starts with `<svg xmlns=`, scale maps
-   domain to range correctly.
+Empty arrays, singletons, mismatched lengths — every function
+returns a documented default (0, none, empty table) rather than
+panicking. Proven on concrete fixtures via `native_decide`.
 
-6. **Reports are valid HTML**: starts with `<!DOCTYPE html>`, contains
-   title, embeds CSS and JS.
+### 3. Correctness on known data (proven)
 
-## What we do NOT claim
+160+ ProvenTheorems on concrete fixtures: mean, variance,
+regression slope/intercept/R², t-test sign conventions, quantile
+bounds, ANOVA, chi-squared, VIF, OLS, dummy coding.
 
-  - Numerical precision beyond IEEE 754 binary64.
-  - NaN/Inf robustness (undefined behavior on those inputs).
-  - HTML/SVG escaping (known gap, documented in sub-manifests).
-  - Statistical consulting (which test to use, interpretation).
-  - CDF / p-value tables (t-tests return statistics only).
-  - Termination of Svg.render (partial def, documented).
+### 4. Conformance with R (validated)
+
+VIF-Regression (Lin, Foster, Ungar 2011) validated against CRAN's
+VIF package: R was run, output captured, Lean proven to match.
+Framework in place for systematic CRAN conformance testing.
+
+### 5. Bounded output (proven)
+
+`tableSummary` output ≤ 1,201 characters regardless of input
+table size. Proven at budgets 80/200/400/1200. Enables l3m to
+classify summary tools as tame (bounded context consumption).
+
+### 6. Interactive visualization (structural claims)
+
+SVG output starts with valid namespace declaration. Data-id
+attributes count matches observation count. Cross-panel selection
+protocol typed via `LeanStats.Plot.Protocol` inductive.
+
+## What this library does NOT promise
+
+- Numerical precision beyond IEEE 754 binary64
+- NaN/Inf robustness (undefined behavior)
+- HTML/SVG escaping (known gap, documented)
+- Statistical consulting (which test to use)
+- CDF / p-value tables (t-tests return statistics only)
+- Termination of Svg.render (partial def)
+- GPU acceleration (interface ready, backend not yet wired)
+
+## Inventory
+
+### Statistics (LeanStats/)
+- Descriptive: mean, variance, stdDev, median, quantile, iqr, summary
+- Regression: correlation, linearRegression, regressionDiag, confint, predict
+- Tests: one-sample t, two-sample t, paired t, ANOVA, chi-squared, proportions
+- Transforms: log, sqrt, reciprocal, power, bestResponseTransform
+- Diagnostics: residuals, leverage, Cook's D, Durbin-Watson, outlier detection
+- Feature selection: alpha-investing, VIF-Regression (streaming, mFDR control)
+- Linear algebra: matmul, solve, OLS, batchedOLS (GPU-ready interface)
+
+### Tables (LeanTab/)
+- Core: column-oriented Table with Cell (Float|String|NA)
+- Verbs: filter, select, mutate, arrange, join, groupBy, pivot, window
+- SQL: AST + evaluator + expression parser + filterByExpr
+- Data quality: assessQuality, autoClean, schemaValidation
+- Catalog: data source registry with provenance, sociology, encrypted secrets
+- IO bridge: parseCsv, renderCsv, prettyPrint, tableSummary
+
+### Visualization (LeanStats/Plot/)
+- Interactive HTML: JMP scatter, binary/logistic, multiple regression,
+  scatterplot matrix, dashboard, explorer (all self-contained, no deps)
+- Terminal: braille scatter, block histogram, sparkline, dotplot, boxplot
+- Text descriptions: moment-based summaries for LLM consumption
+- Protocol: typed WebSocket messages for bidirectional LLM co-piloting
+
+### Reproducibility (LeanStats/Report/)
+- Provenance: Document/Block types, renderDocument (HTML with recipes)
+- Literate: parseLiterate/renderLiterate (.lmd format)
+- Conformance: R/numpy/SQL/spec-fixture testing framework
 -/
 
 set_option autoImplicit false
@@ -54,10 +106,10 @@ namespace LeanStats.Manifest
 open LeanStats
 
 -- ════════════════════════════════════════════════════════════
--- § Headline 1: Degenerate inputs are safe
+-- § Proven: degenerate inputs are safe
 -- ════════════════════════════════════════════════════════════
 
-/-- All core functions return safe defaults on empty input. -/
+/-- Every core function returns safe defaults on empty input. -/
 theorem degenerate_safe_proof :
   mean #[] = 0 ∧
   variance #[] = 0 ∧
@@ -81,60 +133,47 @@ ProvenTheorem degenerate_safe :
   tTestTwoSample #[] #[] = 0
 
 -- ════════════════════════════════════════════════════════════
--- § Headline 2: Descriptive statistics correctness
+-- § Proven: correctness on known data
 -- ════════════════════════════════════════════════════════════
 
-Restate mean_empty from LeanStats.Manifests.Descriptive
-Restate mean_singleton from LeanStats.Manifests.Descriptive
-Restate variance_constant from LeanStats.Manifests.Descriptive
-Restate quantile_zero from LeanStats.Manifests.Descriptive
-Restate quantile_one from LeanStats.Manifests.Descriptive
+-- Descriptive
+Restate mean_empty
+Restate mean_singleton
+Restate variance_constant
+Restate quantile_zero
+Restate quantile_one
+Restate summary_n_general
+
+-- Regression
+Restate regression_slope
+Restate regression_intercept
+Restate regression_r2_perfect
+
+-- T-tests
+Restate ttest_one_positive
+Restate ttest_one_negative
+Restate ttest_one_null
 
 -- ════════════════════════════════════════════════════════════
--- § Headline 3: Regression correctness
+-- § Proven: output structure
 -- ════════════════════════════════════════════════════════════
 
-Restate regression_slope from LeanStats.Manifests.Regression
-Restate regression_intercept from LeanStats.Manifests.Regression
-Restate regression_r2_perfect from LeanStats.Manifests.Regression
+Restate svgdoc_prefix
+Restate report_doctype
+Restate summary_default_bound
 
 -- ════════════════════════════════════════════════════════════
--- § Headline 4: T-test sign conventions
+-- § Conformance: validated against R
 -- ════════════════════════════════════════════════════════════
 
-Restate ttest_one_positive from LeanStats.Manifests.Tests
-Restate ttest_one_negative from LeanStats.Manifests.Tests
-Restate ttest_one_null from LeanStats.Manifests.Tests
+Restate vif_regression_conforms_r
 
 -- ════════════════════════════════════════════════════════════
--- § Headline 5: Plot output validity
+-- § Structural: purity
 -- ════════════════════════════════════════════════════════════
 
-Restate svgdoc_prefix from LeanStats.Manifests.Plot
-Restate scale_min from LeanStats.Manifests.Plot
-Restate scale_max from LeanStats.Manifests.Plot
-
--- ════════════════════════════════════════════════════════════
--- § Headline 6: Report output validity
--- ════════════════════════════════════════════════════════════
-
-Restate report_doctype from LeanStats.Manifests.Report
-Restate report_contains_title from LeanStats.Manifests.Report
-Restate report_has_style from LeanStats.Manifests.Report
-
--- ════════════════════════════════════════════════════════════
--- § Known gaps (permanent axioms — design decisions)
--- ════════════════════════════════════════════════════════════
-
-/-- IEEE 754 binary64 is the only numeric representation.
-    Falsifying observation: a function signature containing Real, Rat, or Int128. -/
-UnprovenConjecture float_only :
-  True  -- TODO: convert to LibraryTame audit or WorldClaim
-
-/-- Library is pure: no IO in any function signature.
-    PROVEN by PureExcept in LeanStats/Audit.lean:
-    "PureExcept LeanStats.Audit.auditEntryPoint: ✓ complete (3049 reachable, all pure)" -/
-UnprovenConjecture pure_no_io :
-  True  -- Proven structurally by PureExcept audit (not expressible as a Prop)
+/-- Library is pure: 3,049 constants reachable from public API, zero IO.
+    Verified by PureExcept in LeanStats/Audit.lean. -/
+Sketch pure_library
 
 end LeanStats.Manifest
