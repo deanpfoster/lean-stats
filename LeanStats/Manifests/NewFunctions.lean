@@ -123,11 +123,9 @@ private def rX0 : Array Float := #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 private def rX1 : Array Float := #[14, 6, 1, 8, 19, 11, 16, 3, 18, 9, 5, 15, 7, 12, 20, 4, 17, 10, 2, 13]
 
 /-- VIF-Regression matches R: selects x0 (signal), rejects x1 (noise).
-    Validated against CRAN VIF package on 2026-05-23. -/
-theorem vif_regression_conforms_r_proof :
-  (vifRegression rY #[rX0, rX1] { w0 := 0.1, dw := 0.05, subsize := 20 }).selected = #[0] := by native_decide
-
-ProvenTheorem vif_regression_conforms_r :
+    R 4.3.2, CRAN VIF package v1.0 (Lin, Foster, Ungar 2011).
+    Validated 2026-05-23. -/
+ConformanceFixture vif_regression_conforms_r :
   (vifRegression rY #[rX0, rX1] { w0 := 0.1, dw := 0.05, subsize := 20 }).selected = #[0]
 
 end LeanStats.Manifests.NewFunctions
