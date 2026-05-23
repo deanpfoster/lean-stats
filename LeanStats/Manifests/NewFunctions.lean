@@ -115,15 +115,19 @@ theorem paired_t_identical_proof : pairedIdentical = 0 := by native_decide
 
 ProvenTheorem paired_t_identical : pairedIdentical = 0
 
--- VIF-Regression conformance: selects only the signal variable
-private def vifY : Array Float := #[2.1, 4.0, 5.9, 8.1, 10.0]
-private def vifXs : Array (Array Float) := #[#[1.0, 2.0, 3.0, 4.0, 5.0], #[5.0, 3.0, 1.0, 4.0, 2.0], #[2.0, 2.0, 2.0, 2.0, 2.0]]
+-- VIF-Regression conformance: validated against R's VIF package (CRAN archive)
+-- R 4.3.2, VIF 1.0, run: Rscript Conformance/R/vif_regression.R
+-- R output: "selected (1-based): 1" → our index 0
+private def rY : Array Float := #[2.5, 3.7, 6.8, 7.9, 10.4, 11.4, 14.2, 16.7, 17.6, 20.3, 21.8, 24.6, 25.5, 28.1, 30.9, 31.2, 34.3, 35.9, 38.5, 39.7]
+private def rX0 : Array Float := #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+private def rX1 : Array Float := #[14, 6, 1, 8, 19, 11, 16, 3, 18, 9, 5, 15, 7, 12, 20, 4, 17, 10, 2, 13]
 
-/-- VIF-Regression correctly identifies the signal (x0) and rejects noise. -/
-theorem vif_regression_selects_signal_proof :
-  (vifRegression vifY vifXs { w0 := 0.5, dw := 0.1, subsize := 5 }).selected = #[0] := by native_decide
+/-- VIF-Regression matches R: selects x0 (signal), rejects x1 (noise).
+    Validated against CRAN VIF package on 2026-05-23. -/
+theorem vif_regression_conforms_r_proof :
+  (vifRegression rY #[rX0, rX1] { w0 := 0.1, dw := 0.05, subsize := 20 }).selected = #[0] := by native_decide
 
-ProvenTheorem vif_regression_selects_signal :
-  (vifRegression vifY vifXs { w0 := 0.5, dw := 0.1, subsize := 5 }).selected = #[0]
+ProvenTheorem vif_regression_conforms_r :
+  (vifRegression rY #[rX0, rX1] { w0 := 0.1, dw := 0.05, subsize := 20 }).selected = #[0]
 
 end LeanStats.Manifests.NewFunctions
