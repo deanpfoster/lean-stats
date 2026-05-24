@@ -1,4 +1,5 @@
 import LeanTab.Catalog
+import LeanTab.SchemaValidation
 
 /-! # LeanTab.CatalogJson — JSON serialization for the data catalog
 
@@ -97,7 +98,9 @@ def DataSource.toJson (src : DataSource) : String :=
     ("environments", jsonArr (src.environments.toList.map Environment.toJson)),
     ("pipelineUrl", jsonStr src.pipelineUrl),
     ("lastSuccessfulRun", jsonStr src.lastSuccessfulRun),
-    ("pipelineStep", jsonStr src.pipelineStep)
+    ("pipelineStep", jsonStr src.pipelineStep),
+    ("validation", jsonStr (match src.validation with | .unverified => "unverified" | .drifted => "drifted" | .validated => "validated")),
+    ("derivedFrom", match src.derivedFrom with | some s => jsonStr s | none => "null")
   ]
 
 def DataCatalog.toJsonString (cat : DataCatalog) : String :=
@@ -119,7 +122,8 @@ def DataCatalog.upsert (cat : DataCatalog) (src : DataSource) : DataCatalog :=
 
 /-- Update a catalog entry preserving sociology fields (owner, contact,
     communications, notes, tags) while refreshing data fields. -/
-def DataSource.refreshFrom (old : DataSource) (t : Table) : DataSource :=
+def DataSource.refreshFrom (old : DataSource) (t : Table)
+    (issues : Array SchemaIssue := #[]) : DataSource :=
   let fresh := catalogFromTable t old.name old.origin
   { fresh with
     owner := old.owner
@@ -128,9 +132,19 @@ def DataSource.refreshFrom (old : DataSource) (t : Table) : DataSource :=
     notes := old.notes
     tags := old.tags
     confidence := old.confidence
+    validation := if issues.isEmpty then .validated else .drifted
+    derivedFrom := old.derivedFrom
     upstreamDeps := old.upstreamDeps
     environments := old.environments
     pipelineUrl := old.pipelineUrl
     encryptedOrigin := old.encryptedOrigin }
+
+/-- Find all unverified entries. -/
+def DataCatalog.findUnverified (cat : DataCatalog) : Array DataSource :=
+  cat.sources.filter (·.validation == .unverified)
+
+/-- Find all drifted entries. -/
+def DataCatalog.findDrifted (cat : DataCatalog) : Array DataSource :=
+  cat.sources.filter (·.validation == .drifted)
 
 end LeanTab
