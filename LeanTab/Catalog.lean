@@ -58,6 +58,16 @@ structure DataQuality where
   nDuplicateRows : Option Nat := none
   deriving Repr
 
+/-- How much we trust this catalog entry. -/
+inductive ValidationStatus where
+  /-- Hearsay. No fetch has confirmed any field. -/
+  | unverified
+  /-- A fetch succeeded but found schema drift from what was recorded. -/
+  | drifted
+  /-- A fetch succeeded and schema matched (or entry was just recorded from a fetch). -/
+  | validated
+  deriving Repr, BEq, Inhabited
+
 /-- An upstream table dependency (who feeds this table). -/
 structure UpstreamDependency where
   tableName : String             -- "unified_inventory_costs"
@@ -107,6 +117,10 @@ structure DataSource where
   tags : Array String := #[]
   /-- Confidence: how much do we trust this entry? -/
   confidence : String := "low"  -- "high", "medium", "low", "unknown"
+  /-- Validation status: unverified (hearsay), drifted, or validated. -/
+  validation : ValidationStatus := .unverified
+  /-- If this entry was derived from/corrected from another, name the parent. -/
+  derivedFrom : Option String := none
 
   -- Pipeline/infrastructure fields (Amazon-style):
 
@@ -257,7 +271,8 @@ def catalogFromTable (t : Table) (name : String) (origin : String := "unknown") 
       distinct := some distinct.size, sample, description := "unknown" : ColumnSpec }
   let quality := assessQuality t
   let summary := tableSummary t
-  { name, origin, schema, quality, rowCount := some t.nRows, summary := some summary }
+  { name, origin, schema, quality, rowCount := some t.nRows, summary := some summary,
+    validation := .validated }
 
 -- ════════════════════════════════════════════════════════════
 -- § Searching and querying the catalog
