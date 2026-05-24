@@ -302,7 +302,8 @@ def DataCatalog.findJoinCandidates (cat : DataCatalog) (src : DataSource) : Arra
 
 /-- Render a catalog entry for the LLM (the "two-eyed" symbolic view). -/
 def DataSource.renderForLLM (src : DataSource) (budget : Nat := 400) : String :=
-  let header := s!"{src.name} ({src.rowCount.getD 0} rows, {src.schema.size} cols)"
+  let badge := match src.validation with | .validated => "✓" | .drifted => "⚠" | .unverified => "?"
+  let header := s!"{badge} {src.name} ({src.rowCount.getD 0} rows, {src.schema.size} cols)"
   let owner := if src.owner != "unknown" then s!"\nowner: {src.owner}" else ""
   let contact := if src.contact != "unknown" then s!", contact: {src.contact}" else ""
   let confidence := s!"\nconfidence: {src.confidence}"
