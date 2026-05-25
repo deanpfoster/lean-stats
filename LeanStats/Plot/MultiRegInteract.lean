@@ -297,7 +297,7 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
     s!"<div class='panel'><svg id='panel_{i+1}' width='280' height='240'></svg>" ++
     s!"<div class='panel-ctrl'><b id='lbl_{i}'>{name}</b> " ++
     s!"<select id='tf_{i}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> " ++
-    s!"deg <select id='deg_{i}' title='Degree of fit in this AV plot. 0=excluded from model. Higher=more flexible fit line (visual smoothing, not model polynomial).'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
+    s!"deg <select id='deg_{i}' title='Polynomial degree in model. 0=excluded. 1=linear. 2=adds X². 3=adds X²+X³. The AV plot shows the combined contribution.'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
   -- Interaction panels
   let interPanels := String.join (interactions.toList.enum.map fun (k, (i, j)) =>
     let idx := nMain + k
@@ -306,7 +306,7 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
     s!"<div class='panel'><svg id='panel_{idx+1}' width='280' height='240'></svg>" ++
     s!"<div class='panel-ctrl'><b id='lbl_{idx}'>{nameI}·{nameJ}</b> " ++
     s!"<select id='tf_{idx}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> " ++
-    s!"deg <select id='deg_{idx}'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
+    s!"deg <select id='deg_{idx}'><option value='0'>0 (out)</option><option value='1' selected>1 (in)</option></select></div></div>")
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>\n<style>{mriCss}{theme.toCss}</style></head><body>\n" ++
   s!"<h2>{pageTitle} <button id='keepBtn' title='Pin this view' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>\n" ++
   s!"<div style='display:flex;align-items:stretch'><div class='y-ctrl'><div class='y-label'>{yName}</div><select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></div><div class='plots-row'>{panel0}{mainPanels}{interPanels}</div></div>\n" ++
