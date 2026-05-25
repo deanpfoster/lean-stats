@@ -19,6 +19,7 @@ import LeanStats.Plot.FittedLine
 import LeanStats.Plot.Interactive
 import LeanStats.Plot.Terminal
 import LeanStats.Plot.Describe
+import LeanStats.Plot.Theme
 import LeanStats.Plot.Jmp
 import LeanStats.Plot.Binary
 import LeanStats.Plot.MultiReg
