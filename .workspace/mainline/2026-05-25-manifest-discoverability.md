@@ -234,6 +234,71 @@ Cost: 0 minutes (reference only) or a half day (write a draft).
 Value: long-term — sets up stats's manifest as a discoverability
 artifact for the project's *users*, not just its developers.
 
+### (6) Cross-rung pointers — every file points one rung up
+
+The actual failure mode that produced this whole memo: I
+jumped to `LeanStats/Plot/Theme.lean` directly, never opened
+`LeanStats/Manifest.lean`. Promoting the manifest to a higher
+directory wouldn't have helped — I bypassed the directory tree
+entirely by knowing the file path. The fix that *would* have
+helped is a pointer in the file my cursor was already on.
+
+The pattern (now codified in
+`lean-manifests/templates/MANIFEST_GUIDE.md` § 7's last
+subsection):
+
+```
+implementation file (LeanStats/Plot/Theme.lean)
+   ↑ "See LeanStats.Manifest § 6 for visualization claims."
+top-level manifest (LeanStats.Manifest)
+   ↑ "See ../README.md for what the library is for."
+README.md
+```
+
+Every Lean file's module docstring names the rung above it.
+The README is the ground floor; every climb terminates there.
+A reader who lands at any rung can climb either direction
+without `cd; ls`.
+
+For stats, the concrete change is a one-line addition to each
+`LeanStats/Plot/*.lean` and `LeanTab/*.lean` module docstring:
+
+```lean
+/-! # LeanStats.Plot.Theme — switchable visual themes
+
+Themes control colors, weights, fonts, spacing.
+
+For structural claims about visualization output (SVG namespace,
+data-id counts, theme-CSS distinctness), see
+`LeanStats.Manifest` § 6 ("Interactive visualization"). -/
+```
+
+And one line at the top of `LeanStats.Manifest`:
+
+```lean
+/-! # LeanStats + LeanTab — Manifest
+
+For what this library is for and who should use it, see the
+project `README.md`. -/
+```
+
+Cost: ~30 minutes for the dozen+ files. Most can be done in a
+single sweep.
+Value: future integrators (and current ones who are landing on
+files cold) climb to the manifest from wherever their cursor
+landed. The discipline self-enforces: a new file without a
+pointer feels obviously incomplete.
+
+l3m has this discipline already in `L3m/Defs/ReviewerSigil.lean`
+and a few other files; we're now applying it consistently to
+the load-bearing manifest files (Spec, Architecture, the four
+subsystems). Stats adopting the same convention closes the loop
+for cross-project integration.
+
+This is the suggestion I'd lead with if I were re-prioritizing.
+The recurring contributor (me, future-me, future-other-agent)
+doesn't reach for the manifest; the pointer pulls them in.
+
 ## The deeper observation
 
 The manifest discipline crosses project boundaries even though
