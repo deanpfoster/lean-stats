@@ -1,4 +1,5 @@
 import LeanStats.Descriptive
+import LeanStats.Plot.Theme
 
 /-! # LeanStats.Plot.MultiReg — Multiple regression interactive HTML page
 
@@ -205,7 +206,8 @@ private def multiRegJs : String :=
 /-- Generate a self-contained HTML page for multiple regression with
     all plots visible simultaneously in a horizontal row. -/
 def multiRegPlot (xs : Array (String × Array Float)) (ys : Array Float)
-    (yName : String := "y") (title : String := "") : String :=
+    (yName : String := "y") (title : String := "")
+    (theme : LeanStats.Plot.Theme := LeanStats.Plot.Theme.tufte) : String :=
   let pageTitle := if title != "" then title else s!"{yName} ~ multiple regression"
   let nPred := xs.size
   let predArrays := String.intercalate "," (xs.toList.map fun (_, vals) =>
@@ -222,7 +224,7 @@ def multiRegPlot (xs : Array (String × Array Float)) (ys : Array Float)
     [s!"<option value='0'>Y vs Ŷ</option>"] ++
     (xs.toList.enum.map fun (i, (name, _)) => s!"<option value='{i+1}'>{name}</option>"))
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
-<style>{multiRegCss}</style></head><body>
+<style>{multiRegCss}{theme.toCss}</style></head><body>
 <h2>{pageTitle} <button id='keepBtn' title='Pin this view' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>
 <div style='display:flex;align-items:flex-start'>
   <div class='y-ctrl'>

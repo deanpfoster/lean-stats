@@ -1,4 +1,5 @@
 import LeanStats.Descriptive
+import LeanStats.Plot.Theme
 
 /-! # LeanStats.Plot.MultiRegInteract — Multiple regression with interaction terms
 
@@ -259,7 +260,8 @@ private def mriJs5 : String :=
     `interactions` is an array of (i, j) pairs indicating which X variables interact. -/
 def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
     (interactions : Array (Nat × Nat) := #[])
-    (yName : String := "y") (title : String := "") : String :=
+    (yName : String := "y") (title : String := "")
+    (theme : LeanStats.Plot.Theme := LeanStats.Plot.Theme.tufte) : String :=
   let pageTitle := if title != "" then title else s!"{yName} ~ multiple regression (interactions)"
   let nMain := xs.size
   let predArrays := String.intercalate "," (xs.toList.map fun (_, vals) =>
@@ -291,7 +293,7 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
     s!"<div class='panel-ctrl'><b id='lbl_{idx}'>{nameI}·{nameJ}</b> " ++
     s!"<select id='tf_{idx}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> " ++
     s!"deg <select id='deg_{idx}'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
-  s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>\n<style>{mriCss}</style></head><body>\n" ++
+  s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>\n<style>{mriCss}{theme.toCss}</style></head><body>\n" ++
   s!"<h2>{pageTitle} <button id='keepBtn' title='Pin this view' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>\n" ++
   s!"<div style='display:flex;align-items:stretch'><div class='y-ctrl'><div class='y-label'>{yName}</div><select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select></div><div class='plots-row'>{panel0}{mainPanels}{interPanels}</div></div>\n" ++
   s!"<div class='toolbar'>\n" ++

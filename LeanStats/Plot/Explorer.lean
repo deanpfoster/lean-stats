@@ -1,4 +1,5 @@
 import LeanStats.Descriptive
+import LeanStats.Plot.Theme
 
 /-! # LeanStats.Plot.Explorer — JMP-style scatter+histogram with point state and WebSocket
 
@@ -224,7 +225,8 @@ private def explorerJs4 : String :=
     Includes per-point state management and bidirectional WebSocket on port 9147. -/
 def explorerPlot (xs ys : Array Float) (groups : Option (Array String) := none)
     (xName : String := "x") (yName : String := "y")
-    (groupName : String := "group") (title : String := "") : String :=
+    (groupName : String := "group") (title : String := "")
+    (theme : LeanStats.Plot.Theme := LeanStats.Plot.Theme.tufte) : String :=
   let xJson := "[" ++ String.intercalate "," (xs.toList.map toString) ++ "]"
   let yJson := "[" ++ String.intercalate "," (ys.toList.map toString) ++ "]"
   let gJson := match groups with
@@ -233,7 +235,7 @@ def explorerPlot (xs ys : Array Float) (groups : Option (Array String) := none)
   let pageTitle := if title != "" then title else s!"{yName} vs {xName}"
   let _ := groupName  -- used in legend context
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
-<style>{explorerCss}</style></head><body>
+<style>{explorerCss}{theme.toCss}</style></head><body>
 <h2>{pageTitle} <button id='keepBtn' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>
 <div class='main-grid'>
   <div class='y-ctrl'>

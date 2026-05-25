@@ -1,3 +1,5 @@
+import LeanStats.Plot.Theme
+
 /-! # LeanStats.Plot.ScatterMatrix — scatterplot matrix (SPLOM) with linked selection
 
 An n×n grid of small panels: off-diagonal scatter plots, diagonal histograms,
@@ -144,7 +146,8 @@ private def floatArrayToJs (arr : Array Float) : String :=
 /-- Generate a scatterplot matrix (SPLOM) HTML page with linked cross-panel selection. -/
 def scatterMatrix (vars : Array (String × Array Float))
     (labels : Option (Array String) := none)
-    (title : String := "") : String :=
+    (title : String := "")
+    (theme : LeanStats.Plot.Theme := LeanStats.Plot.Theme.tufte) : String :=
   let n := vars.size
   let varsJs := "[" ++ ",".intercalate (vars.toList.map fun (name, vals) =>
     "{name:\"" ++ name ++ "\",values:" ++ floatArrayToJs vals ++ "}") ++ "]"
@@ -155,7 +158,7 @@ def scatterMatrix (vars : Array (String × Array Float))
     List.range n |>.map fun c =>
       "<div class=\"cell\" data-row=\"" ++ toString r ++ "\" data-col=\"" ++ toString c ++ "\"></div>").flatten)
   "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>" ++ title ++ "</title>" ++
-  "<style>" ++ splomCss n ++ "</style></head><body>" ++
+  "<style>" ++ splomCss n ++ theme.toCss ++ "</style></head><body>" ++
   "<div class=\"title-bar\"><h2>" ++ title ++ "</h2><button id=\"keepBtn\">📌 Keep</button><button id=\"invertBtn\" style=\"font-size:13px;padding:4px 8px;border:1px solid #ccc;border-radius:4px;cursor:pointer;margin-left:8px\">⇄ Invert</button></div>" ++
   "<div class=\"grid\">" ++ gridHtml ++ "</div>" ++
   "<div id=\"tt\" class=\"tooltip\"></div>" ++

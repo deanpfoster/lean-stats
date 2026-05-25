@@ -1,4 +1,5 @@
 import LeanStats.Descriptive
+import LeanStats.Plot.Theme
 
 /-! # LeanStats.Plot.Dashboard — unified multi-panel analysis dashboard
 
@@ -331,7 +332,8 @@ private def dashJs5 : String :=
     and bidirectional WebSocket on port 9147. -/
 def dashboard (ys : Array Float) (xs : Array (String × Array Float))
     (groups : Option (String × Array String) := none)
-    (yName : String := "y") (title : String := "") : String :=
+    (yName : String := "y") (title : String := "")
+    (theme : LeanStats.Plot.Theme := LeanStats.Plot.Theme.tufte) : String :=
   let n := ys.size
   let yJson := "[" ++ String.intercalate "," (ys.toList.map toString) ++ "]"
   let xsJson := "{" ++ String.intercalate "," (xs.toList.map fun (name, vals) =>
@@ -347,7 +349,7 @@ def dashboard (ys : Array Float) (xs : Array (String × Array Float))
   let pageTitle := if title != "" then title else s!"{yName} Dashboard"
   let _ := n  -- used in data init
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
-<style>{dashCss}</style></head><body>
+<style>{dashCss}{theme.toCss}</style></head><body>
 <h2>{pageTitle} <button id='keepBtn' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>
 <div id='dashPanels' class='dashboard'></div>
 <div class='toolbar'>
