@@ -28,6 +28,7 @@ private def splomJs : String :=
   "function scaleX(v,min,max){return M.l+(v-min)/(max-min)*cw}\n" ++
   "function scaleY(v,min,max){return M.t+ch-(v-min)/(max-min)*ch}\n" ++
   "function ptColor(i){if(pointState[i].excluded)return'#ccc';if(pointState[i].selected)return'orange';return'steelblue'}\n" ++
+  "function ptClass(i){if(pointState[i].excluded)return'point excluded';if(pointState[i].selected)return'point selected';return'point'}\n" ++
   "function drawAll(){var cells=document.querySelectorAll('.cell');cells.forEach(function(c){var r=+c.dataset.row,col=+c.dataset.col;drawCell(r,col,c)})}\n" ++
   "function drawCell(row,col,el){\n" ++
   "  var vals_r=vars[row].values,vals_c=vars[col].values;\n" ++
@@ -45,7 +46,7 @@ private def splomJs : String :=
   "  for(var i=0;i<nObs;i++){\n" ++
   "    if(pointState[i].hidden)continue;\n" ++
   "    var cx=scaleX(vals_c[i],xmin,xmax),cy=scaleY(vals_r[i],ymin,ymax);\n" ++
-  "    svg+='<circle cx=\"'+cx+'\" cy=\"'+cy+'\" r=\"2.5\" fill=\"'+ptColor(i)+'\" opacity=\"0.7\" data-i=\"'+i+'\"/>';\n" ++
+  "    svg+='<circle cx=\"'+cx+'\" cy=\"'+cy+'\" r=\"2.5\" class=\"'+ptClass(i)+'\" data-i=\"'+i+'\"/>';\n" ++
   "  }\n" ++
   "  svg+='</svg>';el.innerHTML=svg;\n" ++
   "}\n" ++

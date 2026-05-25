@@ -88,8 +88,8 @@ private def dashJs2 : String :=
     "var sx=function(v){return(v-xMin)/xR*pw+M.l};var sy=function(v){return PH-M.b-(v-yMin)/yR*ph};" ++
     "var pi=panel._idx;" ++
     "var s=\"<rect x='0' y='0' width='\"+PW+\"' height='\"+PH+\"' fill='transparent' class='bg' data-pi='\"+pi+\"'/>\";" ++
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+(PH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(PH-M.b)+\"' stroke='#333'/>\";" ++
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(PH-M.b)+\"' stroke='#333'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+(PH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(PH-M.b)+\"'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(PH-M.b)+\"'/>\";" ++
     "for(var i=0;i<=4;i++){var v=xMin+i/4*xR;s+=\"<text x='\"+sx(v)+\"' y='\"+(PH-M.b+13)+\"' text-anchor='middle' font-size='9'>\"+v.toPrecision(3)+\"</text>\"}" ++
     "for(var i=0;i<=4;i++){var v=yMin+i/4*yR;s+=\"<text x='\"+(M.l-5)+\"' y='\"+(sy(v)+3)+\"' text-anchor='end' font-size='9'>\"+v.toPrecision(3)+\"</text>\"}" ++
     "var fitPts=pts.filter(function(p){return !state.points[p.idx].excluded});" ++
@@ -98,27 +98,27 @@ private def dashJs2 : String :=
       "var coef=polyFit(fx,fy,deg);" ++
       "if(coef){" ++
         "var path='';for(var i=0;i<=80;i++){var xv=xMin+i/80*xR;var yv=polyEval(coef,xv);if(yv>=yMin-yR&&yv<=yMax+yR){path+=(path===''?'M':'L')+sx(xv)+','+sy(yv)}}" ++
-        "s+=\"<path d='\"+path+\"' fill='none' stroke='#999' stroke-width='1.5' opacity='0.6'/>\";" ++
+        "s+=\"<path class='fit' d='\"+path+\"'/>\";" ++
         "var sse=0;for(var i=0;i<fx.length;i++){var yh=polyEval(coef,fx[i]);sse+=(fy[i]-yh)*(fy[i]-yh)}" ++
         "var se=Math.sqrt(sse/Math.max(1,fx.length-deg-1));" ++
         "var xbar=fx.reduce(function(a,b){return a+b},0)/fx.length;" ++
         "var Sxx=fx.reduce(function(a,v){return a+(v-xbar)*(v-xbar)},0);" ++
         "var bandU='',bandL='';for(var i=0;i<=80;i++){var xv=xMin+i/80*xR;var yv=polyEval(coef,xv);var h=1/fx.length+(xv-xbar)*(xv-xbar)/(Sxx||1);var b=1.96*se*Math.sqrt(h);bandU+=(bandU===''?'M':'L')+sx(xv)+','+sy(yv+b);bandL+=(bandL===''?'M':'L')+sx(xv)+','+sy(yv-b)}" ++
-        "s+=\"<path d='\"+bandU+\"' fill='none' stroke='#999' stroke-width='1' opacity='0.3' stroke-dasharray='3'/>\";" ++
-        "s+=\"<path d='\"+bandL+\"' fill='none' stroke='#999' stroke-width='1' opacity='0.3' stroke-dasharray='3'/>\"" ++
+        "s+=\"<path class='ci' d='\"+bandU+\"'/>\";" ++
+        "s+=\"<path class='ci' d='\"+bandL+\"'/>\"" ++
       "}" ++
     "}" ++
     "state.fits.forEach(function(spec,idx){" ++
       "if(spec.panelIdx!==undefined&&spec.panelIdx!==pi)return;" ++
       "var col=colors[idx%colors.length];" ++
       "var path='';for(var i=0;i<=80;i++){var xv=xMin+i/80*xR;var yv=polyEval(spec.coef,xv);if(yv>=yMin-yR&&yv<=yMax+yR){path+=(path===''?'M':'L')+sx(xv)+','+sy(yv)}}" ++
-      "s+=\"<path d='\"+path+\"' fill='none' stroke='\"+col+\"' stroke-width='2'/>\"" ++
+      "s+=\"<path class='fit' d='\"+path+\"'/>\"" ++
     "});" ++
     "pts.forEach(function(pt){" ++
       "var st=state.points[pt.idx];" ++
-      "if(st.excluded){s+=\"<text x='\"+sx(pt.x)+\"' y='\"+(sy(pt.y)+4)+\"' text-anchor='middle' font-size='11' fill='grey' opacity='0.3' data-idx='\"+pt.idx+\"' data-pi='\"+pi+\"' style='cursor:pointer'>×</text>\"}" ++
-      "else if(st.selected){s+=\"<circle cx='\"+sx(pt.x)+\"' cy='\"+sy(pt.y)+\"' r='4' fill='steelblue' stroke='orange' stroke-width='2' opacity='1' data-idx='\"+pt.idx+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
-      "else{s+=\"<circle cx='\"+sx(pt.x)+\"' cy='\"+sy(pt.y)+\"' r='3.5' fill='steelblue' opacity='0.8' data-idx='\"+pt.idx+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
+      "if(st.excluded){s+=\"<text x='\"+sx(pt.x)+\"' y='\"+(sy(pt.y)+4)+\"' text-anchor='middle' font-size='11' class='point excluded' data-idx='\"+pt.idx+\"' data-pi='\"+pi+\"' style='cursor:pointer'>×</text>\"}" ++
+      "else if(st.selected){s+=\"<circle class='point selected' cx='\"+sx(pt.x)+\"' cy='\"+sy(pt.y)+\"' data-idx='\"+pt.idx+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
+      "else{s+=\"<circle class='point' cx='\"+sx(pt.x)+\"' cy='\"+sy(pt.y)+\"' data-idx='\"+pt.idx+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
     "});" ++
     "svg.innerHTML=s;bindPanel(panel)" ++
   "}"
@@ -176,12 +176,12 @@ private def dashJs3 : String :=
     "var xR2=xMax-xMin||1,yR2=yMax-yMin||1;" ++
     "var sx=function(v){return(v-xMin)/xR2*pw+M.l};var sy=function(v){return PH-M.b-(v-yMin)/yR2*ph};" ++
     "var s=\"<rect x='0' y='0' width='\"+PW+\"' height='\"+PH+\"' fill='transparent' class='bg' data-pi='\"+pi+\"'/>\";" ++
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+(PH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(PH-M.b)+\"' stroke='#333'/>\";" ++
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(PH-M.b)+\"' stroke='#333'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+(PH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(PH-M.b)+\"'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(PH-M.b)+\"'/>\";" ++
     "idx.forEach(function(oi,k){" ++
       "var st=state.points[oi];" ++
-      "if(st.selected){s+=\"<circle cx='\"+sx(resX[k])+\"' cy='\"+sy(resY[k])+\"' r='4' fill='steelblue' stroke='orange' stroke-width='2' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
-      "else{s+=\"<circle cx='\"+sx(resX[k])+\"' cy='\"+sy(resY[k])+\"' r='3.5' fill='steelblue' opacity='0.8' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
+      "if(st.selected){s+=\"<circle class='point selected' cx='\"+sx(resX[k])+\"' cy='\"+sy(resY[k])+\"' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
+      "else{s+=\"<circle class='point' cx='\"+sx(resX[k])+\"' cy='\"+sy(resY[k])+\"' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
     "});" ++
     "svg.innerHTML=s;bindPanel(panel)" ++
   "}" ++
@@ -199,13 +199,13 @@ private def dashJs3 : String :=
     "var xR2=xMax-xMin||1,yR2=yMax-yMin||1;" ++
     "var sx=function(v){return(v-xMin)/xR2*pw+M.l};var sy=function(v){return PH-M.b-(v-yMin)/yR2*ph};" ++
     "var s=\"<rect x='0' y='0' width='\"+PW+\"' height='\"+PH+\"' fill='transparent' class='bg' data-pi='\"+pi+\"'/>\";" ++
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+(PH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(PH-M.b)+\"' stroke='#333'/>\";" ++
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(PH-M.b)+\"' stroke='#333'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+(PH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(PH-M.b)+\"'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(PH-M.b)+\"'/>\";" ++
     "s+=\"<line x1='\"+M.l+\"' y1='\"+sy(0)+\"' x2='\"+(M.l+pw)+\"' y2='\"+sy(0)+\"' stroke='#ccc' stroke-dasharray='4'/>\";" ++
     "idx.forEach(function(oi,k){" ++
       "var st=state.points[oi];" ++
-      "if(st.selected){s+=\"<circle cx='\"+sx(fitted[k])+\"' cy='\"+sy(resid[k])+\"' r='4' fill='steelblue' stroke='orange' stroke-width='2' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
-      "else{s+=\"<circle cx='\"+sx(fitted[k])+\"' cy='\"+sy(resid[k])+\"' r='3.5' fill='steelblue' opacity='0.8' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
+      "if(st.selected){s+=\"<circle class='point selected' cx='\"+sx(fitted[k])+\"' cy='\"+sy(resid[k])+\"' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
+      "else{s+=\"<circle class='point' cx='\"+sx(fitted[k])+\"' cy='\"+sy(resid[k])+\"' data-idx='\"+oi+\"' data-pi='\"+pi+\"' style='cursor:pointer'/>\"}" ++
     "});" ++
     "svg.innerHTML=s;bindPanel(panel)" ++
   "}"

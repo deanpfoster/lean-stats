@@ -139,8 +139,8 @@ private def binaryJs : String :=
     "window._pairs=pairs;window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._orig=orig;window._xf=xf;" ++
     "let s='';" ++
     -- Axes
-    "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
-    "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}'/>`;" ++
     -- X ticks
     "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     -- Y ticks (probability 0 to 1)
@@ -286,8 +286,8 @@ private def binaryJs : String :=
         "if(spec.se&&V){const se=1.96*seEta(txI,V,deg);bandU+=(bandU===''?'M':'L')+px+','+sy(invLink(eta+se,spec.link));bandL+=(bandL===''?'M':'L')+px+','+sy(invLink(eta-se,spec.link))}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
-      "if(spec.se&&bandU){var slw=spec.lw;svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${slw}' stroke-dasharray='4'/>`}" ++
-      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw||2}'/>`" ++
+      "if(spec.se&&bandU){var slw=spec.lw;svg.innerHTML+=`<path class='ci' d='${bandU}'/><path class='ci' d='${bandL}'/>`}" ++
+      "svg.innerHTML+=`<path class='fit' d='${path}'/>`" ++
     "});" ++
     "if(fitSpecs.length>0){" ++
       "var legendHtml='';" ++

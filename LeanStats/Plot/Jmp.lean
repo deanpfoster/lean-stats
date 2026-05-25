@@ -139,8 +139,8 @@ private def jmpJs : String :=
     "const sy=y=>H-M.b-(y-yMin)/yR*ph;" ++
     "window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._yMin=yMin;window._yMax=yMax;" ++
     "let s='';" ++
-    "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
-    "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}'/>`;" ++
     "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     -- X axis label (clickable)
@@ -149,7 +149,7 @@ private def jmpJs : String :=
     -- Y axis label (clickable, rotated)
     "var ylbl=axisLabelText(yName,yf,deg);" ++
     "s+=`<text x='14' y='${M.t+ph/2}' text-anchor='middle' font-size='13' class='axis-label' id='yLabel' transform='rotate(-90,14,${M.t+ph/2})'>${ylbl}</text>`;" ++
-    "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
+    "for(let i=0;i<xd.length;i++){s+=`<circle class='point' cx='${sx(xd[i])}' cy='${sy(yd[i])}'/>`}" ++
     "svg.innerHTML=s;" ++
     -- Attach click handlers to axis labels
     "document.getElementById('xLabel').addEventListener('click',function(e){e.stopPropagation();showAxisPopup('x',e)});" ++
@@ -195,8 +195,8 @@ private def jmpJs : String :=
         "}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
-      "if(spec.se&&bandU){svg.innerHTML+=`<path d='${bandU}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${spec.lw}' stroke-dasharray='4'/><path d='${bandL}' fill='none' stroke='${col}' opacity='0.4' stroke-width='${spec.lw}' stroke-dasharray='4'/>`}" ++
-      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw}'/>`" ++
+      "if(spec.se&&bandU){svg.innerHTML+=`<path class='ci' d='${bandU}'/><path class='ci' d='${bandL}'/>`}" ++
+      "svg.innerHTML+=`<path class='fit' d='${path}'/>`" ++
     "});" ++
     -- Legend
     "if(fits.length>0){" ++

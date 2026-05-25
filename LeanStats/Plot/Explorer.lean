@@ -69,8 +69,8 @@ private def explorerJs2 : String :=
     -- Background rect for click-to-clear
     "s+=\"<rect x='0' y='0' width='\"+SW+\"' height='\"+SH+\"' fill='transparent' id='scatterBg'/>\";" ++
     -- Axes
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+(SH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(SH-M.b)+\"' stroke='#333'/>\";" ++
-    "s+=\"<line x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(SH-M.b)+\"' stroke='#333'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+(SH-M.b)+\"' x2='\"+(M.l+pw)+\"' y2='\"+(SH-M.b)+\"'/>\";" ++
+    "s+=\"<line class='axis' x1='\"+M.l+\"' y1='\"+M.t+\"' x2='\"+M.l+\"' y2='\"+(SH-M.b)+\"'/>\";" ++
     "for(var i=0;i<=4;i++){var v=xMin+i/4*xR;s+=\"<text x='\"+sx(v)+\"' y='\"+(SH-M.b+15)+\"' text-anchor='middle' font-size='11'>\"+v.toPrecision(3)+\"</text>\"}" ++
     "for(var i=0;i<=4;i++){var v=yMin+i/4*yR;s+=\"<text x='\"+(M.l-8)+\"' y='\"+(sy(v)+4)+\"' text-anchor='end' font-size='11'>\"+v.toPrecision(3)+\"</text>\"}" ++
     -- Auto-fit line on non-excluded
@@ -80,29 +80,29 @@ private def explorerJs2 : String :=
       "var coef=polyFit(fx,fy,deg);" ++
       "if(coef){" ++
         "var path='';for(var i=0;i<=100;i++){var xv=xMin+i/100*xR;var yv=polyEval(coef,xv);if(yv>=yMin-yR&&yv<=yMax+yR){path+=(path===''?'M':'L')+sx(xv)+','+sy(yv)}}" ++
-        "s+=\"<path d='\"+path+\"' fill='none' stroke='#999' stroke-width='1.5' opacity='0.6'/>\";" ++
+        "s+=\"<path class='fit' d='\"+path+\"'/>\";" ++
         -- SE band
         "var sse=0;for(var i=0;i<fx.length;i++){var yh=polyEval(coef,fx[i]);sse+=(fy[i]-yh)*(fy[i]-yh)}" ++
         "var se=Math.sqrt(sse/(fx.length-deg-1));" ++
         "var xbar=fx.reduce(function(a,b){return a+b},0)/fx.length;" ++
         "var Sxx=fx.reduce(function(a,v){return a+(v-xbar)*(v-xbar)},0);" ++
         "var bandU='',bandL='';for(var i=0;i<=100;i++){var xv=xMin+i/100*xR;var yv=polyEval(coef,xv);var h=1/fx.length+(xv-xbar)*(xv-xbar)/Sxx;var b=1.96*se*Math.sqrt(h);bandU+=(bandU===''?'M':'L')+sx(xv)+','+sy(yv+b);bandL+=(bandL===''?'M':'L')+sx(xv)+','+sy(yv-b)}" ++
-        "s+=\"<path d='\"+bandU+\"' fill='none' stroke='#999' stroke-width='1' opacity='0.3' stroke-dasharray='4'/>\";" ++
-        "s+=\"<path d='\"+bandL+\"' fill='none' stroke='#999' stroke-width='1' opacity='0.3' stroke-dasharray='4'/>\"" ++
+        "s+=\"<path class='ci' d='\"+bandU+\"'/>\";" ++
+        "s+=\"<path class='ci' d='\"+bandL+\"'/>\"" ++
       "}" ++
     "}" ++
     -- Checkpoint lines
     "fits.forEach(function(spec,idx){" ++
       "var col=colors[idx%colors.length];" ++
       "var path='';for(var i=0;i<=100;i++){var xv=xMin+i/100*xR;var yv=polyEval(spec.coef,xv);if(yv>=yMin-yR&&yv<=yMax+yR){path+=(path===''?'M':'L')+sx(xv)+','+sy(yv)}}" ++
-      "s+=\"<path d='\"+path+\"' fill='none' stroke='\"+col+\"' stroke-width='2'/>\"" ++
+      "s+=\"<path class='fit' d='\"+path+\"'/>\"" ++
     "});" ++
     -- Points
     "pts.forEach(function(p){" ++
       "var st=pointState[p.idx];" ++
-      "if(st.excluded){s+=\"<text x='\"+sx(p.x)+\"' y='\"+(sy(p.y)+4)+\"' text-anchor='middle' font-size='12' fill='grey' opacity='0.4' data-idx='\"+p.idx+\"' style='cursor:pointer'>×</text>\"}" ++
-      "else if(st.selected){s+=\"<circle cx='\"+sx(p.x)+\"' cy='\"+sy(p.y)+\"' r='5' fill='steelblue' stroke='orange' stroke-width='2' data-idx='\"+p.idx+\"' style='cursor:pointer'/>\"}" ++
-      "else{s+=\"<circle cx='\"+sx(p.x)+\"' cy='\"+sy(p.y)+\"' r='4' fill='steelblue' opacity='0.7' data-idx='\"+p.idx+\"' style='cursor:pointer'/>\"}" ++
+      "if(st.excluded){s+=\"<text x='\"+sx(p.x)+\"' y='\"+(sy(p.y)+4)+\"' text-anchor='middle' font-size='12' class='point excluded' data-idx='\"+p.idx+\"' style='cursor:pointer'>×</text>\"}" ++
+      "else if(st.selected){s+=\"<circle class='point selected' cx='\"+sx(p.x)+\"' cy='\"+sy(p.y)+\"' data-idx='\"+p.idx+\"' style='cursor:pointer'/>\"}" ++
+      "else{s+=\"<circle class='point' cx='\"+sx(p.x)+\"' cy='\"+sy(p.y)+\"' data-idx='\"+p.idx+\"' style='cursor:pointer'/>\"}" ++
     "});" ++
     "scatter.innerHTML=s;" ++
     -- Event: click background to clear
