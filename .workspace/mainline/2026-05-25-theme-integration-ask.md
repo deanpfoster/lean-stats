@@ -122,32 +122,49 @@ Three commits, small:
    diff the output bytes, verify they differ by the expected
    color/font swaps.
 
-Plus a `--default-theme=jmp` agent flag for users who want a
-session-wide theme without setting it per-call.
+The schema descriptions on each tool will include guidance for
+the LLM: "If the user has named a preferred theme or described
+a presentation context (board meeting, dark slides, JMP-shop),
+pick the matching theme. Otherwise default to Tufte." This is
+how the LLM-decides-with-user-guidance pattern surfaces — the
+agent picks, and the choice is visible in the tool-call stream
+where the user can override on the next message.
 
 No new manifest claims required. The Theme picking is pure
 configuration, no security delta.
 
-## Question before you start
+## On the per-call vs session-scoped question
 
-**Should `theme` be a per-call parameter or a session-scoped
-setting?** Two equally reasonable shapes:
+Decided: **per-call**. The LLM picks the theme per plot, with
+guidance from the user. Each `theme=...` argument is a small
+visible decision in the tool-call stream — the user sees what
+the LLM chose and can correct it without leaving residual state
+to clean up.
 
-- *Per-call* (what I proposed): each plot tool takes `theme=...`.
-  LLM picks per call. Simple.
-- *Session-scoped*: a single `set_plot_theme` tool sets a
-  session-local default; subsequent plots use it. The LLM picks
-  once when the user says "I'm presenting on dark." Less
-  per-call ceremony.
+The shape we want is: user says "make me a plot of X vs Y," LLM
+picks an appropriate theme based on context (a default for
+exploration, JMP if the user mentioned they're a JMP user, dark
+if the user said they're presenting tomorrow). The user reading
+the chat sees "...creating jmp_scatter with theme=jmp..." and
+can correct in their next message: "actually use Tufte." On the
+next plot, the LLM picks again, taking the correction into
+account.
 
-Both are easy to implement. I lean per-call because it makes the
-choice visible in the tool-call stream (an audit trail of "this
-plot used JMP, this one used dark"). But session-scoped reads
-nicer for the common case of "all plots the same theme."
+This is "LLM decides, user guides" rather than "user sets a
+mode" — the per-call argument is what makes the LLM's choice
+visible and overrideable. A session-scoped setting would hide
+the choice behind a stale variable.
 
-If you have a preference, tell me before you ship the
-integration; I'll match. If indifferent, I'll go per-call with
-the option to add session-scope as a later refinement.
+When the LLM doesn't know what to pick, it should ask. The
+schema description should encourage this: "If the user has
+expressed a preference (JMP, ggplot, dark for presentations,
+etc.), use that. Otherwise, use Tufte (the default) and don't
+ask — but if the plot is for a specific context the user
+mentioned, pick the matching theme."
+
+So: per-call argument with a sensible default, prose in the
+schema description that nudges the LLM to honor user signals.
+No session-scoped state.
 
 ## Aside
 
