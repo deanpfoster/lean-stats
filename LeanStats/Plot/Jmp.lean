@@ -1,4 +1,5 @@
 import LeanStats.Descriptive
+import LeanStats.Plot.Theme
 
 /-! # LeanStats.Plot.Jmp — JMP-style interactive scatter with fit controls
 
@@ -299,12 +300,13 @@ where
     If l3m runs a WebSocket server on port 9147, the page reports user actions back. -/
 def jmpScatter (xs ys : Array Float)
     (xName : String := "x") (yName : String := "y")
-    (title : String := "") : String :=
+    (title : String := "")
+    (theme : LeanStats.Plot.Theme := LeanStats.Plot.Theme.tufte) : String :=
   let xJson := "[" ++ String.intercalate "," (xs.toList.map toString) ++ "]"
   let yJson := "[" ++ String.intercalate "," (ys.toList.map toString) ++ "]"
   let pageTitle := if title != "" then title else s!"{yName} vs {xName}"
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
-<style>{jmpCss}</style></head><body>
+<style>{jmpCss}{theme.toCss}</style></head><body>
 <h2>{pageTitle} <button id='keepBtn' title='Pin this view to your analysis document' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>
 <div class='toolbar'>
   <svg id='lwPicker' width='120' height='24' style='vertical-align:middle;cursor:pointer' title='Line thickness — click to select, click same to toggle SE bands'></svg>

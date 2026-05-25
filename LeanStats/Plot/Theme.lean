@@ -40,6 +40,17 @@ structure Theme where
   marginRight : Float := 15
   marginBottom : Float := 30
   marginLeft : Float := 45
+  -- Structural flags
+  /-- "inline" (Tufte: label on the line) or "box" (legend in a box below) -/
+  legendStyle : String := "inline"
+  /-- "none", "subtle" (1px light), "full" (dark border around plot) -/
+  borderStyle : String := "none"
+  /-- "none", "horizontal", "full" (both directions) -/
+  gridStyle : String := "none"
+  /-- "minimal" (ticks only), "lines" (full axis lines), "frame" (box around plot) -/
+  axisStyle : String := "minimal"
+  /-- "filled", "open", "filled-border" -/
+  pointStyle : String := "filled"
   deriving Repr
 
 /-- Tufte: minimal, high data-ink ratio, no chartjunk. -/
@@ -51,7 +62,12 @@ def Theme.tufte : Theme :=
     fitWeight := 1.5
     pointOpacity := 0.65
     gridColor := "none"
-    fontFamily := "Georgia, serif" }
+    fontFamily := "Georgia, serif"
+    legendStyle := "inline"
+    borderStyle := "none"
+    gridStyle := "none"
+    axisStyle := "minimal"
+    pointStyle := "filled" }
 
 /-- JMP: the familiar blue-on-white with heavier axes. -/
 def Theme.jmp : Theme :=
@@ -64,7 +80,12 @@ def Theme.jmp : Theme :=
     pointRadius := 3.5
     pointOpacity := 0.8
     gridColor := "none"
-    fontFamily := "system-ui, sans-serif" }
+    fontFamily := "system-ui, sans-serif"
+    legendStyle := "box"
+    borderStyle := "subtle"
+    gridStyle := "none"
+    axisStyle := "lines"
+    pointStyle := "filled" }
 
 /-- R/ggplot: grey background, white grid lines. -/
 def Theme.ggplot : Theme :=
@@ -78,7 +99,12 @@ def Theme.ggplot : Theme :=
     fitWeight := 1.5
     pointRadius := 2.5
     pointOpacity := 0.8
-    fontFamily := "Helvetica, Arial, sans-serif" }
+    fontFamily := "Helvetica, Arial, sans-serif"
+    legendStyle := "box"
+    borderStyle := "none"
+    gridStyle := "full"
+    axisStyle := "minimal"
+    pointStyle := "filled" }
 
 /-- Excel: the corporate default everyone recognizes. -/
 def Theme.excel : Theme :=
@@ -92,7 +118,12 @@ def Theme.excel : Theme :=
     gridColor := "#d9d9d9"
     pointRadius := 4.0
     pointOpacity := 1.0
-    fontFamily := "Calibri, sans-serif" }
+    fontFamily := "Calibri, sans-serif"
+    legendStyle := "box"
+    borderStyle := "full"
+    gridStyle := "horizontal"
+    axisStyle := "frame"
+    pointStyle := "filled-border" }
 
 /-- Dark: for presentations on dark backgrounds. -/
 def Theme.dark : Theme :=
@@ -108,20 +139,40 @@ def Theme.dark : Theme :=
     axisWeight := 0.5
     fitWeight := 1.5
     pointOpacity := 0.8
-    fontFamily := "SF Mono, Menlo, monospace" }
+    fontFamily := "SF Mono, Menlo, monospace"
+    legendStyle := "inline"
+    borderStyle := "subtle"
+    gridStyle := "horizontal"
+    axisStyle := "lines"
+    pointStyle := "filled" }
 
 /-- Generate CSS from a theme. -/
 def Theme.toCss (t : Theme) : String :=
-  s!"svg \{ background: {t.backgroundColor} }" ++
-  s!" line.axis \{ stroke: {t.axisColor}; stroke-width: {t.axisWeight} }" ++
-  s!" text.tick \{ fill: #666; font-size: {t.tickFontSize}px; font-family: {t.fontFamily} }" ++
-  s!" text.label \{ fill: #333; font-size: {t.labelFontSize}px; font-family: {t.fontFamily} }" ++
-  s!" circle.point \{ fill: {t.pointColor}; opacity: {t.pointOpacity}; r: {t.pointRadius} }" ++
-  s!" circle.selected \{ fill: {t.selectedColor}; opacity: 1 }" ++
-  s!" circle.excluded \{ fill: {t.excludedColor}; opacity: 0.3 }" ++
-  s!" path.fit \{ stroke: {t.fitColor}; stroke-width: {t.fitWeight}; fill: none }" ++
-  s!" path.ci \{ stroke: {t.ciColor}; stroke-width: {t.ciWeight}; fill: none; stroke-dasharray: 4 }" ++
-  (if t.gridColor != "none" then s!" line.grid \{ stroke: {t.gridColor}; stroke-width: 0.5 }" else "")
+  let border := match t.borderStyle with
+    | "none" => "svg{border:none}"
+    | "subtle" => "svg{border:1px solid #e8e8e8;border-radius:4px}"
+    | _ => "svg{border:1px solid #999;border-radius:2px}"
+  let grid := match t.gridStyle with
+    | "horizontal" => s!"line.grid\{stroke:{t.gridColor};stroke-width:0.5}"
+    | "full" => s!"line.grid\{stroke:{t.gridColor};stroke-width:0.5}"
+    | _ => ""
+  let point := match t.pointStyle with
+    | "open" => s!"circle.point\{fill:none;stroke:{t.pointColor};stroke-width:1;opacity:{t.pointOpacity}}"
+    | "filled-border" => s!"circle.point\{fill:{t.pointColor};stroke:#fff;stroke-width:0.5;opacity:{t.pointOpacity}}"
+    | _ => s!"circle.point\{fill:{t.pointColor};opacity:{t.pointOpacity}}"
+  s!"{border}" ++
+  s!" svg\{background:{t.backgroundColor}}" ++
+  s!" line.axis\{stroke:{t.axisColor};stroke-width:{t.axisWeight}}" ++
+  s!" text.tick\{fill:#666;font-size:{t.tickFontSize}px;font-family:{t.fontFamily}}" ++
+  s!" text.label\{fill:#333;font-size:{t.labelFontSize}px;font-family:{t.fontFamily};cursor:pointer}" ++
+  s!" {point}" ++
+  s!" circle.selected\{fill:{t.selectedColor};opacity:1}" ++
+  s!" circle.excluded\{fill:{t.excludedColor};opacity:0.3}" ++
+  s!" path.fit\{stroke:{t.fitColor};stroke-width:{t.fitWeight};fill:none}" ++
+  s!" path.ci\{stroke:{t.ciColor};stroke-width:{t.ciWeight};fill:none;stroke-dasharray:4}" ++
+  s!" {grid}" ++
+  s!" .legend\{font-family:{t.fontFamily};font-size:12px}" ++
+  s!" h2\{font-family:{t.fontFamily}}"
 
 /-- Adaptive point radius based on sample size. -/
 def adaptiveRadius (n : Nat) : Float :=
