@@ -21,34 +21,60 @@ namespace LeanStats.Plot
 private def jmpCss : String :=
   "body{font-family:system-ui,sans-serif;margin:20px;color:#333}" ++
   "h2{margin-bottom:8px}" ++
-  ".controls{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}" ++
-  ".controls label{font-size:13px}" ++
-  ".controls select,.controls button{padding:4px 8px;font-size:13px}" ++
-  ".axis-ctrl{background:#f0f4f8;padding:4px 8px;border-radius:4px;font-size:13px}" ++
-  ".toolbar{margin:12px 0 12px 64px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
+  ".toolbar{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}" ++
   ".toolbar select,.toolbar button,.toolbar label{font-size:13px}" ++
-  ".plot-grid{display:grid;grid-template-columns:60px 600px;grid-template-rows:450px auto;gap:0;margin:8px 0}" ++
-  ".y-ctrl{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;writing-mode:vertical-rl;transform:rotate(180deg)}" ++
-  ".y-label{font-weight:bold;font-size:14px}" ++
-  ".y-ctrl select{font-size:11px;writing-mode:horizontal-tb;transform:rotate(180deg)}" ++
-  ".y-ctrl .orig-toggle{font-size:10px;writing-mode:horizontal-tb;transform:rotate(180deg)}" ++
-  ".x-ctrl{grid-column:2;grid-row:2;text-align:center;font-size:13px;padding:8px 0}" ++
-  ".x-ctrl select{font-size:12px}" ++
-  ".x-ctrl .orig-toggle{font-size:11px;margin-left:8px}" ++
-  "#plot{grid-column:2;grid-row:1;border:1px solid #e0e0e0;border-radius:6px}" ++
+  ".plot-wrap{position:relative;display:inline-block;margin:8px 0}" ++
+  "#plot{border:1px solid #e0e0e0;border-radius:6px}" ++
   "#fitBtn{background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer}" ++
   "#fitBtn:hover{background:#2563eb}" ++
-  ".stats{font-family:monospace;font-size:13px;margin:12px 0 0 64px;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
-  "svg{border:1px solid #e0e0e0;border-radius:6px}"
+  ".stats{font-family:monospace;font-size:13px;margin:12px 0;padding:12px;background:#f8f8f8;border-radius:6px;white-space:pre-wrap}" ++
+  ".axis-popup{position:absolute;background:#fff;border:1px solid #ddd;border-radius:6px;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:12px;z-index:100}" ++
+  ".axis-popup button{padding:2px 6px;margin:1px;border:1px solid #ddd;border-radius:3px;cursor:pointer;background:#f8f8f8}" ++
+  ".axis-popup button.active{background:#3b82f6;color:#fff;border-color:#3b82f6}" ++
+  ".axis-label{cursor:pointer;font-weight:bold}"
 
 private def jmpJs : String :=
-  "const W=600,H=450,M={t:15,r:15,b:30,l:45};" ++
+  "const W=600,H=450,M={t:15,r:15,b:45,l:55};" ++
   "const pw=W-M.l-M.r,ph=H-M.t-M.b;" ++
   "const svg=document.getElementById('plot');" ++
   "const statsEl=document.getElementById('stats');" ++
   -- Transform functions
   "function tx(v,f){switch(f){case'recip':return v!==0?1/v:NaN;case'log':return v>0?Math.log(v):NaN;case'sqrt':return v>=0?Math.sqrt(v):NaN;case'square':return v*v;case'exp':return Math.exp(v);default:return v}}" ++
   "function itx(v,f){switch(f){case'recip':return v!==0?1/v:NaN;case'log':return Math.exp(v);case'sqrt':return v*v;case'square':return v>=0?Math.sqrt(v):NaN;case'exp':return Math.log(v);default:return v}}" ++
+  -- Axis label text helper
+  "function axisLabelText(name,form,deg){" ++
+    "var sup=['⁰','¹','²','³','⁴','⁵'];" ++
+    "var t=form==='linear'?name:form==='recip'?'1/'+name:form==='sqrt'?'√('+name+')':form+'('+name+')';" ++
+    "if(deg>1)t+=sup[deg];" ++
+    "return t}" ++
+  -- Popup logic
+  "var activePopup=null;" ++
+  "function closePopup(){if(activePopup){activePopup.remove();activePopup=null}}" ++
+  "function showAxisPopup(axis,evt){" ++
+    "closePopup();" ++
+    "var wrap=document.querySelector('.plot-wrap');" ++
+    "var rect=wrap.getBoundingClientRect();" ++
+    "var px=evt.clientX-rect.left,py=evt.clientY-rect.top;" ++
+    "var div=document.createElement('div');div.className='axis-popup';" ++
+    "var formSel=document.getElementById(axis==='x'?'xform':'yform');" ++
+    "var degSel=document.getElementById('degree');" ++
+    "var origCb=document.getElementById(axis==='x'?'xOrig':'yOrig');" ++
+    "var transforms=['recip','log','sqrt','linear','square','exp'];" ++
+    "var labels=['1/x','log','√','linear','x²','exp'];" ++
+    "var html='<div>';" ++
+    "transforms.forEach(function(t,i){var cls=formSel.value===t?' active':'';html+='<button class=\"tf-btn'+cls+'\" data-tf=\"'+t+'\">'+labels[i]+'</button>'});" ++
+    "html+='</div><div style=\"margin-top:4px\">deg ';" ++
+    "for(var i=0;i<=5;i++){var cls=parseInt(degSel.value)===i?' active':'';html+='<button class=\"deg-btn'+cls+'\" data-deg=\"'+i+'\">'+i+'</button>'}" ++
+    "html+='</div><div style=\"margin-top:4px\"><label><input type=\"checkbox\" class=\"orig-cb\"'+(origCb.checked?' checked':'')+'/> orig</label></div>';" ++
+    "div.innerHTML=html;" ++
+    "div.style.left=px+'px';div.style.top=py+'px';" ++
+    "wrap.appendChild(div);activePopup=div;" ++
+    "div.querySelectorAll('.tf-btn').forEach(function(b){b.addEventListener('click',function(){formSel.value=b.dataset.tf;draw();updatePopupHighlights()})});" ++
+    "div.querySelectorAll('.deg-btn').forEach(function(b){b.addEventListener('click',function(){degSel.value=b.dataset.deg;draw();updatePopupHighlights()})});" ++
+    "div.querySelector('.orig-cb').addEventListener('change',function(){origCb.checked=this.checked;draw()});" ++
+    "function updatePopupHighlights(){div.querySelectorAll('.tf-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tf===formSel.value)});div.querySelectorAll('.deg-btn').forEach(function(b){b.classList.toggle('active',parseInt(b.dataset.deg)===parseInt(degSel.value))})}" ++
+  "}" ++
+  "document.addEventListener('mousedown',function(e){if(activePopup&&!activePopup.contains(e.target))closePopup()});" ++
   -- Polynomial fit via normal equations
   "function polyFit(x,y,deg){" ++
     "const n=x.length;" ++
@@ -96,6 +122,7 @@ private def jmpJs : String :=
   "function draw(){" ++
     "const xf=document.getElementById('xform').value;" ++
     "const yf=document.getElementById('yform').value;" ++
+    "const deg=parseInt(document.getElementById('degree').value);" ++
     "const xOrig=document.getElementById('xOrig').checked;" ++
     "const yOrig=document.getElementById('yOrig').checked;" ++
     "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf),yt=tx(rawY[i],yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
@@ -115,8 +142,17 @@ private def jmpJs : String :=
     "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
     "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
+    -- X axis label (clickable)
+    "var xlbl=axisLabelText(xName,xf,deg);" ++
+    "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13' class='axis-label' id='xLabel'>${xlbl}</text>`;" ++
+    -- Y axis label (clickable, rotated)
+    "var ylbl=axisLabelText(yName,yf,deg);" ++
+    "s+=`<text x='14' y='${M.t+ph/2}' text-anchor='middle' font-size='13' class='axis-label' id='yLabel' transform='rotate(-90,14,${M.t+ph/2})'>${ylbl}</text>`;" ++
     "for(let i=0;i<xd.length;i++){s+=`<circle cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
     "svg.innerHTML=s;" ++
+    -- Attach click handlers to axis labels
+    "document.getElementById('xLabel').addEventListener('click',function(e){e.stopPropagation();showAxisPopup('x',e)});" ++
+    "document.getElementById('yLabel').addEventListener('click',function(e){e.stopPropagation();showAxisPopup('y',e)});" ++
     "renderFits()" ++
   "}" ++
   -- Render all stored fits
@@ -189,12 +225,8 @@ private def jmpJs : String :=
   "}" ++
   -- Event listeners
   "drawLwPicker();" ++
-  "document.getElementById('xform').addEventListener('change',function(){draw()});" ++
-  "document.getElementById('yform').addEventListener('change',function(){draw()});" ++
   "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var deg=parseInt(document.getElementById('degree').value);fits.push({deg:deg,xf:xf,yf:yf,se:seOn,lw:lwCurrent});draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];draw();drawLwPicker()});" ++
-  "document.getElementById('xOrig').addEventListener('change',function(){draw()});" ++
-  "document.getElementById('yOrig').addEventListener('change',function(){draw()});" ++
   -- Keep button
   "document.getElementById('keepBtn').addEventListener('click',function(){" ++
     "var state={event:'keep',xform:document.getElementById('xform').value," ++
@@ -279,20 +311,14 @@ def jmpScatter (xs ys : Array Float)
   <button id='fitBtn' title='Add a fit with current settings'>+ Fit</button>
   <button id='clearBtn' title='Remove all fits from the plot'>Clear fits</button>
 </div>
-<div class='plot-grid'>
-  <div class='y-ctrl'>
-    <div class='y-label'>{yName}</div>
-    <select id='yform'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select>
-    <label class='orig-toggle'><input type='checkbox' id='yOrig'> orig</label>
-  </div>
+<div class='plot-wrap'>
   <svg id='plot' width='600' height='450'></svg>
-  <div class='x-ctrl'>
-    <b>{xName}</b>
-    <select id='xform'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select>
-    degree <select id='degree'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select>
-    <label class='orig-toggle'><input type='checkbox' id='xOrig'> orig</label>
-  </div>
 </div>
+<select id='xform' style='display:none'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select>
+<select id='yform' style='display:none'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select>
+<select id='degree' style='display:none'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select>
+<input type='checkbox' id='xOrig' style='display:none'/>
+<input type='checkbox' id='yOrig' style='display:none'/>
 <div id='stats' class='stats'></div>
 <script>
 const rawX = {xJson};
