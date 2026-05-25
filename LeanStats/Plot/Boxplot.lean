@@ -42,17 +42,17 @@ private def boxJs : String :=
   "function draw(){\n" ++
   "  var svg=document.getElementById('boxsvg');\n" ++
   "  var s='';\n" ++
-  "  s+='<line x1=\"'+M.l+'\" y1=\"'+M.t+'\" x2=\"'+M.l+'\" y2=\"'+(H-M.b)+'\" stroke=\"#333\"/>';\n" ++
+  "  s+='<line class=\"axis\" x1=\"'+M.l+'\" y1=\"'+M.t+'\" x2=\"'+M.l+'\" y2=\"'+(H-M.b)+'\" />';\n" ++
   "  for(var i=0;i<=5;i++){var v=yMin+i/5*(yMax-yMin);var y=sy(v);\n" ++
-  "    s+='<line x1=\"'+(M.l-4)+'\" y1=\"'+y+'\" x2=\"'+M.l+'\" y2=\"'+y+'\" stroke=\"#333\"/>';\n" ++
+  "    s+='<line x1=\"'+(M.l-4)+'\" y1=\"'+y+'\" x2=\"'+M.l+'\" y2=\"'+y+'\" class=\"axis\"/>';\n" ++
   "    s+='<text x=\"'+(M.l-8)+'\" y=\"'+(y+3)+'\" text-anchor=\"end\" font-size=\"10\">'+v.toPrecision(3)+'</text>'}\n" ++
   "  var ptIdx=0;\n" ++
   "  groups.forEach(function(g,gi){\n" ++
   "    var st=stats(g.values);\n" ++
   "    var cx=M.l+gi*(boxW+gap)+boxW/2;\n" ++
   "    var x1=cx-boxW/2,x2=cx+boxW/2;\n" ++
-  "    s+='<rect x=\"'+x1+'\" y=\"'+sy(st.q3)+'\" width=\"'+boxW+'\" height=\"'+(sy(st.q1)-sy(st.q3))+'\" fill=\"'+theme.pointColor+'\" opacity=\"0.3\" stroke=\"'+theme.pointColor+'\" data-gi=\"'+gi+'\" class=\"box\" style=\"cursor:pointer\"/>';\n" ++
-  "    s+='<line x1=\"'+x1+'\" y1=\"'+sy(st.med)+'\" x2=\"'+x2+'\" y2=\"'+sy(st.med)+'\" stroke=\"'+theme.pointColor+'\" stroke-width=\"2\"/>';\n" ++
+  "    s+='<rect x=\"'+x1+'\" y=\"'+sy(st.q3)+'\" width=\"'+boxW+'\" height=\"'+(sy(st.q1)-sy(st.q3))+'\" class=\"box point\" data-gi=\"'+gi+'\" style=\"cursor:pointer\"/>';\n" ++
+  "    s+='<line x1=\"'+x1+'\" y1=\"'+sy(st.med)+'\" x2=\"'+x2+'\" y2=\"'+sy(st.med)+'\" class=\"fit\" stroke-width=\"2\"/>';\n" ++
   "    s+='<line x1=\"'+cx+'\" y1=\"'+sy(st.wHi)+'\" x2=\"'+cx+'\" y2=\"'+sy(st.q3)+'\" stroke=\"#333\"/>';\n" ++
   "    s+='<line x1=\"'+cx+'\" y1=\"'+sy(st.q1)+'\" x2=\"'+cx+'\" y2=\"'+sy(st.wLo)+'\" stroke=\"#333\"/>';\n" ++
   "    s+='<line x1=\"'+(cx-boxW/4)+'\" y1=\"'+sy(st.wHi)+'\" x2=\"'+(cx+boxW/4)+'\" y2=\"'+sy(st.wHi)+'\" stroke=\"#333\"/>';\n" ++
@@ -60,8 +60,8 @@ private def boxJs : String :=
   "    g.values.forEach(function(v,vi){\n" ++
   "      var lo=st.q1-1.5*(st.q3-st.q1),hi=st.q3+1.5*(st.q3-st.q1);\n" ++
   "      if(v<lo||v>hi){\n" ++
-  "        var col=pointState[ptIdx+vi].selected?theme.selectedColor:theme.pointColor;\n" ++
-  "        s+='<circle cx=\"'+cx+'\" cy=\"'+sy(v)+'\" r=\"3.5\" fill=\"'+col+'\" opacity=\"0.8\" data-gi=\"'+gi+'\" data-vi=\"'+vi+'\" data-pi=\"'+(ptIdx+vi)+'\" class=\"outlier\" style=\"cursor:pointer\"/>';\n" ++
+  "        var cls=pointState[ptIdx+vi].selected?'point selected':'point';\n" ++
+  "        s+='<circle cx=\"'+cx+'\" cy=\"'+sy(v)+'\" r=\"3.5\" class=\"'+cls+'\" data-gi=\"'+gi+'\" data-vi=\"'+vi+'\" data-pi=\"'+(ptIdx+vi)+'\" style=\"cursor:pointer\"/>';\n" ++
   "      }\n" ++
   "    });\n" ++
   "    s+='<text x=\"'+cx+'\" y=\"'+(H-M.b+16)+'\" text-anchor=\"middle\" font-size=\"11\">'+g.name+'</text>';\n" ++
@@ -81,7 +81,7 @@ private def boxJs : String :=
   "    sendWs({event:'selection',text:'selected group '+groups[gi].name+' ('+groups[gi].values.length+' points)'});\n" ++
   "    draw();return;\n" ++
   "  }\n" ++
-  "  var dot=e.target.closest('.outlier');\n" ++
+  "  var dot=e.target.closest('circle.point');\n" ++
   "  if(dot){\n" ++
   "    var pi=+dot.dataset.pi;\n" ++
   "    if(!e.shiftKey)pointState.forEach(function(p){p.selected=false});\n" ++
@@ -94,7 +94,7 @@ private def boxJs : String :=
   "});\n" ++
   "svgEl.addEventListener('mousemove',function(e){\n" ++
   "  var box=e.target.closest('.box');\n" ++
-  "  var dot=e.target.closest('.outlier');\n" ++
+  "  var dot=e.target.closest('circle.point');\n" ++
   "  if(box){\n" ++
   "    var gi=+box.dataset.gi,g=groups[gi],st=stats(g.values);\n" ++
   "    tooltip.innerHTML='<b>'+g.name+'</b><br>n='+st.n+'<br>median='+st.med.toPrecision(4)+'<br>Q1='+st.q1.toPrecision(4)+'<br>Q3='+st.q3.toPrecision(4)+'<br>min='+st.min.toPrecision(4)+'<br>max='+st.max.toPrecision(4);\n" ++

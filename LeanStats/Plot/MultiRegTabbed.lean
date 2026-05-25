@@ -133,15 +133,15 @@ private def multiRegTabbedJs : String :=
     "window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._yMin=yMin;window._yMax=yMax;" ++
     "window._plotX=yhat;window._plotY=yv;" ++
     "let s='';" ++
-    "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
-    "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}'/>`;" ++
     "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     -- Diagonal reference line
     "let dMin=Math.max(xMin,yMin),dMax=Math.min(xMax,yMax);" ++
     "if(dMax>dMin){s+=`<line x1='${sx(dMin)}' y1='${sy(dMin)}' x2='${sx(dMax)}' y2='${sy(dMax)}' stroke='#999' stroke-dasharray='5' stroke-width='1'/>`}" ++
     -- Points
-    "for(let i=0;i<yhat.length;i++){s+=`<circle cx='${sx(yhat[i])}' cy='${sy(yv[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
+    "for(let i=0;i<yhat.length;i++){s+=`<circle class='point' cx='${sx(yhat[i])}' cy='${sy(yv[i])}'/>`}" ++
     -- R² annotation
     "let sst=0,sse=0;let ym=yv.reduce((a,b)=>a+b,0)/yv.length;for(let i=0;i<yv.length;i++){sst+=(yv[i]-ym)**2;sse+=(yv[i]-yhat[i])**2}" ++
     "let r2=1-sse/sst;" ++
@@ -184,11 +184,11 @@ private def multiRegTabbedJs : String :=
     "window._sx=sx;window._sy=sy;window._xMin=xMin;window._xMax=xMax;window._yMin=yMin;window._yMax=yMax;" ++
     "window._plotX=eX;window._plotY=eY;" ++
     "let s='';" ++
-    "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
-    "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}'/>`;" ++
     "for(let i=0;i<=4;i++){let v=xMin+i/4*xR;s+=`<text x='${sx(v)}' y='${H-M.b+15}' text-anchor='middle' font-size='11'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=4;i++){let v=yMin+i/4*yR;s+=`<text x='${M.l-8}' y='${sy(v)+4}' text-anchor='end' font-size='11'>${v.toPrecision(3)}</text>`}" ++
-    "for(let i=0;i<eX.length;i++){s+=`<circle cx='${sx(eX[i])}' cy='${sy(eY[i])}' r='4' fill='steelblue' opacity='0.7'/>`}" ++
+    "for(let i=0;i<eX.length;i++){s+=`<circle class='point' cx='${sx(eX[i])}' cy='${sy(eY[i])}'/>`}" ++
     -- Fit line through origin (slope = multiple regression coefficient)
     "if(deg>0){" ++
       "let num=0,den=0;for(let i=0;i<eX.length;i++){num+=eX[i]*eY[i];den+=eX[i]*eX[i]}" ++
@@ -217,7 +217,7 @@ private def multiRegTabbedJs : String :=
         "path+=(path===''?'M':'L')+sx(xi)+','+sy(yi)" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
-      "svg.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw}'/>`" ++
+      "svg.innerHTML+=`<path class='fit' d='${path}'/>`" ++
     "});" ++
     -- Legend
     "let legendHtml='';" ++

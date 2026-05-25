@@ -88,8 +88,8 @@ private def multiRegJs : String :=
     "const sy=y=>H-M.b-(y-yMin)/yR*ph;" ++
     "plotState[plotIdx]={sx,sy,xMin,xMax,yMin,yMax,plotX:xArr,plotY:yArr};" ++
     "let s='';" ++
-    "s+=`<line x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}' stroke='#333'/>`;" ++
-    "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${H-M.b}' x2='${M.l+pw}' y2='${H-M.b}'/>`;" ++
+    "s+=`<line class='axis' x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}'/>`;" ++
     "for(let i=0;i<=3;i++){let v=xMin+i/3*xR;s+=`<text x='${sx(v)}' y='${H-M.b+13}' text-anchor='middle' font-size='9'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=3;i++){let v=yMin+i/3*yR;s+=`<text x='${M.l-5}' y='${sy(v)+3}' text-anchor='end' font-size='9'>${v.toPrecision(3)}</text>`}" ++
     -- Draw CI band for the regression line (if plotIdx > 0, it's an AV plot)
@@ -103,12 +103,12 @@ private def multiRegJs : String :=
       "let bandU='',bandL='';const nPts=60;" ++
       "for(let i=0;i<=nPts;i++){let xi=xMin+i/nPts*xR;let yi=slope*xi;let h=1/n+(xi-xm)**2/Sxx;let band=1.96*se*Math.sqrt(h);" ++
         "bandU+=(bandU===''?'M':'L')+sx(xi)+','+sy(yi+band);bandL+=(bandL===''?'M':'L')+sx(xi)+','+sy(yi-band)}" ++
-      "s+=`<path d='${bandU}' fill='none' stroke='rgba(100,100,100,0.3)' stroke-dasharray='3' stroke-width='1'/>`;" ++
-      "s+=`<path d='${bandL}' fill='none' stroke='rgba(100,100,100,0.3)' stroke-dasharray='3' stroke-width='1'/>`;" ++
+      "s+=`<path class='ci' d='${bandU}'/>`;" ++
+      "s+=`<path class='ci' d='${bandL}'/>`;" ++
       -- Regression line
-      "s+=`<line x1='${sx(xMin)}' y1='${sy(slope*xMin)}' x2='${sx(xMax)}' y2='${sy(slope*xMax)}' stroke='#666' stroke-width='1.5'/>`" ++
+      "s+=`<path class='fit' d='M${sx(xMin)},${sy(slope*xMin)}L${sx(xMax)},${sy(slope*xMax)}'/>`" ++
     "}" ++
-    "for(let i=0;i<xArr.length;i++){s+=`<circle cx='${sx(xArr[i])}' cy='${sy(yArr[i])}' r='3' fill='steelblue' opacity='0.7'/>`}" ++
+    "for(let i=0;i<xArr.length;i++){s+=`<circle class='point' cx='${sx(xArr[i])}' cy='${sy(yArr[i])}'/>`}" ++
     "if(annotation)s+=`<text x='${M.l+4}' y='${M.t+12}' font-size='10' fill='#333'>${annotation}</text>`;" ++
     "svgEl.innerHTML=s;renderFitsForPlot(svgEl,plotIdx)}" ++
   -- Render fits for one plot
@@ -122,7 +122,7 @@ private def multiRegJs : String :=
       "let path='';const nPts=80;" ++
       "for(let i=0;i<=nPts;i++){const xi=xMin+i/nPts*(xMax-xMin);const yi=polyEval(coef,xi);path+=(path===''?'M':'L')+sx(xi)+','+sy(yi)}" ++
       "const col=colors[idx%colors.length];" ++
-      "svgEl.innerHTML+=`<path d='${path}' fill='none' stroke='${col}' stroke-width='${spec.lw}'/>`" ++
+      "svgEl.innerHTML+=`<path class='fit' d='${path}'/>`" ++
     "})}" ++
   -- Main draw
   "function draw(){" ++
