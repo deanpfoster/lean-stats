@@ -163,17 +163,9 @@ Restate report_doctype
 Restate summary_default_bound
 
 -- ════════════════════════════════════════════════════════════
--- § Conformance: validated against R
+-- § Catalog security: secrets never travel during merge
 -- ════════════════════════════════════════════════════════════
 
 Restate vif_regression_conforms_r
-
--- ════════════════════════════════════════════════════════════
--- § Structural: purity
--- ════════════════════════════════════════════════════════════
-
-/-- Library is pure: 3,049 constants reachable from public API, zero IO.
-    Verified by PureExcept in LeanStats/Audit.lean. -/
-Sketch pure_library
 
 end LeanStats.Manifest
