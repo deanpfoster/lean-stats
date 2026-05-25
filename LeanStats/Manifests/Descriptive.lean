@@ -25,6 +25,7 @@ Two layers of claims:
   - Robustness to NaN/Inf inputs.
   - Weighted statistics (not implemented).
 -/
+-- Implementation: LeanStats/Descriptive.lean
 
 set_option autoImplicit false
 

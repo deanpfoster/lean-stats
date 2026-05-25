@@ -13,6 +13,7 @@ The JMP / Stine & Foster workflow after fitting a line:
 
 This module provides all of that as pure functions over the fit.
 -/
+-- Manifest claims: LeanStats/Manifests/Diagnostics.lean
 
 set_option autoImplicit false
 

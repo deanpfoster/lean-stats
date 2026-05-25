@@ -15,6 +15,7 @@ summaries that answer:
 Output is a compact structured string (not JSON — just key: value lines)
 that fits in ~200-400 characters. The LLM reads this instead of pixels.
 -/
+-- Manifest claims: LeanStats/Manifests/PlotDescribe.lean
 
 set_option autoImplicit false
 

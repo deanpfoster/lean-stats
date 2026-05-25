@@ -13,6 +13,7 @@ The core tidyverse verbs for row/column manipulation:
 
 All are pure functions Table → Table. They compose via `|>`.
 -/
+-- Manifest claims: LeanTab/Manifest.lean
 
 set_option autoImplicit false
 

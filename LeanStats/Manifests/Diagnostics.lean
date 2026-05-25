@@ -19,6 +19,7 @@ import LeanStats.Diagnostics
   - Known fixture: slope and intercept match linearRegression.
   - Fitted values = slope * x + intercept.
 -/
+-- Implementation: LeanStats/Diagnostics.lean
 
 set_option autoImplicit false
 

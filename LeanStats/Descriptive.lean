@@ -17,6 +17,7 @@ properties live in `LeanStats/Manifests/Descriptive.lean`.
   - Anything that needs IO (file reading, etc.) — by design, this is a
     pure library; CSV/file ingestion happens at the consumer layer.
 -/
+-- Manifest claims: LeanStats/Manifests/Descriptive.lean
 
 set_option autoImplicit false
 

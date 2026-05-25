@@ -16,6 +16,7 @@ Grammar:
 Dispatch table covers all LeanStats public functions.
 Pure — no IO. l3m calls `evalString` and gets back a result or error message.
 -/
+-- Manifest claims: LeanStats/Manifests/Eval.lean
 
 set_option autoImplicit false
 

@@ -20,6 +20,7 @@ import LeanTab.Sql.Eval
   - Subqueries, CTEs, window functions (not in AST yet).
   - NULL semantics matching PostgreSQL exactly.
 -/
+-- Implementation: LeanTab/Sql/Eval.lean
 
 set_option autoImplicit false
 

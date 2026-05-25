@@ -6,6 +6,7 @@ import LeanStats.Plot.Describe
 
 Proves structural properties of plot description functions on fixtures.
 -/
+-- Implementation: LeanStats/Plot/Describe.lean
 
 set_option autoImplicit false
 

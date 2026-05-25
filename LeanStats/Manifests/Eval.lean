@@ -7,6 +7,7 @@ import LeanStats.Eval
 Proves that the expression evaluator correctly dispatches known
 functions and rejects unknown ones / wrong arg counts.
 -/
+-- Implementation: LeanStats/Eval.lean
 
 set_option autoImplicit false
 

@@ -7,6 +7,7 @@ import LeanStats.LinAlg
 import LeanStats.VIFRegression
 import LeanStats.Tests
 import LeanTab.Table
+-- Implementation (partial): LeanStats/VIFRegression.lean
 
 set_option autoImplicit false
 namespace LeanStats.Manifests.NewFunctions

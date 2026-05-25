@@ -22,6 +22,7 @@ import LeanStats.Tests
   - Degrees of freedom for Welch's approximation.
   - Power analysis or sample-size recommendations.
 -/
+-- Implementation: LeanStats/Tests.lean
 
 set_option autoImplicit false
 

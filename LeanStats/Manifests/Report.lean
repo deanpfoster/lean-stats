@@ -23,6 +23,7 @@ import LeanStats.Report.Html
   - W3C HTML5 validator conformance.
   - Accessibility (no ARIA attributes).
 -/
+-- Implementation: LeanStats/Report/Html.lean
 
 set_option autoImplicit false
 

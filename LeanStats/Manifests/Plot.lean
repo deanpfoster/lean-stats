@@ -25,6 +25,7 @@ import LeanStats.Plot.Histogram
   - Visual correctness ("looks right") — human judgment.
   - Termination of `Svg.render` (partial def).
 -/
+-- Implementation: LeanStats/Plot/Svg.lean
 
 set_option autoImplicit false
 

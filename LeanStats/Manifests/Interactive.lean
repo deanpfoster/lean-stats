@@ -26,6 +26,7 @@ These are all decidable string properties on concrete fixtures.
   - Browser compatibility.
   - Performance on large n.
 -/
+-- Implementation: LeanStats/Plot/Interactive.lean
 
 set_option autoImplicit false
 

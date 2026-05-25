@@ -6,6 +6,7 @@ Pure t-test implementations (one-sample, two-sample Welch's). Returns
 the t-statistic only; we don't yet ship a CDF table or p-value
 calculator (TODO: incorporate Student's t CDF).
 -/
+-- Manifest claims: LeanStats/Manifests/Tests.lean
 
 set_option autoImplicit false
 
