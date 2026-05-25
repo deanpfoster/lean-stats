@@ -64,7 +64,11 @@ private def mriJs2 : String :=
       "else{let pi=term.parents[0],pj=term.parents[1];" ++
         "let tfi=document.getElementById('tf_'+pi).value;" ++
         "let tfj=document.getElementById('tf_'+pj).value;" ++
-        "baseVals=rawXs[terms[pi].idx].map((v,k)=>tx(v,tfi)*tx(rawXs[terms[pj].idx][k],tfj))}" ++
+        "let vi=rawXs[terms[pi].idx].map(v=>tx(v,tfi));" ++
+        "let vj=rawXs[terms[pj].idx].map(v=>tx(v,tfj));" ++
+        "let mi=vi.reduce((a,b)=>a+b,0)/vi.length;" ++
+        "let mj=vj.reduce((a,b)=>a+b,0)/vj.length;" ++
+        "baseVals=vi.map((v,k)=>(v-mi)*(vj[k]-mj))}" ++
       "let cols=predCols(baseVals,tf,deg);" ++
       "cols.forEach(col=>{for(let i=0;i<n;i++)X[i].push(col[i])})" ++
     "}return X}" ++
@@ -79,7 +83,11 @@ private def mriJs2 : String :=
       "else{let pi=term.parents[0],pj=term.parents[1];" ++
         "let tfi=document.getElementById('tf_'+pi).value;" ++
         "let tfj=document.getElementById('tf_'+pj).value;" ++
-        "baseVals=rawXs[terms[pi].idx].map((v,k)=>tx(v,tfi)*tx(rawXs[terms[pj].idx][k],tfj))}" ++
+        "let vi=rawXs[terms[pi].idx].map(v=>tx(v,tfi));" ++
+        "let vj=rawXs[terms[pj].idx].map(v=>tx(v,tfj));" ++
+        "let mi=vi.reduce((a,b)=>a+b,0)/vi.length;" ++
+        "let mj=vj.reduce((a,b)=>a+b,0)/vj.length;" ++
+        "baseVals=vi.map((v,k)=>(v-mi)*(vj[k]-mj))}" ++
       "let cols=predCols(baseVals,tf,deg);" ++
       "cols.forEach(col=>{for(let i=0;i<n;i++)X[i].push(col[i])})" ++
     "}return X}" ++
@@ -100,7 +108,11 @@ private def mriJs2 : String :=
     "else{let pi=term.parents[0],pj=term.parents[1];" ++
       "let tfi=document.getElementById('tf_'+pi).value;" ++
       "let tfj=document.getElementById('tf_'+pj).value;" ++
-      "baseVals=rawXs[terms[pi].idx].map((v,k)=>tx(v,tfi)*tx(rawXs[terms[pj].idx][k],tfj))}" ++
+      "let vi=rawXs[terms[pi].idx].map(v=>tx(v,tfi));" ++
+      "let vj=rawXs[terms[pj].idx].map(v=>tx(v,tfj));" ++
+      "let mi=vi.reduce((a,b)=>a+b,0)/vi.length;" ++
+      "let mj=vj.reduce((a,b)=>a+b,0)/vj.length;" ++
+      "baseVals=vi.map((v,k)=>(v-mi)*(vj[k]-mj))}" ++
     "let xjCols=predCols(baseVals,tf,deg);" ++
     "let xjFlat=valid.map(i=>xjCols[0][i]);" ++
     "let coefX=fitOLS(XvE,xjFlat);let eX=residuals(XvE,xjFlat,coefX);" ++
@@ -139,6 +151,8 @@ private def mriJs3 : String :=
     "s+=`<line x1='${M.l}' y1='${M.t}' x2='${M.l}' y2='${H-M.b}' stroke='#333'/>`;" ++
     "for(let i=0;i<=3;i++){let v=xMin+i/3*xR;s+=`<text x='${sx(v)}' y='${H-M.b+13}' text-anchor='middle' font-size='9'>${v.toPrecision(3)}</text>`}" ++
     "for(let i=0;i<=3;i++){let v=yMin+i/3*yR;s+=`<text x='${M.l-5}' y='${sy(v)+3}' text-anchor='end' font-size='9'>${v.toPrecision(3)}</text>`}" ++
+    -- y=0 reference line on AV plots (residuals are centered at zero)
+    "if(plotIdx>0&&yMin<=0&&yMax>=0){s+=`<line x1='${M.l}' y1='${sy(0)}' x2='${M.l+pw}' y2='${sy(0)}' stroke='#ccc' stroke-width='0.5' stroke-dasharray='3'/>`}" ++
     "if(plotIdx>0&&xArr.length>2){" ++
       "let n=xArr.length;let xm=xArr.reduce((a,b)=>a+b,0)/n;" ++
       "let Sxx=xArr.reduce((a,v)=>a+(v-xm)**2,0);" ++
@@ -283,7 +297,7 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
     s!"<div class='panel'><svg id='panel_{i+1}' width='280' height='240'></svg>" ++
     s!"<div class='panel-ctrl'><b id='lbl_{i}'>{name}</b> " ++
     s!"<select id='tf_{i}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> " ++
-    s!"deg <select id='deg_{i}'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
+    s!"deg <select id='deg_{i}' title='Degree of fit in this AV plot. 0=excluded from model. Higher=more flexible fit line (visual smoothing, not model polynomial).'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
   -- Interaction panels
   let interPanels := String.join (interactions.toList.enum.map fun (k, (i, j)) =>
     let idx := nMain + k
