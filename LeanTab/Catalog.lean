@@ -12,6 +12,7 @@ Every field supports "unknown" because most of this information is
 scraped from Slack channels, half-remembered conversations, and
 tribal knowledge.
 -/
+-- No manifest yet. Claims would go in LeanTab/Manifests/Catalog.lean
 
 set_option autoImplicit false
 

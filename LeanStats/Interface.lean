@@ -23,6 +23,7 @@ line becomes a tool. The Restate'd theorems become the tool's "trust
 documentation" — what the agent can tell the user about why the result
 is trustworthy.
 -/
+-- API contract for l3m. See also: LeanStats/Manifest.lean
 
 set_option autoImplicit false
 

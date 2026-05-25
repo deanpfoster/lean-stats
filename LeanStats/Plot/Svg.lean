@@ -15,6 +15,7 @@ list of children; we could prove termination, but a manifest claim
 backed by `native_decide` on a curated corpus is enough for now.
 See `Manifests/Plot.lean`.
 -/
+-- Manifest claims: LeanStats/Manifests/Plot.lean
 
 set_option autoImplicit false
 

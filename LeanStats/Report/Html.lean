@@ -10,6 +10,7 @@ Pure: returns a `String`. The caller writes the file via IO. This
 keeps `LeanStats` free of capability concerns; report-writing-to-disk
 is the consumer's job.
 -/
+-- Manifest claims: LeanStats/Manifests/Report.lean
 
 set_option autoImplicit false
 

@@ -15,6 +15,7 @@ It dispatches to existing LeanTab verbs:
 
 This is a reference evaluator — correct, not fast.
 -/
+-- Manifest claims: LeanTab/Sql/Manifest.lean
 
 set_option autoImplicit false
 

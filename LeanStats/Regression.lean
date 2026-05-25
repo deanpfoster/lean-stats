@@ -6,6 +6,7 @@ Pure functions for ordinary-least-squares linear regression and
 Pearson correlation. Manifest claims about least-squares optimality
 and orthogonality live in `LeanStats/Manifests/Regression.lean`.
 -/
+-- Manifest claims: LeanStats/Manifests/Regression.lean
 
 set_option autoImplicit false
 

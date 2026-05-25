@@ -26,6 +26,7 @@ IO-bearing constants are reachable from this root.
 
 If this file compiles without error, the library is pure.
 -/
+-- Purity audit. Referenced by: LeanStats/Manifest.lean
 
 set_option autoImplicit false
 

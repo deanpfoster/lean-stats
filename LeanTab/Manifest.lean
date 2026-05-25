@@ -21,6 +21,7 @@ import LeanTab.Stats
   - Correctness of user-supplied predicates/functions.
   - Performance on large tables (no indexing, no lazy evaluation).
 -/
+-- Implementation: LeanTab/Table.lean, LeanTab/Verbs.lean
 
 set_option autoImplicit false
 

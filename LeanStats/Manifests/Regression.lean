@@ -22,6 +22,7 @@ import LeanStats.Manifests.Util
   - Numerical stability for near-collinear data.
   - Multivariate regression (not implemented).
 -/
+-- Implementation: LeanStats/Regression.lean
 
 set_option autoImplicit false
 

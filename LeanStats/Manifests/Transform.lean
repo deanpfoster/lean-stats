@@ -16,6 +16,7 @@ import LeanStats.Transform
   - sqrt(4) = 2.
   - reciprocal(2) = 0.5.
 -/
+-- Implementation: LeanStats/Transform.lean
 
 set_option autoImplicit false
 

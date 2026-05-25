@@ -22,6 +22,7 @@ AlphaInvesting
   └── StepResult (what happened at each step)
 ```
 -/
+-- No manifest yet. Claims would go in LeanStats/Manifests/AlphaInvesting.lean
 
 set_option autoImplicit false
 

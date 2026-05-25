@@ -11,6 +11,7 @@ Contract: observation `i` gets `data-id='i'` in EVERY plot. The JS
 in `LeanStats.Report.Interactive` uses this to synchronize selection
 across all SVGs on the page.
 -/
+-- Manifest claims: LeanStats/Manifests/Interactive.lean
 
 set_option autoImplicit false
 

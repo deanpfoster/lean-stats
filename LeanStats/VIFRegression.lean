@@ -18,6 +18,7 @@ Key properties:
 - Controls marginal false discovery rate via alpha-investing
 - Two modes: "dense" (many signals expected) and "sparse" (few signals)
 -/
+-- Manifest claims: LeanStats/Manifests/NewFunctions.lean (partial)
 
 set_option autoImplicit false
 

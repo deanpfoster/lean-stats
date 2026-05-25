@@ -11,6 +11,7 @@ Adapts detail level to the space available:
 - **200 chars**: minimal — 2 cols, type only
 - **80 chars**: one-liner — just dimensions + column names
 -/
+-- Manifest claims: LeanTab/Manifests/Summarize.lean
 
 set_option autoImplicit false
 

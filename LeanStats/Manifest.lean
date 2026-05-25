@@ -99,6 +99,7 @@ protocol typed via `LeanStats.Plot.Protocol` inductive.
 - Literate: parseLiterate/renderLiterate (.lmd format)
 - Conformance: R/numpy/SQL/spec-fixture testing framework
 -/
+-- Per-axis manifests: LeanStats/Manifests/*.lean
 
 set_option autoImplicit false
 

@@ -7,6 +7,7 @@ import LeanTab.Summarize
 Key claim: `tableSummary t budget` output length ≤ budget + 1.
 This is what lets l3m classify summary tools as tame.
 -/
+-- Implementation: LeanTab/Summarize.lean
 
 set_option autoImplicit false
 

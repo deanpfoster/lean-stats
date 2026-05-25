@@ -16,6 +16,7 @@ All operate element-wise on `Array Float` and handle edge cases
 (log of non-positive, sqrt of negative, reciprocal of zero) by
 returning 0 for those elements.
 -/
+-- Manifest claims: LeanStats/Manifests/Transform.lean
 
 set_option autoImplicit false
 

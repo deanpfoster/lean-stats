@@ -16,6 +16,7 @@ When extracted as `lean-tab`, this file becomes the root of that library.
 The stats bridge (`LeanTab.Stats`) imports `LeanStats` and provides the
 glue; everything else in `LeanTab/` is self-contained.
 -/
+-- Manifest claims: LeanTab/Manifest.lean
 
 set_option autoImplicit false
 
