@@ -28,6 +28,7 @@ import LeanStats.Plot.MultiRegInteract
 import LeanStats.Plot.Explorer
 import LeanStats.Plot.Dashboard
 import LeanStats.Plot.ScatterMatrix
+import LeanStats.Plot.Boxplot
 import LeanStats.Plot.Protocol
 
 import LeanStats.Report.Tooltip

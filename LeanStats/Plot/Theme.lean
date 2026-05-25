@@ -210,4 +210,63 @@ def bankTo45 (xs ys : Array Float) : Float × Float :=
       let height := if height > 800 then 800 else if height < 200 then 200 else height
       return (width, height)
 
+/-- Generate SVG rug marks along the X axis (bottom edge). -/
+def rugX (xs : Array Float) (sx : Float → Float) (yPos : Float) (color : String := "#666") : String :=
+  xs.foldl (fun acc x =>
+    let px := sx x
+    acc ++ s!"<line x1=\"{px}\" y1=\"{yPos}\" x2=\"{px}\" y2=\"{yPos - 4}\" stroke=\"{color}\" stroke-width=\"0.5\" opacity=\"0.4\"/>\n"
+  ) ""
+
+/-- Generate SVG rug marks along the Y axis (left edge). -/
+def rugY (ys : Array Float) (sy : Float → Float) (xPos : Float) (color : String := "#666") : String :=
+  ys.foldl (fun acc y =>
+    let py := sy y
+    acc ++ s!"<line x1=\"{xPos}\" y1=\"{py}\" x2=\"{xPos + 4}\" y2=\"{py}\" stroke=\"{color}\" stroke-width=\"0.5\" opacity=\"0.4\"/>\n"
+  ) ""
+
+/-- Draw axis lines spanning only the data range (Tufte range frame). -/
+def rangeFrame (xMin xMax yMin yMax : Float) (sx sy : Float → Float) (color : String := "#999") : String :=
+  let x1 := sx xMin; let x2 := sx xMax
+  let y1 := sy yMin; let y2 := sy yMax
+  s!"<line x1=\"{x1}\" y1=\"{y1}\" x2=\"{x2}\" y2=\"{y1}\" stroke=\"{color}\" stroke-width=\"0.75\"/>\n" ++
+  s!"<line x1=\"{x1}\" y1=\"{y1}\" x2=\"{x1}\" y2=\"{y2}\" stroke=\"{color}\" stroke-width=\"0.75\"/>\n"
+
+/-- Expand a range to include zero if the includeZero flag is set. -/
+def expandToZero (mn mx : Float) (includeZero : Bool) : Float × Float :=
+  if !includeZero then (mn, mx)
+  else (if mn < 0 then mn else 0, if mx > 0 then mx else 0)
+
+/-- Generate a vertical histogram SVG (bars go horizontal, stacked vertically).
+    For use as a marginal distribution panel beside a scatter plot. -/
+def verticalHistogram (data : Array Float) (sy : Float → Float)
+    (xOffset : Float) (width : Float := 40) (bins : Nat := 10)
+    (color : String := "steelblue") : String :=
+  if data.size == 0 || bins == 0 then ""
+  else
+    let mn := data.foldl (fun acc v => if v < acc then v else acc) (data.getD 0 0)
+    let mx := data.foldl (fun acc v => if v > acc then v else acc) (data.getD 0 0)
+    let range := mx - mn
+    if range == 0 then ""
+    else
+      let binWidth := range / bins.toFloat
+      let counts := data.foldl (fun (acc : Array Nat) v =>
+        let idx := ((v - mn) / binWidth).toUInt64.toNat
+        let idx := if idx >= bins then bins - 1 else idx
+        acc.set! idx ((acc.getD idx 0) + 1)
+      ) (Array.mkArray bins 0)
+      let maxCount := counts.foldl (fun acc c => if c > acc then c else acc) 0
+      if maxCount == 0 then ""
+      else Id.run do
+        let mut svg := ""
+        for i in List.range bins do
+          let c := counts.getD i 0
+          let binLo := mn + i.toFloat * binWidth
+          let binHi := binLo + binWidth
+          let yTop := sy binHi
+          let yBot := sy binLo
+          let h := (yBot - yTop).abs
+          let barW := width * c.toFloat / maxCount.toFloat
+          svg := svg ++ s!"<rect x=\"{xOffset}\" y=\"{if yTop < yBot then yTop else yBot}\" width=\"{barW}\" height=\"{h}\" fill=\"{color}\" opacity=\"0.5\"/>\n"
+        return svg
+
 end LeanStats.Plot
