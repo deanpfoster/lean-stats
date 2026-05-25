@@ -12,6 +12,7 @@ import LeanTab.Stats
 import LeanTab.Summarize
 import LeanTab.Catalog
 import LeanTab.CatalogJson
+import LeanTab.CatalogMerge
 import LeanTab.Crypto
 import LeanTab.Join
 import LeanTab.Sql.Ast
