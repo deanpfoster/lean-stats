@@ -6,22 +6,42 @@ namespace LeanTab
 
 private def tryParseFloat (s : String) : Option Float :=
   let s := s.trim
-  let (neg, s) := if s.startsWith "-" then (true, s.drop 1) else (false, s)
-  let parts := s.splitOn "."
-  match parts with
-  | [intPart] =>
-    match intPart.toNat? with
-    | some n => some (if neg then -(n.toFloat) else n.toFloat)
-    | none => none
-  | [intPart, fracPart] =>
-    if fracPart.isEmpty then none
-    else match intPart.toNat?, fracPart.toNat? with
-      | some i, some f =>
-        let denom := (10 : Float) ^ fracPart.length.toFloat
-        let v := i.toFloat + f.toFloat / denom
-        some (if neg then -v else v)
-      | _, _ => none
-  | _ => none
+  -- Split on 'e' or 'E' for scientific notation
+  let (mantissa, exponent) := match s.splitOn "e" with
+    | [m, e] => (m, e)
+    | _ => match s.splitOn "E" with
+      | [m, e] => (m, e)
+      | _ => (s, "0")
+  let (neg, m) := if mantissa.startsWith "-" then (true, mantissa.drop 1)
+    else if mantissa.startsWith "+" then (false, mantissa.drop 1)
+    else (false, mantissa)
+  let parts := m.splitOn "."
+  let baseVal := match parts with
+    | [intPart] => match intPart.toNat? with
+      | some n => some n.toFloat
+      | none => none
+    | [intPart, fracPart] =>
+      if fracPart.isEmpty then none
+      else match intPart.toNat?, fracPart.toNat? with
+        | some i, some f =>
+          let denom := (10 : Float) ^ fracPart.length.toFloat
+          some (i.toFloat + f.toFloat / denom)
+        | _, _ => none
+    | _ => none
+  match baseVal with
+  | none => none
+  | some v =>
+    let v := if neg then -v else v
+    -- Apply exponent
+    let expNeg := exponent.startsWith "-"
+    let expStr := if expNeg then exponent.drop 1
+      else if exponent.startsWith "+" then exponent.drop 1
+      else exponent
+    match expStr.toNat? with
+    | some e =>
+      let factor := (10 : Float) ^ e.toFloat
+      some (if expNeg then v / factor else v * factor)
+    | none => if exponent == "0" then some v else none
 
 def parseCell (s : String) : Cell :=
   if s == "" then .na
