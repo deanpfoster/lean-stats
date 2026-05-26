@@ -50,7 +50,7 @@ def parseCell (s : String) : Cell :=
     | none => .str s
 
 /-- RFC 4180 CSV parser. Handles quoted fields, escaped quotes, newlines in quotes. -/
-partial def parseCsv (s : String) : Table :=
+partial def parseCsv (s : String) (delimiter : Char := ',') : Table :=
   let rows := parseRows s.iter
   match rows with
   | [] => { columns := #[] }
@@ -79,7 +79,7 @@ where
     if it.atEnd then (acc.toString, it, true)
     else
       let c := it.curr
-      if c == ',' then (acc.toString, it.next, false)
+      if c == delimiter then (acc.toString, it.next, false)
       else if c == '\n' then (acc.toString, it.next, true)
       else if c == '\r' then
         let next := it.next
@@ -102,7 +102,7 @@ where
         parseQuoted it.next (acc.toString ++ c.toString).toSubstring
   consumeDelim (it : String.Iterator) (field : String) : String × String.Iterator × Bool :=
     if it.atEnd then (field, it, true)
-    else if it.curr == ',' then (field, it.next, false)
+    else if it.curr == delimiter then (field, it.next, false)
     else if it.curr == '\n' then (field, it.next, true)
     else if it.curr == '\r' then
       let next := it.next
@@ -110,11 +110,11 @@ where
       (field, next, true)
     else (field, it, true)  -- malformed, treat as EOL
 
-private def needsQuoting (s : String) : Bool :=
-  s.any fun c => c == ',' || c == '"' || c == '\n' || c == '\r'
+private def needsQuoting (s : String) (delimiter : Char) : Bool :=
+  s.any fun c => c == delimiter || c == '"' || c == '\n' || c == '\r'
 
-private def quoteField (s : String) : String :=
-  if needsQuoting s then
+private def quoteField (s : String) (delimiter : Char) : String :=
+  if needsQuoting s delimiter then
     "\"" ++ s.replace "\"" "\"\"" ++ "\""
   else s
 
@@ -123,10 +123,12 @@ def renderCell : Cell → String
   | .str v => v
   | .na => ""
 
-def renderCsv (t : Table) : String :=
-  let header := ",".intercalate (t.colNames.toList.map quoteField)
+def renderCsv (t : Table) (delimiter : Char := ',') : String :=
+  let delStr := String.mk [delimiter]
+  let qf (s : String) := quoteField s delimiter
+  let header := delStr.intercalate (t.colNames.toList.map qf)
   let rows := (List.range t.nRows).map fun i =>
-    ",".intercalate ((t.row i).map (quoteField ∘ renderCell)).toList
+    delStr.intercalate ((t.row i).map (fun c => qf (renderCell c))).toList
   "\n".intercalate (header :: rows)
 
 end LeanTab
