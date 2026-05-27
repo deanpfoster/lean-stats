@@ -32,6 +32,7 @@ import LeanTab.Manifests.MultiGroup
 import LeanTab.Manifests.Summarize
 import LeanTab.Manifests.Parse
 import LeanTab.Manifests.Query
+import LeanTab.Manifests.Algebra
 import LeanTab.Clean
 import LeanTab.Interface
 import LeanTab.JoinDiscovery
