@@ -124,8 +124,16 @@ UnitTest summary_max : (summary #[3.0, 1.0, 2.0]).max = 3.0
 -- § Universally quantified claims (cannot native_decide over Float)
 -- ════════════════════════════════════════════════════════════
 
-/-- Variance is non-negative for all inputs. Cannot prove over
-    arbitrary Float; stated as structural property of the implementation. -/
+/-- Float arithmetic agrees with Real arithmetic on inputs that
+    are not NaN or Inf. This is the standard assumption every
+    numerical library makes implicitly; we name it explicitly.
+    When Mathlib is added as a dependency, the conjectures below
+    can be proven for Real and derived for Float via this claim. -/
+Sketch float_approximates_real
+
+/-- Variance is non-negative for all inputs. Provable for Real
+    (sum of squares / n ≥ 0). Unprovable for Float without the
+    WorldClaim above + Mathlib. -/
 UnprovenConjecture variance_nonneg :
   ∀ (xs : Array Float), variance xs ≥ 0
 
