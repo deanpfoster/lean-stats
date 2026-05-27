@@ -1,4 +1,4 @@
-import DeanLean.Basic
+import LeanManifests.Basic
 import LeanStats.Manifests.Util
 
 /-! # Manifests/Regression — claims about correlation and linear regression

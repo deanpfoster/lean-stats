@@ -144,7 +144,7 @@ User's words on naming: "what is the standard name for it in the
 Lean world?" Looking at neighbors:
 
   - `lean-manifests` (kebab, "lean-" prefix)
-  - `dean_lean` (snake, "dean_lean" — older style)
+  - `lean_manifests` (snake, "lean_manifests" — older style)
   - `mathlib4` (no prefix; well-known library)
   - `aesop`, `batteries` (no prefix; tools/utility libraries)
   - `lean-toml`, `lean-json` (kebab + "lean-" prefix; format-specific
@@ -165,7 +165,7 @@ etc. (Mirrors how `Mathlib` does it for sub-areas.)
 
 ## Dependencies
 
-Path-dep on `../lean-manifests` (provides `dean_lean` / `DeanLean`).
+Path-dep on `../lean-manifests` (provides `lean_manifests` / `LeanManifests`).
 
 When integrated with l3m, l3m will path-dep on `../lean-stats`.
 

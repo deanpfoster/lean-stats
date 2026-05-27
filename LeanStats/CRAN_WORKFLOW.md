@@ -29,7 +29,7 @@ The LLM writes a pure Lean implementation:
 
 ### Step 3: Validate against R
 
-Using our Conformance framework (DeanLean.Conformance.R):
+Using our Conformance framework (LeanManifests.Conformance.R):
 
 ```lean
 -- Golden fixture (checked in, always compiles):

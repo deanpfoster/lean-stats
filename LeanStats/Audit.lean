@@ -1,4 +1,4 @@
-import DeanLean.Basic
+import LeanManifests.Basic
 import LeanStats.Manifest
 import LeanStats.Anova
 import LeanStats.Proportion

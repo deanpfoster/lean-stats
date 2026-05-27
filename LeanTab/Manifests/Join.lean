@@ -1,4 +1,4 @@
-import DeanLean.Basic
+import LeanManifests.Basic
 import LeanTab.Join
 
 set_option autoImplicit false

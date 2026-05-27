@@ -1,4 +1,4 @@
-import DeanLean.Basic
+import LeanManifests.Basic
 import LeanTab.Table
 import LeanTab.Csv
 import LeanTab.Pretty

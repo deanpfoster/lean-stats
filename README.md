@@ -43,7 +43,7 @@ LeanStats/
 ```
 
 Requires `lean-toolchain` `leanprover/lean4:v4.16.0`. Path-dep on
-`../lean-manifests` (which provides `dean_lean` / `DeanLean`).
+`../lean-manifests` (which provides `lean_manifests` / `LeanManifests`).
 
 ## Usage
 

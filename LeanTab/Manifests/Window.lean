@@ -1,4 +1,4 @@
-import DeanLean.Basic
+import LeanManifests.Basic
 import LeanTab.Window
 import LeanStats.Manifests.Util
 

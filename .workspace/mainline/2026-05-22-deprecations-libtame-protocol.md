@@ -40,7 +40,7 @@ remediation:
   verify no `Real`/`Rat`/`Int128` reaches stats's surface), OR also
   move to audit-grep. Your call.
 
-The new `WorldClaim` macro (in `DeanLean.WorldClaim`) takes a
+The new `WorldClaim` macro (in `LeanManifests.WorldClaim`) takes a
 non-vacuous `Prop` and produces a `def : Prop` tagged `@[world_claim]`.
 The discipline: name the falsifying observation in the doc-comment,
 thread the claim as an explicit hypothesis through the theorem
@@ -89,7 +89,7 @@ Recommended placement: `LeanStats/Manifest.lean`, near the end,
 same shape as before:
 
 ```lean
-import DeanLean.LibraryTame
+import LeanManifests.LibraryTame
 -- ... existing imports
 
 -- after all Restate entries:
