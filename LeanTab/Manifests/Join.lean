@@ -21,28 +21,28 @@ private def t2 : Table := Table.fromColumns #[
 theorem innerJoin_row_bound_proof :
   (innerJoin t1 t2 "id").nRows = 2 := by native_decide
 
-ProvenTheorem innerJoin_row_bound :
+UnitTest innerJoin_row_bound :
   (innerJoin t1 t2 "id").nRows = 2
 
 /-- Left join preserves all 3 left rows. -/
 theorem leftJoin_preserves_left_proof :
   (leftJoin t1 t2 "id").nRows = 3 := by native_decide
 
-ProvenTheorem leftJoin_preserves_left :
+UnitTest leftJoin_preserves_left :
   (leftJoin t1 t2 "id").nRows = 3
 
 /-- Cross join gives 9 rows (3 × 3). -/
 theorem crossJoin_row_count_proof :
   (crossJoin t1 t2).nRows = 9 := by native_decide
 
-ProvenTheorem crossJoin_row_count :
+UnitTest crossJoin_row_count :
   (crossJoin t1 t2).nRows = 9
 
 /-- Inner join has 3 columns (id, x, y — key merged). -/
 theorem innerJoin_col_count_proof :
   (innerJoin t1 t2 "id").nCols = 3 := by native_decide
 
-ProvenTheorem innerJoin_col_count :
+UnitTest innerJoin_col_count :
   (innerJoin t1 t2 "id").nCols = 3
 
 end LeanTab.Manifests.Join

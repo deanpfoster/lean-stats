@@ -33,20 +33,20 @@ private def tMissing : Table := Table.fromColumns #[
 /-- countNa counts exactly the NA values. -/
 theorem countNa_claim_proof : countNa xs = 2 := by native_decide
 
-ProvenTheorem countNa_claim : countNa xs = 2
+UnitTest countNa_claim : countNa xs = 2
 
 /-- fillForward propagates last non-na value. -/
 theorem fillForward_claim_proof :
   fillForward xs = #[.float 1, .float 1, .float 3, .float 3] := by native_decide
 
-ProvenTheorem fillForward_claim :
+UnitTest fillForward_claim :
   fillForward xs = #[.float 1, .float 1, .float 3, .float 3]
 
 /-- dropNa removes exactly the NA rows. -/
 theorem dropNa_claim_proof :
   (dropNa tMissing "a").nRows = tMissing.nRows - 1 := by native_decide
 
-ProvenTheorem dropNa_claim :
+UnitTest dropNa_claim :
   (dropNa tMissing "a").nRows = tMissing.nRows - 1
 
 end LeanTab.Manifests.Missing

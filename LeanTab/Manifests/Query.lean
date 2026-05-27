@@ -32,21 +32,21 @@ private def isErr (r : Except String Table) : Bool := !r.isOk
 /-- No filters: returns .ok with same nRows -/
 theorem query_nofilter_proof : nRowsOk (runQuery fixture {}) 5 = true := by native_decide
 
-ProvenTheorem query_nofilter : nRowsOk (runQuery fixture {}) 5 = true
+UnitTest query_nofilter : nRowsOk (runQuery fixture {}) 5 = true
 
 /-- WHERE "x > 2": returns .ok with fewer rows -/
 theorem query_where_proof : nRowsLt (runQuery fixture { where_ := some "x > 2" }) 5 = true := by native_decide
 
-ProvenTheorem query_where : nRowsLt (runQuery fixture { where_ := some "x > 2" }) 5 = true
+UnitTest query_where : nRowsLt (runQuery fixture { where_ := some "x > 2" }) 5 = true
 
 /-- LIMIT 2: returns .ok with 2 rows -/
 theorem query_limit_proof : nRowsOk (runQuery fixture { limit := some 2 }) 2 = true := by native_decide
 
-ProvenTheorem query_limit : nRowsOk (runQuery fixture { limit := some 2 }) 2 = true
+UnitTest query_limit : nRowsOk (runQuery fixture { limit := some 2 }) 2 = true
 
 /-- Bad WHERE parse (empty): returns .error -/
 theorem query_bad_where_proof : isErr (runQuery fixture { where_ := some "" }) = true := by native_decide
 
-ProvenTheorem query_bad_where : isErr (runQuery fixture { where_ := some "" }) = true
+UnitTest query_bad_where : isErr (runQuery fixture { where_ := some "" }) = true
 
 end LeanTab.Manifests.Query

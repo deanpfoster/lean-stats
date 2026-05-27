@@ -19,28 +19,28 @@ private def t2x2 : Table := Table.fromRows #["a", "b"] #[
 theorem render_has_newline_proof :
   String.containsSubstr (renderCsv t2x2) "\n" = true := by native_decide
 
-ProvenTheorem render_has_newline :
+UnitTest render_has_newline :
   String.containsSubstr (renderCsv t2x2) "\n" = true
 
 /-- parseCsv of a simple CSV has correct nRows. -/
 theorem parse_nrows_proof :
   (parseCsv "a,b\n1,2\n3,4").nRows = 2 := by native_decide
 
-ProvenTheorem parse_nrows :
+UnitTest parse_nrows :
   (parseCsv "a,b\n1,2\n3,4").nRows = 2
 
 /-- parseCsv of a simple CSV has correct nCols. -/
 theorem parse_ncols_proof :
   (parseCsv "a,b\n1,2\n3,4").nCols = 2 := by native_decide
 
-ProvenTheorem parse_ncols :
+UnitTest parse_ncols :
   (parseCsv "a,b\n1,2\n3,4").nCols = 2
 
 /-- prettyPrint output is non-empty. -/
 theorem pretty_nonempty_proof :
   ((prettyPrint t2x2).length > 0) = true := by native_decide
 
-ProvenTheorem pretty_nonempty :
+UnitTest pretty_nonempty :
   ((prettyPrint t2x2).length > 0) = true
 
 end LeanTab.Manifests.IO

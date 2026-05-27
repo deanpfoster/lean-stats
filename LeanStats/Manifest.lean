@@ -122,7 +122,7 @@ theorem degenerate_safe_proof :
   tTestOneSample #[] 0 = 0 ∧
   tTestTwoSample #[] #[] = 0 := by native_decide
 
-ProvenTheorem degenerate_safe :
+UnitTest degenerate_safe :
   mean #[] = 0 ∧
   variance #[] = 0 ∧
   stdDev #[] = 0 ∧

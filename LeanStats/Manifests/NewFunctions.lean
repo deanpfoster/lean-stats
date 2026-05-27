@@ -22,7 +22,7 @@ private def anovaIsSome : Bool :=
 
 theorem anova_three_groups_proof : anovaIsSome = true := by native_decide
 
-ProvenTheorem anova_three_groups : anovaIsSome = true
+UnitTest anova_three_groups : anovaIsSome = true
 
 -- ════════════════════════════════════════════════════════════
 -- § 2. chiSquaredTest on 2x2 table returns positive statistic
@@ -34,7 +34,7 @@ private def chiSqPositive : Bool := chiSqStat > 0
 
 theorem chi_squared_positive_proof : chiSqPositive = true := by native_decide
 
-ProvenTheorem chi_squared_positive : chiSqPositive = true
+UnitTest chi_squared_positive : chiSqPositive = true
 
 -- ════════════════════════════════════════════════════════════
 -- § 3. vifAll with uncorrelated predictors returns low values
@@ -46,7 +46,7 @@ private def vifBothLow : Bool := vifValues.all (· < 5)
 
 theorem vif_uncorrelated_low_proof : vifBothLow = true := by native_decide
 
-ProvenTheorem vif_uncorrelated_low : vifBothLow = true
+UnitTest vif_uncorrelated_low : vifBothLow = true
 
 -- ════════════════════════════════════════════════════════════
 -- § 4. Table.dummyCode produces correct column count
@@ -61,7 +61,7 @@ private def dummyCodeColCount : Bool := dummyCodedTable.nCols = testTable.nCols 
 
 theorem dummy_code_col_count_proof : dummyCodeColCount = true := by native_decide
 
-ProvenTheorem dummy_code_col_count : dummyCodeColCount = true
+UnitTest dummy_code_col_count : dummyCodeColCount = true
 
 -- ════════════════════════════════════════════════════════════
 -- § 5. LinAlg.matmul identity
@@ -75,7 +75,7 @@ private def matmulIdentity : Bool := (LinAlg.matmul id2 mat2).data == mat2.data
 
 theorem matmul_identity_proof : matmulIdentity = true := by native_decide
 
-ProvenTheorem matmul_identity : matmulIdentity = true
+UnitTest matmul_identity : matmulIdentity = true
 
 -- ════════════════════════════════════════════════════════════
 -- § 6. LinAlg.ols on perfect linear data y = 2x + 1
@@ -92,7 +92,7 @@ private def olsResult : Bool :=
 
 theorem ols_perfect_linear_proof : olsResult = true := by native_decide
 
-ProvenTheorem ols_perfect_linear : olsResult = true
+UnitTest ols_perfect_linear : olsResult = true
 
 -- ════════════════════════════════════════════════════════════
 -- § 7. iqr on known data
@@ -104,7 +104,7 @@ private def iqrExpected : Bool := iqrValue > 0
 
 theorem iqr_positive_proof : iqrExpected = true := by native_decide
 
-ProvenTheorem iqr_positive : iqrExpected = true
+UnitTest iqr_positive : iqrExpected = true
 
 -- ════════════════════════════════════════════════════════════
 -- § 8. tTestPaired returns 0 when pairs are identical
@@ -114,7 +114,7 @@ private def pairedIdentical : Float := tTestPaired #[1,2,3] #[1,2,3]
 
 theorem paired_t_identical_proof : pairedIdentical = 0 := by native_decide
 
-ProvenTheorem paired_t_identical : pairedIdentical = 0
+UnitTest paired_t_identical : pairedIdentical = 0
 
 -- VIF-Regression conformance: validated against R's VIF package (CRAN archive)
 -- R 4.3.2, VIF 1.0, run: Rscript Conformance/R/vif_regression.R

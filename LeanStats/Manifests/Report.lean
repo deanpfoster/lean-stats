@@ -38,21 +38,21 @@ open LeanStats.Report LeanStats.Manifests
 theorem report_doctype_proof :
   (renderReport { title := "T", subtitle := "S", sections := [] }).startsWith "<!DOCTYPE html>" = true := by native_decide
 
-ProvenTheorem report_doctype :
+UnitTest report_doctype :
   (renderReport { title := "T", subtitle := "S", sections := [] }).startsWith "<!DOCTYPE html>" = true
 
 /-- Report output contains the title. -/
 theorem report_contains_title_proof :
   String.containsSubstr (renderReport { title := "MyTitle", subtitle := "Sub", sections := [] }) "MyTitle" = true := by native_decide
 
-ProvenTheorem report_contains_title :
+UnitTest report_contains_title :
   String.containsSubstr (renderReport { title := "MyTitle", subtitle := "Sub", sections := [] }) "MyTitle" = true
 
 /-- Report output contains the subtitle. -/
 theorem report_contains_subtitle_proof :
   String.containsSubstr (renderReport { title := "T", subtitle := "MySub", sections := [] }) "MySub" = true := by native_decide
 
-ProvenTheorem report_contains_subtitle :
+UnitTest report_contains_subtitle :
   String.containsSubstr (renderReport { title := "T", subtitle := "MySub", sections := [] }) "MySub" = true
 
 /-- Report with a section contains the section heading. -/
@@ -61,7 +61,7 @@ theorem report_section_heading_proof :
     (renderReport { title := "T", subtitle := "S", sections := [{ heading := "Results", prose := "text" }] })
     "Results" = true := by native_decide
 
-ProvenTheorem report_section_heading :
+UnitTest report_section_heading :
   String.containsSubstr
     (renderReport { title := "T", subtitle := "S", sections := [{ heading := "Results", prose := "text" }] })
     "Results" = true
@@ -74,25 +74,25 @@ ProvenTheorem report_section_heading :
 theorem report_has_style_proof :
   String.containsSubstr (renderReport { title := "T", subtitle := "S", sections := [] }) "<style>" = true := by native_decide
 
-ProvenTheorem report_has_style :
+UnitTest report_has_style :
   String.containsSubstr (renderReport { title := "T", subtitle := "S", sections := [] }) "<style>" = true
 
 /-- Report contains a <script> block (JS is embedded). -/
 theorem report_has_script_proof :
   String.containsSubstr (renderReport { title := "T", subtitle := "S", sections := [] }) "<script>" = true := by native_decide
 
-ProvenTheorem report_has_script :
+UnitTest report_has_script :
   String.containsSubstr (renderReport { title := "T", subtitle := "S", sections := [] }) "<script>" = true
 
 /-- Tooltip CSS is non-empty. -/
 theorem tooltip_css_nonempty_proof : tooltipCss.length > 0 := by native_decide
 
-ProvenTheorem tooltip_css_nonempty : tooltipCss.length > 0
+UnitTest tooltip_css_nonempty : tooltipCss.length > 0
 
 /-- Tooltip JS is non-empty. -/
 theorem tooltip_js_nonempty_proof : tooltipJs.length > 0 := by native_decide
 
-ProvenTheorem tooltip_js_nonempty : tooltipJs.length > 0
+UnitTest tooltip_js_nonempty : tooltipJs.length > 0
 
 /-- Section with SVG includes the SVG content. -/
 theorem section_svg_proof :
@@ -100,7 +100,7 @@ theorem section_svg_proof :
     (renderSection { heading := "H", prose := "P", svg := some "<svg/>" })
     "<svg/>" = true := by native_decide
 
-ProvenTheorem section_svg :
+UnitTest section_svg :
   String.containsSubstr
     (renderSection { heading := "H", prose := "P", svg := some "<svg/>" })
     "<svg/>" = true

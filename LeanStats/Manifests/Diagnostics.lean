@@ -49,18 +49,18 @@ private def getDiagResiduals (xs ys : Array Float) : Option (Array Float) :=
 /-- Degenerate input (< 3 points) returns none. -/
 theorem diag_degenerate_proof : (regressionDiag #[1.0, 2.0] #[3.0, 4.0]).isSome = false := by native_decide
 
-ProvenTheorem diag_degenerate : (regressionDiag #[1.0, 2.0] #[3.0, 4.0]).isSome = false
+UnitTest diag_degenerate : (regressionDiag #[1.0, 2.0] #[3.0, 4.0]).isSome = false
 
 /-- Mismatched lengths returns none. -/
 theorem diag_mismatched_proof : (regressionDiag #[1.0, 2.0, 3.0] #[1.0, 2.0]).isSome = false := by native_decide
 
-ProvenTheorem diag_mismatched : (regressionDiag #[1.0, 2.0, 3.0] #[1.0, 2.0]).isSome = false
+UnitTest diag_mismatched : (regressionDiag #[1.0, 2.0, 3.0] #[1.0, 2.0]).isSome = false
 
 /-- Diagnostics returns some for valid input (≥ 3 points with variation). -/
 theorem diag_valid_proof :
   (regressionDiag #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0]).isSome = true := by native_decide
 
-ProvenTheorem diag_valid :
+UnitTest diag_valid :
   (regressionDiag #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0]).isSome = true
 
 -- ════════════════════════════════════════════════════════════
@@ -71,35 +71,35 @@ ProvenTheorem diag_valid :
 theorem diag_perfect_r2_proof :
   getDiagR2 #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 1.0 := by native_decide
 
-ProvenTheorem diag_perfect_r2 :
+UnitTest diag_perfect_r2 :
   getDiagR2 #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 1.0
 
 /-- Perfect linear data: se = 0. -/
 theorem diag_perfect_se_proof :
   getDiagSe #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 0.0 := by native_decide
 
-ProvenTheorem diag_perfect_se :
+UnitTest diag_perfect_se :
   getDiagSe #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 0.0
 
 /-- Perfect linear data: slope = 2. -/
 theorem diag_perfect_slope_proof :
   getDiagSlope #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0 := by native_decide
 
-ProvenTheorem diag_perfect_slope :
+UnitTest diag_perfect_slope :
   getDiagSlope #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0
 
 /-- Perfect linear data: all residuals are 0. -/
 theorem diag_perfect_resid_proof :
   getDiagResiduals #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some #[0.0, 0.0, 0.0] := by native_decide
 
-ProvenTheorem diag_perfect_resid :
+UnitTest diag_perfect_resid :
   getDiagResiduals #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some #[0.0, 0.0, 0.0]
 
 /-- Perfect linear data: Durbin-Watson = 2 (no autocorrelation, since residuals are 0). -/
 theorem diag_perfect_dw_proof :
   getDiagDW #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0 := by native_decide
 
-ProvenTheorem diag_perfect_dw :
+UnitTest diag_perfect_dw :
   getDiagDW #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0
 
 private def getDiagOutlierCount (xs ys : Array Float) : Option Nat :=
@@ -109,7 +109,7 @@ private def getDiagOutlierCount (xs ys : Array Float) : Option Nat :=
 theorem diag_perfect_no_outliers_proof :
   getDiagOutlierCount #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 0 := by native_decide
 
-ProvenTheorem diag_perfect_no_outliers :
+UnitTest diag_perfect_no_outliers :
   getDiagOutlierCount #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 0
 
 -- ════════════════════════════════════════════════════════════

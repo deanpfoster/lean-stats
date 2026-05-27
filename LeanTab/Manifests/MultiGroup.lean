@@ -19,21 +19,21 @@ private def t : Table := Table.fromColumns #[
 theorem multi_group_keys_proof :
   (groupByMany t #["a", "b"]).keys.size = 3 := by native_decide
 
-ProvenTheorem multi_group_keys :
+UnitTest multi_group_keys :
   (groupByMany t #["a", "b"]).keys.size = 3
 
 /-- groupByMany on one column produces 2 distinct keys. -/
 theorem multi_group_single_proof :
   (groupByMany t #["a"]).keys.size = 2 := by native_decide
 
-ProvenTheorem multi_group_single :
+UnitTest multi_group_single :
   (groupByMany t #["a"]).keys.size = 2
 
 /-- Group sizes sum to total rows (4). -/
 theorem group_counts_sum_proof :
   ((groupByMany t #["a", "b"]).groups.map (·.size)).foldl (· + ·) 0 = 4 := by native_decide
 
-ProvenTheorem group_counts_sum :
+UnitTest group_counts_sum :
   ((groupByMany t #["a", "b"]).groups.map (·.size)).foldl (· + ·) 0 = 4
 
 end LeanTab.Manifests.MultiGroup

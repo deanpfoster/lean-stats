@@ -51,56 +51,56 @@ private def evalCols (q : Query) (d : Database) : Option Nat :=
 theorem select_star_rows_proof :
   evalRows { select_ := [.star], from_ := "t1" } db = some 4 := by native_decide
 
-ProvenTheorem select_star_rows :
+UnitTest select_star_rows :
   evalRows { select_ := [.star], from_ := "t1" } db = some 4
 
 /-- SELECT * FROM t1 returns all 3 columns. -/
 theorem select_star_cols_proof :
   evalCols { select_ := [.star], from_ := "t1" } db = some 3 := by native_decide
 
-ProvenTheorem select_star_cols :
+UnitTest select_star_cols :
   evalCols { select_ := [.star], from_ := "t1" } db = some 3
 
 /-- SELECT x, y FROM t1 returns 2 columns. -/
 theorem select_cols_proof :
   evalCols { select_ := [.expr (.col "x") none, .expr (.col "y") none], from_ := "t1" } db = some 2 := by native_decide
 
-ProvenTheorem select_cols :
+UnitTest select_cols :
   evalCols { select_ := [.expr (.col "x") none, .expr (.col "y") none], from_ := "t1" } db = some 2
 
 /-- WHERE x > 2 reduces to 2 rows. -/
 theorem where_reduces_proof :
   evalRows { select_ := [.star], from_ := "t1", where_ := some (.gt (.col "x") (.litFloat 2)) } db = some 2 := by native_decide
 
-ProvenTheorem where_reduces :
+UnitTest where_reduces :
   evalRows { select_ := [.star], from_ := "t1", where_ := some (.gt (.col "x") (.litFloat 2)) } db = some 2
 
 /-- LIMIT 2 returns 2 rows. -/
 theorem limit_rows_proof :
   evalRows { select_ := [.star], from_ := "t1", limit := some 2 } db = some 2 := by native_decide
 
-ProvenTheorem limit_rows :
+UnitTest limit_rows :
   evalRows { select_ := [.star], from_ := "t1", limit := some 2 } db = some 2
 
 /-- GROUP BY g produces 2 groups. -/
 theorem group_by_rows_proof :
   evalRows { select_ := [.agg .avg (.col "x") "avg_x"], from_ := "t1", groupBy := ["g"] } db = some 2 := by native_decide
 
-ProvenTheorem group_by_rows :
+UnitTest group_by_rows :
   evalRows { select_ := [.agg .avg (.col "x") "avg_x"], from_ := "t1", groupBy := ["g"] } db = some 2
 
 /-- COUNT(*) returns 1 row. -/
 theorem count_star_proof :
   evalRows { select_ := [.agg .countStar .null "n"], from_ := "t1" } db = some 1 := by native_decide
 
-ProvenTheorem count_star :
+UnitTest count_star :
   evalRows { select_ := [.agg .countStar .null "n"], from_ := "t1" } db = some 1
 
 /-- Unknown table returns none. -/
 theorem unknown_table_proof :
   (eval { select_ := [.star], from_ := "nope" } db).isSome = false := by native_decide
 
-ProvenTheorem unknown_table :
+UnitTest unknown_table :
   (eval { select_ := [.star], from_ := "nope" } db).isSome = false
 
 end LeanTab.Sql.Manifest

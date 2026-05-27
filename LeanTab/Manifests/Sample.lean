@@ -14,18 +14,18 @@ private def t : Table := Table.fromColumns #[
 
 theorem slice_row_count_proof : (slice t 1 3).nRows = 2 := by native_decide
 
-ProvenTheorem slice_row_count : (slice t 1 3).nRows = 2
+UnitTest slice_row_count : (slice t 1 3).nRows = 2
 
 theorem slice_full_proof : (slice t 0 5).nRows = 5 := by native_decide
 
-ProvenTheorem slice_full : (slice t 0 5).nRows = 5
+UnitTest slice_full : (slice t 0 5).nRows = 5
 
 theorem sample_n_count_proof : (sampleN t 2).nRows = 2 := by native_decide
 
-ProvenTheorem sample_n_count : (sampleN t 2).nRows = 2
+UnitTest sample_n_count : (sampleN t 2).nRows = 2
 
 theorem slice_preserves_cols_proof : (slice t 1 3).nCols = t.nCols := by native_decide
 
-ProvenTheorem slice_preserves_cols : (slice t 1 3).nCols = t.nCols
+UnitTest slice_preserves_cols : (slice t 1 3).nCols = t.nCols
 
 end LeanTab.Manifests.Sample

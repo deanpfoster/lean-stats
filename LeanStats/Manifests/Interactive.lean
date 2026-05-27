@@ -46,7 +46,7 @@ private def testYs : Array Float := #[2.0, 4.0, 6.0]
 theorem scatter_dataid_count_proof :
   countDataIds (interactiveScatter testData).render = 3 := by native_decide
 
-ProvenTheorem scatter_dataid_count :
+UnitTest scatter_dataid_count :
   countDataIds (interactiveScatter testData).render = 3
 
 -- ════════════════════════════════════════════════════════════
@@ -57,14 +57,14 @@ ProvenTheorem scatter_dataid_count :
 theorem scatter_has_id0_proof :
   String.containsSubstr (interactiveScatter testData).render "data-id='0'" = true := by native_decide
 
-ProvenTheorem scatter_has_id0 :
+UnitTest scatter_has_id0 :
   String.containsSubstr (interactiveScatter testData).render "data-id='0'" = true
 
 /-- Scatter output contains data-id='2' (last point). -/
 theorem scatter_has_id2_proof :
   String.containsSubstr (interactiveScatter testData).render "data-id='2'" = true := by native_decide
 
-ProvenTheorem scatter_has_id2 :
+UnitTest scatter_has_id2 :
   String.containsSubstr (interactiveScatter testData).render "data-id='2'" = true
 
 -- ════════════════════════════════════════════════════════════
@@ -75,14 +75,14 @@ ProvenTheorem scatter_has_id2 :
 theorem scatter_tooltip_obs0_proof :
   String.containsSubstr (interactiveScatter testData).render "obs 0" = true := by native_decide
 
-ProvenTheorem scatter_tooltip_obs0 :
+UnitTest scatter_tooltip_obs0 :
   String.containsSubstr (interactiveScatter testData).render "obs 0" = true
 
 /-- Tooltip for last point contains "obs 2". -/
 theorem scatter_tooltip_obs2_proof :
   String.containsSubstr (interactiveScatter testData).render "obs 2" = true := by native_decide
 
-ProvenTheorem scatter_tooltip_obs2 :
+UnitTest scatter_tooltip_obs2 :
   String.containsSubstr (interactiveScatter testData).render "obs 2" = true
 
 -- ════════════════════════════════════════════════════════════
@@ -93,21 +93,21 @@ ProvenTheorem scatter_tooltip_obs2 :
 theorem js_has_sync_proof :
   String.containsSubstr interactiveJs "sync()" = true := by native_decide
 
-ProvenTheorem js_has_sync :
+UnitTest js_has_sync :
   String.containsSubstr interactiveJs "sync()" = true
 
 /-- Interactive JS contains point-in-polygon for lasso. -/
 theorem js_has_pip_proof :
   String.containsSubstr interactiveJs "function pip" = true := by native_decide
 
-ProvenTheorem js_has_pip :
+UnitTest js_has_pip :
   String.containsSubstr interactiveJs "function pip" = true
 
 /-- Interactive CSS contains the .selected class. -/
 theorem css_has_selected_proof :
   String.containsSubstr interactiveCss ".selected" = true := by native_decide
 
-ProvenTheorem css_has_selected :
+UnitTest css_has_selected :
   String.containsSubstr interactiveCss ".selected" = true
 
 -- ════════════════════════════════════════════════════════════
@@ -125,14 +125,14 @@ private def qqDataIdCount (xs ys : Array Float) : Option Nat :=
 theorem resid_dataid_count_proof :
   residDataIdCount testXs testYs = some 3 := by native_decide
 
-ProvenTheorem resid_dataid_count :
+UnitTest resid_dataid_count :
   residDataIdCount testXs testYs = some 3
 
 /-- Q-Q plot on same data also has 3 data-ids. -/
 theorem qq_dataid_count_proof :
   qqDataIdCount testXs testYs = some 3 := by native_decide
 
-ProvenTheorem qq_dataid_count :
+UnitTest qq_dataid_count :
   qqDataIdCount testXs testYs = some 3
 
 -- ════════════════════════════════════════════════════════════
