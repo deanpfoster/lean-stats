@@ -66,12 +66,13 @@ private def jmpJs : String :=
     "transforms.forEach(function(t,i){var cls=formSel.value===t?' active':'';html+='<button class=\"tf-btn'+cls+'\" data-tf=\"'+t+'\">'+labels[i]+'</button>'});" ++
     "html+='</div><div style=\"margin-top:4px\">deg ';" ++
     "for(var i=0;i<=5;i++){var cls=parseInt(degSel.value)===i?' active':'';html+='<button class=\"deg-btn'+cls+'\" data-deg=\"'+i+'\">'+i+'</button>'}" ++
+    "html+='<button class=\"deg-btn'+(degSel.value==='S'?' active':'')+'\" data-deg=\"S\">S</button>';" ++
     "html+='</div><div style=\"margin-top:4px\"><label><input type=\"checkbox\" class=\"orig-cb\"'+(origCb.checked?' checked':'')+'/> orig</label></div>';" ++
     "div.innerHTML=html;" ++
     "div.style.left=px+'px';div.style.top=py+'px';" ++
     "wrap.appendChild(div);activePopup=div;" ++
     "div.querySelectorAll('.tf-btn').forEach(function(b){b.addEventListener('click',function(){formSel.value=b.dataset.tf;draw();updatePopupHighlights()})});" ++
-    "div.querySelectorAll('.deg-btn').forEach(function(b){b.addEventListener('click',function(){degSel.value=b.dataset.deg;draw();updatePopupHighlights()})});" ++
+    "div.querySelectorAll('.deg-btn').forEach(function(b){b.addEventListener('click',function(){degSel.value=b.dataset.deg;document.getElementById('dfSlider').style.display=b.dataset.deg==='S'?'inline-block':'none';draw();updatePopupHighlights()})});" ++
     "div.querySelector('.orig-cb').addEventListener('change',function(){origCb.checked=this.checked;draw()});" ++
     "function updatePopupHighlights(){div.querySelectorAll('.tf-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tf===formSel.value)});div.querySelectorAll('.deg-btn').forEach(function(b){b.classList.toggle('active',parseInt(b.dataset.deg)===parseInt(degSel.value))})}" ++
   "}" ++
@@ -92,6 +93,7 @@ private def jmpJs : String :=
     "return coef}" ++
   -- Evaluate polynomial
   "function polyEval(coef,x){let y=0;for(let i=0;i<coef.length;i++)y+=coef[i]*Math.pow(x,i);return y}" ++
+  "function kernelSmooth(xs,ys,xGrid,bw){return xGrid.map(function(x0){var num=0,den=0;for(var i=0;i<xs.length;i++){var w=Math.exp(-0.5*Math.pow((xs[i]-x0)/bw,2));num+=w*ys[i];den+=w}return den>0?num/den:0})}" ++
   -- Line width picker state
   "var lwOptions=[1,2,3,5];var lwCurrent=2;var seOn=false;" ++
   "var colors=['crimson','#2563eb','#16a34a','#9333ea','#ea580c','#0891b2','#4f46e5','#dc2626'];" ++
@@ -166,9 +168,10 @@ private def jmpJs : String :=
     "fits.forEach(function(spec,idx){" ++
       "if(spec.hidden)return;" ++
       "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],spec.xf),yt=tx(rawY[i],spec.yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
-      "if(pairs.length<spec.deg+1)return;" ++
+      "if(!isSmoother && pairs.length<spec.deg+1)return;" ++
       "const txd=pairs.map(p=>p.tx),tyd=pairs.map(p=>p.ty);" ++
-      "const coef=polyFit(txd,tyd,spec.deg);" ++
+      "var coef,isSmoother=spec.deg==='S';" ++
+      "if(!isSmoother){coef=polyFit(txd,tyd,spec.deg)}" ++
       "const yMean=tyd.reduce((a,b)=>a+b,0)/tyd.length;" ++
       "let sst=0,sse=0;for(let i=0;i<txd.length;i++){let yh=polyEval(coef,txd[i]);sse+=(tyd[i]-yh)**2;sst+=(tyd[i]-yMean)**2}" ++
       "const se=Math.sqrt(sse/(txd.length-spec.deg-1));" ++
@@ -178,7 +181,7 @@ private def jmpJs : String :=
         "var txI;" ++
         "if(xOrig){txI=tx(plotXi,spec.xf)}else{txI=tx(itx(plotXi,curXf),spec.xf)}" ++
         "if(isNaN(txI)||!isFinite(txI))continue;" ++
-        "const tyI=polyEval(coef,txI);" ++
+        "var tyI;if(isSmoother){var bw=(Math.max(...txd)-Math.min(...txd))/(spec.df||5);var num=0,den=0;for(var si=0;si<txd.length;si++){var w=Math.exp(-0.5*Math.pow((txd[si]-txI)/bw,2));num+=w*tyd[si];den+=w}tyI=den>0?num/den:0}else{tyI=polyEval(coef,txI)}" ++
         "var plotYi;" ++
         "if(yOrig){plotYi=itx(tyI,spec.yf)}else{plotYi=tx(itx(tyI,spec.yf),curYf)}" ++
         "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
@@ -226,7 +229,7 @@ private def jmpJs : String :=
   "}" ++
   -- Event listeners
   "drawLwPicker();" ++
-  "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var deg=parseInt(document.getElementById('degree').value);fits.push({deg:deg,xf:xf,yf:yf,se:seOn,lw:lwCurrent});draw();drawLwPicker()});" ++
+  "document.getElementById('fitBtn').addEventListener('click',function(){var xf=document.getElementById('xform').value;var yf=document.getElementById('yform').value;var degVal=document.getElementById('degree').value;if(degVal==='S'){var df=+document.getElementById('dfSlider').value;fits.push({deg:'S',df:df,xf:xf,yf:yf,se:false,lw:lwCurrent})}else{var deg=parseInt(degVal);fits.push({deg:deg,xf:xf,yf:yf,se:seOn,lw:lwCurrent})}draw();drawLwPicker()});" ++
   "document.getElementById('clearBtn').addEventListener('click',function(){fits=[];draw();drawLwPicker()});" ++
   -- Keep button
   "document.getElementById('keepBtn').addEventListener('click',function(){" ++
@@ -318,7 +321,8 @@ def jmpScatter (xs ys : Array Float)
 </div>
 <select id='xform' style='display:none'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select>
 <select id='yform' style='display:none'><option value='recip'>1/y</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>y²</option><option value='exp'>exp</option></select>
-<select id='degree' style='display:none'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select>
+<select id='degree' style='display:none'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option><option value='S'>S</option></select>
+<input type='range' id='dfSlider' min='2' max='40' value='8' style='display:none;width:80px;vertical-align:middle' title='Smoother df'>
 <input type='checkbox' id='xOrig' style='display:none'/>
 <input type='checkbox' id='yOrig' style='display:none'/>
 <div id='stats' class='stats'></div>
