@@ -168,9 +168,9 @@ private def jmpJs : String :=
     "fits.forEach(function(spec,idx){" ++
       "if(spec.hidden)return;" ++
       "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],spec.xf),yt=tx(rawY[i],spec.yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({rx:rawX[i],ry:rawY[i],tx:xt,ty:yt})}" ++
-      "if(!isSmoother && pairs.length<spec.deg+1)return;" ++
       "const txd=pairs.map(p=>p.tx),tyd=pairs.map(p=>p.ty);" ++
-      "var coef,isSmoother=spec.deg==='S';" ++
+      "var isSmoother=spec.deg==='S',coef;" ++
+      "if(!isSmoother&&pairs.length<spec.deg+1)return;" ++
       "if(!isSmoother){coef=polyFit(txd,tyd,spec.deg)}" ++
       "const yMean=tyd.reduce((a,b)=>a+b,0)/tyd.length;" ++
       "let sst=0,sse=0;for(let i=0;i<txd.length;i++){let yh=polyEval(coef,txd[i]);sse+=(tyd[i]-yh)**2;sst+=(tyd[i]-yMean)**2}" ++
