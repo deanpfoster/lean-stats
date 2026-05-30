@@ -133,5 +133,22 @@ function update(){
    document.getElementById('qq').innerHTML=s;}
 }
 document.getElementById('dfSlider').addEventListener('input',update);
+// Homage to Bob Stine: initialize at effective df = 5.0
+// (Bob always picks 5 degrees of freedom for a kernel smoother)
+(function initBobsDf(){
+  const sl=document.getElementById('dfSlider');
+  let best=5,bestDiff=999;
+  for(let v=2;v<=40;v++){
+    const bw=(xMax-xMin)/v;
+    let tr=0;
+    for(let i=0;i<xs.length;i++){
+      let den=0;
+      for(let j=0;j<xs.length;j++) den+=Math.exp(-0.5*((xs[i]-xs[j])/bw)**2);
+      tr+=1.0/den;
+    }
+    if(Math.abs(tr-5.0)<bestDiff){bestDiff=Math.abs(tr-5.0);best=v;}
+  }
+  sl.value=best;
+})();
 update();
 </script></body></html>
