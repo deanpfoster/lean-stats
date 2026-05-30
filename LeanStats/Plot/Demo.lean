@@ -1,0 +1,143 @@
+/-! # LeanStats.Plot.Demo — Kernel Smoother Interactive Demo
+
+A self-contained HTML page with tabbed views (Scatter+Smooth, Residuals,
+Histogram, QQ Plot) linked by a degrees-of-freedom slider that controls
+Nadaraya-Watson kernel smoother bandwidth.
+-/
+
+set_option autoImplicit false
+
+namespace LeanStats.Plot
+
+/-- Self-contained HTML page: tabbed kernel smoother demo with df slider. -/
+def kernelSmootherDemoHTML : String :=
+"<!DOCTYPE html>
+<html><head><meta charset='utf-8'><title>Kernel Smoother Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f5;padding:20px}
+.controls{margin-bottom:16px}
+.controls label{font-size:14px;font-weight:600}
+.controls input[type=range]{width:300px;margin-left:12px}
+#dfVal{color:#c00;font-weight:700}
+.tabs{position:relative}
+.tabs input[type=radio]{display:none}
+.tabs label{display:inline-block;padding:8px 16px;cursor:pointer;font-size:13px;
+  border-bottom:2px solid transparent;margin-right:4px}
+.tabs input[type=radio]:checked+label{border-bottom-color:#333;font-weight:600}
+.panel{display:none;background:#fff;border:1px solid #ddd;border-radius:4px;margin-top:8px;padding:12px}
+#t1:checked~#p1,#t2:checked~#p2,#t3:checked~#p3,#t4:checked~#p4{display:block}
+svg{display:block}
+</style></head><body>
+<div class='controls'>
+  <label>Degrees of Freedom: <span id='dfVal'>5</span></label>
+  <input type='range' id='dfSlider' min='2' max='40' value='5'>
+</div>
+<div class='tabs'>
+  <input type='radio' name='tab' id='t1' checked><label for='t1'>Scatter + Smooth</label>
+  <input type='radio' name='tab' id='t2'><label for='t2'>Residuals</label>
+  <input type='radio' name='tab' id='t3'><label for='t3'>Histogram</label>
+  <input type='radio' name='tab' id='t4'><label for='t4'>QQ Plot</label>
+  <div class='panel' id='p1'><svg id='scatter' width='600' height='400'></svg></div>
+  <div class='panel' id='p2'><svg id='resid' width='600' height='400'></svg></div>
+  <div class='panel' id='p3'><svg id='hist' width='600' height='400'></svg></div>
+  <div class='panel' id='p4'><svg id='qq' width='600' height='400'></svg></div>
+</div>
+<script>
+const W=600,H=400,M={t:30,r:20,b:40,l:50};
+const pw=W-M.l-M.r,ph=H-M.t-M.b;
+const n=80;
+// seeded pseudo-random for reproducibility
+let seed=42;function rng(){seed=(seed*1664525+1013904223)&0xFFFFFFFF;return(seed>>>0)/4294967296;}
+const xs=Array.from({length:n},(_,i)=>i/n*4*Math.PI);
+const ys=xs.map(x=>Math.sin(x)+0.3*(rng()*2-1));
+const xMin=Math.min(...xs),xMax=Math.max(...xs);
+const xGrid=Array.from({length:200},(_,i)=>xMin+i/(199)*(xMax-xMin));
+
+function kernelSmooth(xs,ys,xGrid,bw){
+  return xGrid.map(x0=>{let num=0,den=0;
+    for(let i=0;i<xs.length;i++){const w=Math.exp(-0.5*((xs[i]-x0)/bw)**2);num+=w*ys[i];den+=w;}
+    return den>0?num/den:0;});
+}
+function sx(x){return M.l+(x-xMin)/(xMax-xMin)*pw;}
+function sy(y,yMin,yMax){return M.t+ph-(y-yMin)/(yMax-yMin)*ph;}
+function axes(svg,xLab,yLab,yMin,yMax){
+  let g='<line x1=\"'+M.l+'\" y1=\"'+(M.t+ph)+'\" x2=\"'+(M.l+pw)+'\" y2=\"'+(M.t+ph)+'\" stroke=\"#333\"/>';
+  g+='<line x1=\"'+M.l+'\" y1=\"'+M.t+'\" x2=\"'+M.l+'\" y2=\"'+(M.t+ph)+'\" stroke=\"#333\"/>';
+  for(let i=0;i<=4;i++){
+    const xv=xMin+i/4*(xMax-xMin);
+    g+='<text x=\"'+sx(xv)+'\" y=\"'+(M.t+ph+15)+'\" text-anchor=\"middle\" font-size=\"10\">'+xv.toFixed(1)+'</text>';
+    const yv=yMin+i/4*(yMax-yMin);
+    g+='<text x=\"'+(M.l-5)+'\" y=\"'+sy(yv,yMin,yMax)+'\" text-anchor=\"end\" font-size=\"10\" dy=\"3\">'+yv.toFixed(2)+'</text>';
+  }
+  return g;
+}
+function update(){
+  const df=+document.getElementById('dfSlider').value;
+  document.getElementById('dfVal').textContent=df;
+  const bw=(xMax-xMin)/df;
+  const smooth=kernelSmooth(xs,ys,xGrid,bw);
+  const smoothAtX=kernelSmooth(xs,ys,xs,bw);
+  const resids=ys.map((y,i)=>y-smoothAtX[i]);
+  // Scatter + Smooth
+  {const yAll=ys.concat(smooth);const yMin=Math.min(...yAll),yMax=Math.max(...yAll);
+   let s=axes(null,'x','y',yMin,yMax);
+   xs.forEach((x,i)=>{s+='<circle cx=\"'+sx(x)+'\" cy=\"'+sy(ys[i],yMin,yMax)+'\" r=\"3\" fill=\"steelblue\" opacity=\"0.7\"/>';});
+   let path='M';xGrid.forEach((x,i)=>{path+=(i?'L':'')+sx(x).toFixed(1)+','+sy(smooth[i],yMin,yMax).toFixed(1);});
+   s+='<path d=\"'+path+'\" fill=\"none\" stroke=\"#c00\" stroke-width=\"2\"/>';
+   document.getElementById('scatter').innerHTML=s;}
+  // Residuals
+  {const rMin=Math.min(...resids),rMax=Math.max(...resids);
+   let s=axes(null,'x','residual',rMin,rMax);
+   s+='<line x1=\"'+M.l+'\" y1=\"'+sy(0,rMin,rMax)+'\" x2=\"'+(M.l+pw)+'\" y2=\"'+sy(0,rMin,rMax)+'\" stroke=\"#999\" stroke-dasharray=\"4\"/>';
+   xs.forEach((x,i)=>{s+='<circle cx=\"'+sx(x)+'\" cy=\"'+sy(resids[i],rMin,rMax)+'\" r=\"3\" fill=\"steelblue\" opacity=\"0.7\"/>';});
+   document.getElementById('resid').innerHTML=s;}
+  // Histogram
+  {const nBins=15;const rMin=Math.min(...resids),rMax=Math.max(...resids);
+   const binW=(rMax-rMin)/nBins||1;
+   const bins=Array(nBins).fill(0);
+   resids.forEach(r=>{let b=Math.floor((r-rMin)/binW);if(b>=nBins)b=nBins-1;bins[b]++;});
+   const bMax=Math.max(...bins);
+   let s='';
+   for(let i=0;i<=4;i++){const yv=(bMax*i/4);
+     s+='<text x=\"'+(M.l-5)+'\" y=\"'+(M.t+ph-i/4*ph)+'\" text-anchor=\"end\" font-size=\"10\" dy=\"3\">'+Math.round(yv)+'</text>';}
+   s+='<line x1=\"'+M.l+'\" y1=\"'+(M.t+ph)+'\" x2=\"'+(M.l+pw)+'\" y2=\"'+(M.t+ph)+'\" stroke=\"#333\"/>';
+   s+='<line x1=\"'+M.l+'\" y1=\"'+M.t+'\" x2=\"'+M.l+'\" y2=\"'+(M.t+ph)+'\" stroke=\"#333\"/>';
+   const barW=pw/nBins;
+   bins.forEach((c,i)=>{const bx=M.l+i*barW;const bh=c/bMax*ph;
+     s+='<rect x=\"'+bx+'\" y=\"'+(M.t+ph-bh)+'\" width=\"'+(barW-1)+'\" height=\"'+bh+'\" fill=\"steelblue\" opacity=\"0.7\"/>';
+     const lbl=(rMin+(i+0.5)*binW).toFixed(2);
+     if(i%3===0)s+='<text x=\"'+(bx+barW/2)+'\" y=\"'+(M.t+ph+14)+'\" text-anchor=\"middle\" font-size=\"9\">'+lbl+'</text>';});
+   document.getElementById('hist').innerHTML=s;}
+  // QQ Plot
+  {const sorted=[...resids].sort((a,b)=>a-b);
+   const mean=resids.reduce((a,b)=>a+b,0)/n;
+   const sd=Math.sqrt(resids.reduce((a,b)=>a+(b-mean)**2,0)/n)||1;
+   function qnorm(p){const a=[0,-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239e0];
+     const b=[0,-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1];
+     const c=[0,-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838e0,-2.549732539343734e0,4.374664141464968e0,2.938163982698783e0];
+     const d=[0,7.784695709041462e-3,3.224671290700398e-1,2.445134137142996e0,3.754408661907416e0];
+     const pLow=0.02425,pHigh=1-pLow;let q,r;
+     if(p<pLow){q=Math.sqrt(-2*Math.log(p));return(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);}
+     if(p<=pHigh){q=p-0.5;r=q*q;return(((((a[1]*r+a[2])*r+a[3])*r+a[4])*r+a[5])*r+a[6])*q/(((((b[1]*r+b[2])*r+b[3])*r+b[4])*r+b[5])*r+1);}
+     q=Math.sqrt(-2*Math.log(1-p));return-(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);}
+   const theoretical=sorted.map((_,i)=>qnorm((i+0.5)/n));
+   const standardized=sorted.map(v=>(v-mean)/sd);
+   const allV=theoretical.concat(standardized);
+   const vMin=Math.min(...allV),vMax=Math.max(...allV);
+   function sqx(v){return M.l+(v-vMin)/(vMax-vMin)*pw;}
+   function sqy(v){return M.t+ph-(v-vMin)/(vMax-vMin)*ph;}
+   let s='<line x1=\"'+sqx(vMin)+'\" y1=\"'+sqy(vMin)+'\" x2=\"'+sqx(vMax)+'\" y2=\"'+sqy(vMax)+'\" stroke=\"#999\" stroke-dasharray=\"4\"/>';
+   s+='<line x1=\"'+M.l+'\" y1=\"'+(M.t+ph)+'\" x2=\"'+(M.l+pw)+'\" y2=\"'+(M.t+ph)+'\" stroke=\"#333\"/>';
+   s+='<line x1=\"'+M.l+'\" y1=\"'+M.t+'\" x2=\"'+M.l+'\" y2=\"'+(M.t+ph)+'\" stroke=\"#333\"/>';
+   for(let i=0;i<=4;i++){const v=vMin+i/4*(vMax-vMin);
+     s+='<text x=\"'+sqx(v)+'\" y=\"'+(M.t+ph+15)+'\" text-anchor=\"middle\" font-size=\"10\">'+v.toFixed(1)+'</text>';
+     s+='<text x=\"'+(M.l-5)+'\" y=\"'+sqy(v)+'\" text-anchor=\"end\" font-size=\"10\" dy=\"3\">'+v.toFixed(1)+'</text>';}
+   theoretical.forEach((t,i)=>{s+='<circle cx=\"'+sqx(t)+'\" cy=\"'+sqy(standardized[i])+'\" r=\"3\" fill=\"steelblue\" opacity=\"0.7\"/>';});
+   document.getElementById('qq').innerHTML=s;}
+}
+document.getElementById('dfSlider').addEventListener('input',update);
+update();
+</script></body></html>"
+
+end LeanStats.Plot

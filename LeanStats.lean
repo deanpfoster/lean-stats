@@ -30,6 +30,7 @@ import LeanStats.Plot.Dashboard
 import LeanStats.Plot.ScatterMatrix
 import LeanStats.Plot.Boxplot
 import LeanStats.Plot.Protocol
+import LeanStats.Plot.Demo
 
 import LeanStats.Report.Tooltip
 import LeanStats.Report.Interactive
