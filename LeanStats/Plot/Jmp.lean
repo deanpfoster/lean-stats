@@ -64,9 +64,11 @@ private def jmpJs : String :=
     "var labels=['1/x','log','√','linear','x²','exp'];" ++
     "var html='<div>';" ++
     "transforms.forEach(function(t,i){var cls=formSel.value===t?' active':'';html+='<button class=\"tf-btn'+cls+'\" data-tf=\"'+t+'\">'+labels[i]+'</button>'});" ++
-    "html+='</div><div style=\"margin-top:4px\">deg ';" ++
+    "html+='</div>';" ++
+    "if(axis==='x'){html+='<div style=\"margin-top:4px\">deg ';" ++
     "for(var i=0;i<=5;i++){var cls=parseInt(degSel.value)===i?' active':'';html+='<button class=\"deg-btn'+cls+'\" data-deg=\"'+i+'\">'+i+'</button>'}" ++
-    "html+='</div><div style=\"margin-top:4px\"><label><input type=\"checkbox\" class=\"orig-cb\"'+(origCb.checked?' checked':'')+'/> orig</label></div>';" ++
+    "html+='</div>'}" ++
+    "html+='<div style=\"margin-top:4px\"><label><input type=\"checkbox\" class=\"orig-cb\"'+(origCb.checked?' checked':'')+'/> orig</label></div>';" ++
     "div.innerHTML=html;" ++
     "div.style.left=px+'px';div.style.top=py+'px';" ++
     "wrap.appendChild(div);activePopup=div;" ++
@@ -221,8 +223,8 @@ private def jmpJs : String :=
         "}" ++
       "}" ++
       "const col=colors[idx%colors.length];" ++
-      "if(spec.se&&bandU){svg.innerHTML+=`<path class='ci' d='${bandU}'/><path class='ci' d='${bandL}'/>`}" ++
-      "svg.innerHTML+=`<path class='fit' d='${path}'/>`" ++
+      "if(spec.se&&bandU){var ci1=document.createElementNS('http://www.w3.org/2000/svg','path');ci1.setAttribute('class','ci');ci1.setAttribute('d',bandU);svg.appendChild(ci1);var ci2=document.createElementNS('http://www.w3.org/2000/svg','path');ci2.setAttribute('class','ci');ci2.setAttribute('d',bandL);svg.appendChild(ci2)}" ++
+      "var fitEl=document.createElementNS('http://www.w3.org/2000/svg','path');fitEl.setAttribute('class','fit');fitEl.setAttribute('d',path);fitEl.setAttribute('stroke',col);svg.appendChild(fitEl)" ++
     "});" ++
     -- Legend
     "if(fits.length>0){" ++
