@@ -154,9 +154,35 @@ private def jmpJs : String :=
     -- Attach click handlers to axis labels
     "document.getElementById('xLabel').addEventListener('click',function(e){e.stopPropagation();showAxisPopup('x',e)});" ++
     "document.getElementById('yLabel').addEventListener('click',function(e){e.stopPropagation();showAxisPopup('y',e)});" ++
-    "renderFits()" ++
+    "renderFits();" ++
+    "renderLivePreview()" ++
   "}" ++
-  -- Render all stored fits
+  -- Live preview: always shows current degree/transform as a dashed curve
+  "function renderLivePreview(){" ++
+    "const sx=window._sx,sy=window._sy,xMin=window._xMin,xMax=window._xMax;" ++
+    "if(!sx)return;" ++
+    "const xf=document.getElementById('xform').value;" ++
+    "const yf=document.getElementById('yform').value;" ++
+    "const deg=parseInt(document.getElementById('degree').value);" ++
+    "if(isNaN(deg))return;" ++
+    "const xOrig=document.getElementById('xOrig').checked;" ++
+    "const yOrig=document.getElementById('yOrig').checked;" ++
+    "let pairs=[];for(let i=0;i<rawX.length;i++){let xt=tx(rawX[i],xf),yt=tx(rawY[i],yf);if(!isNaN(xt)&&isFinite(xt)&&!isNaN(yt)&&isFinite(yt))pairs.push({tx:xt,ty:yt})}" ++
+    "if(pairs.length<deg+1)return;" ++
+    "const txd=pairs.map(p=>p.tx),tyd=pairs.map(p=>p.ty);" ++
+    "const coef=polyFit(txd,tyd,deg);" ++
+    "let path='';const nPts=100;const curXf=xf,curYf=yf;" ++
+    "for(let i=0;i<=nPts;i++){" ++
+      "const plotXi=xMin+i/nPts*(xMax-xMin);" ++
+      "var txI;if(xOrig){txI=tx(plotXi,xf)}else{txI=plotXi}" ++
+      "if(isNaN(txI)||!isFinite(txI))continue;" ++
+      "const tyI=polyEval(coef,txI);" ++
+      "var plotYi;if(yOrig){plotYi=itx(tyI,yf)}else{plotYi=tyI}" ++
+      "if(isNaN(plotYi)||!isFinite(plotYi))continue;" ++
+      "path+=(path===''?'M':'L')+sx(plotXi)+','+sy(plotYi)" ++
+    "}" ++
+    "if(path){var el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('d',path);el.setAttribute('stroke','#999');el.setAttribute('stroke-width','1.5');el.setAttribute('fill','none');el.setAttribute('stroke-dasharray','5,3');el.setAttribute('opacity','0.7');svg.appendChild(el)}" ++
+  "}" ++
   "function renderFits(){" ++
     "const xOrig=window._xOrig,yOrig=window._yOrig,xf=window._xf,yf=window._yf;" ++
     "const sx=window._sx,sy=window._sy,xMin=window._xMin,xMax=window._xMax;" ++
