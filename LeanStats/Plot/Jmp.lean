@@ -237,7 +237,7 @@ private def jmpJs : String :=
         "for(var i=lcoef.length-1;i>=0;i--){var c=lcoef[i];var cs=c>=0&&i<lcoef.length-1?' + '+c.toPrecision(3):c.toPrecision(3);if(i===0)eq+=cs;else if(i===1)eq+=cs+'*x ';else eq+=cs+'*x^'+i+' '}" ++
         "var xl=spec.xf==='linear'?xName:spec.xf+'('+xName+')';" ++
         "var yl=spec.yf==='linear'?yName:spec.yf+'('+yName+')';" ++
-        "eq=eq.replace(/y/,'('+yl+')').replace(/x/g,xl);" ++
+        "eq=eq.replace(/y/,yl).replace(/x/g,xl);" ++
         "var swH=20;var swW=30;var svgSw='<svg width=\"'+swW+'\" height=\"'+swH+'\" style=\"vertical-align:middle;margin-right:6px;cursor:pointer\" data-fidx=\"'+idx+'\">';" ++
         "svgSw+='<rect x=\"0\" y=\"0\" width=\"'+swW+'\" height=\"'+swH+'\" fill=\"transparent\"/>';" ++
         "svgSw+='<line x1=\"2\" y1=\"'+swH/2+'\" x2=\"'+(swW-2)+'\" y2=\"'+swH/2+'\" stroke=\"'+col+'\" stroke-width=\"'+spec.lw+'\"/>';" ++
