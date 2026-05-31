@@ -151,7 +151,7 @@ private def jmpJs : String :=
     -- Y axis label (clickable, rotated)
     "var ylbl=axisLabelText(yName,yf,deg);" ++
     "s+=`<text x='14' y='${M.t+ph/2}' text-anchor='middle' font-size='13' class='axis-label' id='yLabel' transform='rotate(-90,14,${M.t+ph/2})'>${ylbl}</text>`;" ++
-    "for(let i=0;i<xd.length;i++){s+=`<circle class='point' cx='${sx(xd[i])}' cy='${sy(yd[i])}'/>`}" ++
+    "for(let i=0;i<xd.length;i++){s+=`<circle class='point' cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='3'/>`}" ++
     "svg.innerHTML=s;" ++
     -- Attach click handlers to axis labels
     "document.getElementById('xLabel').addEventListener('click',function(e){e.stopPropagation();showAxisPopup('x',e)});" ++
