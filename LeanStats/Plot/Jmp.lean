@@ -224,7 +224,7 @@ private def jmpJs : String :=
       "}" ++
       "const col=colors[idx%colors.length];" ++
       "if(spec.se&&bandU){var ci1=document.createElementNS('http://www.w3.org/2000/svg','path');ci1.setAttribute('class','ci');ci1.setAttribute('d',bandU);svg.appendChild(ci1);var ci2=document.createElementNS('http://www.w3.org/2000/svg','path');ci2.setAttribute('class','ci');ci2.setAttribute('d',bandL);svg.appendChild(ci2)}" ++
-      "var fitEl=document.createElementNS('http://www.w3.org/2000/svg','path');fitEl.setAttribute('class','fit');fitEl.setAttribute('d',path);fitEl.setAttribute('stroke',col);svg.appendChild(fitEl)" ++
+      "var fitEl=document.createElementNS('http://www.w3.org/2000/svg','path');fitEl.setAttribute('d',path);fitEl.setAttribute('style','stroke:'+col+';stroke-width:'+spec.lw+';fill:none');svg.appendChild(fitEl)" ++
     "});" ++
     -- Legend
     "if(fits.length>0){" ++
