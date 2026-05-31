@@ -149,7 +149,7 @@ private def jmpJs : String :=
     "var xlbl=axisLabelText(xName,xf,deg);" ++
     "s+=`<text x='${M.l+pw/2}' y='${H-5}' text-anchor='middle' font-size='13' class='axis-label' id='xLabel'>${xlbl}</text>`;" ++
     -- Y axis label (clickable, rotated)
-    "var ylbl=axisLabelText(yName,yf,deg);" ++
+    "var ylbl=axisLabelText(yName,yf,0);" ++
     "s+=`<text x='14' y='${M.t+ph/2}' text-anchor='middle' font-size='13' class='axis-label' id='yLabel' transform='rotate(-90,14,${M.t+ph/2})'>${ylbl}</text>`;" ++
     "for(let i=0;i<xd.length;i++){s+=`<circle class='point' cx='${sx(xd[i])}' cy='${sy(yd[i])}' r='3'/>`}" ++
     "svg.innerHTML=s;" ++
