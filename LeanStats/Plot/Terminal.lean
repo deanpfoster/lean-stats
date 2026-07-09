@@ -47,7 +47,7 @@ def terminalScatter (data : Array (Float × Float))
     let pw := width * 2   -- pixel width
     let ph := height * 4  -- pixel height
     -- Rasterize points into a grid
-    let grid := data.foldl (init := Array.mkArray height (Array.mkArray width 0))
+    let grid := data.foldl (init := Array.replicate height (Array.replicate width 0))
       fun grid (x, y) =>
         let px := ((x - xmin) / xrange * (pw - 1).toFloat).toUInt64.toNat
         let py := ((ymax - y) / yrange * (ph - 1).toFloat).toUInt64.toNat
@@ -55,13 +55,13 @@ def terminalScatter (data : Array (Float × Float))
         let cy := Nat.min (py / 4) (height - 1)
         let bx := px % 2
         let by_ := py % 4
-        let row := grid.getD cy (Array.mkArray width 0)
+        let row := grid.getD cy (Array.replicate width 0)
         let cell := row.getD cx 0
         let newCell := cell ||| brailleBit bx by_
         grid.set! cy (row.set! cx newCell)
     -- Render to string
     let lines := grid.map fun row =>
-      String.mk (row.toList.map brailleChar)
+      String.ofList (row.toList.map brailleChar)
     String.intercalate "\n" lines.toList
 
 /-- Histogram rendered as Unicode block characters (▁▂▃▄▅▆▇█). -/
@@ -75,7 +75,7 @@ def terminalHistogram (data : Array Float)
     let range := if mx == mn then 1.0 else mx - mn
     let binWidth := range / bins'.toFloat
     -- Count per bin
-    let counts := data.foldl (init := Array.mkArray bins' 0) fun acc v =>
+    let counts := data.foldl (init := Array.replicate bins' 0) fun acc v =>
       let idx := ((v - mn) / binWidth).toUInt64.toNat
       let idx := if idx >= bins' then bins' - 1 else idx
       acc.set! idx (acc.getD idx 0 + 1)
@@ -83,15 +83,15 @@ def terminalHistogram (data : Array Float)
     if maxCount == 0 then "(no data)"
     else
       -- Render top-to-bottom
-      let blocks := "▁▂▃▄▅▆▇█"
+      let blocks : Array Char := #['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
       let lines := (List.range height).reverse.map fun row =>
         let threshold := (row.toFloat + 1) / height.toFloat
-        String.mk (counts.toList.map fun c =>
+        String.ofList (counts.toList.map fun c =>
           let frac := c.toFloat / maxCount.toFloat
           if frac >= threshold then '█'
           else if frac > (row.toFloat / height.toFloat) then
             let subLevel := ((frac - row.toFloat / height.toFloat) * height.toFloat * 8).toUInt64.toNat
-            (blocks.get? ⟨Nat.min subLevel 7⟩).getD ' '
+            (blocks[Nat.min subLevel 7]?).getD ' '
           else ' ')
       String.intercalate "\n" lines
 
@@ -102,10 +102,10 @@ def sparkline (data : Array Float) : String :=
     let mn := data.foldl (fun a b => if b < a then b else a) data[0]!
     let mx := data.foldl (fun a b => if b > a then b else a) data[0]!
     let range := if mx == mn then 1.0 else mx - mn
-    let blocks := "▁▂▃▄▅▆▇█"
-    String.mk (data.toList.map fun v =>
+    let blocks : Array Char := #['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
+    String.ofList (data.toList.map fun v =>
       let level := ((v - mn) / range * 7).toUInt64.toNat
-      (blocks.get? ⟨Nat.min level 7⟩).getD '▁')
+      (blocks[Nat.min level 7]?).getD '▁')
 
 /-- Residual plot as terminal scatter (fitted vs residuals). -/
 def terminalResidPlot (diag : LeanStats.RegressionDiag)
@@ -122,7 +122,7 @@ def terminalDotplot (data : Array Float) (width : Nat := 60) : String :=
     let mx := data.foldl (fun a b => if b > a then b else a) data[0]!
     let range := if mx == mn then 1.0 else mx - mn
     -- Bin each value into a column
-    let bins := data.foldl (init := Array.mkArray width 0) fun acc v =>
+    let bins := data.foldl (init := Array.replicate width 0) fun acc v =>
       let idx := ((v - mn) / range * (width - 1).toFloat).toUInt64.toNat
       let idx := if idx >= width then width - 1 else idx
       acc.set! idx (acc.getD idx 0 + 1)
@@ -131,9 +131,9 @@ def terminalDotplot (data : Array Float) (width : Nat := 60) : String :=
     else
       -- Render top-down: each row shows dots where count >= row level
       let rows := (List.range maxStack).reverse.map fun row =>
-        String.mk (bins.toList.map fun c =>
+        String.ofList (bins.toList.map fun c =>
           if c > row then '•' else ' ')
-      let axis := String.mk (List.replicate width '─')
+      let axis := String.ofList (List.replicate width '─')
       let label := s!"  {mn}                                              {mx}"
       String.intercalate "\n" (rows ++ [axis, label])
 
@@ -177,7 +177,7 @@ def terminalBoxplot (data : Array Float) (width : Nat := 60) (label : String := 
       else if i >= pLo && i <= pHi then '─'
       else ' '
     let lbl := if label == "" then "  " else s!"  {label} "
-    lbl ++ String.mk line.toList
+    lbl ++ String.ofList line.toList
 
 /-- Side-by-side dotplots for comparing groups.
     Each group gets its own row, all on the same scale. -/
@@ -193,17 +193,17 @@ def terminalGroupDotplot (groups : Array (String × Array Float)) (width : Nat :
       let range := if mx == mn then 1.0 else mx - mn
       -- Find max label width for alignment
       let maxLabelW := groups.foldl (fun best (name, _) => Nat.max best name.length) 0
-      let pad (s : String) : String := s ++ String.mk (List.replicate (maxLabelW - s.length) ' ')
+      let pad (s : String) : String := s ++ String.ofList (List.replicate (maxLabelW - s.length) ' ')
       -- Render each group
       let rows := groups.toList.map fun (name, vals) =>
-        let dots := Array.mkArray width ' '
+        let dots := Array.replicate width ' '
         let dots := vals.foldl (fun acc v =>
           let idx := ((v - mn) / range * (width - 1).toFloat).toUInt64.toNat
           let idx := if idx >= width then width - 1 else idx
           acc.set! idx '•') dots
-        s!"  {pad name} │{String.mk dots.toList}│"
-      let axis := s!"  {pad ""} └{String.mk (List.replicate width '─')}┘"
-      let label := s!"  {pad ""} {mn}{String.mk (List.replicate (width - 12) ' ')}{mx}"
+        s!"  {pad name} │{String.ofList dots.toList}│"
+      let axis := s!"  {pad ""} └{String.ofList (List.replicate width '─')}┘"
+      let label := s!"  {pad ""} {mn}{String.ofList (List.replicate (width - 12) ' ')}{mx}"
       String.intercalate "\n" (rows ++ [axis, label])
 
 /-- Side-by-side boxplots for comparing groups. -/
@@ -216,11 +216,11 @@ def terminalGroupBoxplot (groups : Array (String × Array Float)) (width : Nat :
       let mn := allVals.foldl (fun a b => if b < a then b else a) allVals[0]!
       let mx := allVals.foldl (fun a b => if b > a then b else a) allVals[0]!
       let maxLabelW := groups.foldl (fun best (name, _) => Nat.max best name.length) 0
-      let pad (s : String) : String := s ++ String.mk (List.replicate (maxLabelW - s.length) ' ')
+      let pad (s : String) : String := s ++ String.ofList (List.replicate (maxLabelW - s.length) ' ')
       let rows := groups.toList.map fun (name, vals) =>
         let bp := terminalBoxplot vals width name
         bp
-      let label := s!"  {pad ""}{mn}{String.mk (List.replicate (width - 12) ' ')}{mx}"
+      let label := s!"  {pad ""}{mn}{String.ofList (List.replicate (width - 12) ' ')}{mx}"
       String.intercalate "\n" (rows ++ [label])
 
 /-- Formatted regression summary (Minitab-style). -/

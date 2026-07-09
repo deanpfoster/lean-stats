@@ -31,13 +31,13 @@ inductive Value where
 
 structure ParseState where
   input : String
-  pos : Nat
+  pos : String.Pos.Raw
 
 private def peek (s : ParseState) : Option Char :=
-  s.input.get? ⟨s.pos⟩
+  String.Pos.Raw.get? s.input s.pos
 
 private def advance (s : ParseState) : ParseState :=
-  { s with pos := s.pos + 1 }
+  { s with pos := String.Pos.Raw.next s.input s.pos }
 
 private partial def skipWs (s : ParseState) : ParseState :=
   match peek s with
@@ -55,9 +55,9 @@ private partial def parseNumber (s : ParseState) : Except String (Value × Parse
   let s := match peek s with
     | some '.' => consumeDigits (advance s)
     | _ => s
-  if s.pos == start then .error s!"expected number at {s.pos}"
+  if s.pos.byteIdx == start.byteIdx then .error s!"expected number at {s.pos.byteIdx}"
   else
-    let numStr := s.input.extract ⟨start⟩ ⟨s.pos⟩
+    let numStr := String.Pos.Raw.extract s.input start s.pos
     .ok (.num (parseFloat numStr), s)
 where
   consumeDigits (s : ParseState) : ParseState :=
@@ -66,10 +66,10 @@ where
     | none => s
   parseFloat (s : String) : Float :=
     let neg := s.startsWith "-"
-    let s := if neg then s.drop 1 else s
+    let s := if neg then (s.drop 1).toString else s
     let parts := s.splitOn "."
     let whole := (parts.getD 0 "0").foldl (fun acc c => acc * 10 + (c.toNat - '0'.toNat)) 0
-    let frac := match parts.get? 1 with
+    let frac := match parts[1]? with
       | none => 0.0
       | some f =>
         let (v, _) := f.foldl (fun (acc, div) c =>
@@ -93,7 +93,7 @@ private def toFloats (v : Value) (ctx : String) : Except String (Array Float) :=
 private def floatsToVal (xs : Array Float) : Value := .arr (xs.map .num)
 
 private def dispatchFn (name : String) (args : Array Value) : Except String Value :=
-  let canon := if name.startsWith "LeanStats." then name.drop 10 else name
+  let canon := if name.startsWith "LeanStats." then (name.drop 10).toString else name
   match canon, args.size with
   | "mean", 1 => do let xs ← toFloats args[0]! "mean"; .ok (.num (mean xs))
   | "variance", 1 => do let xs ← toFloats args[0]! "variance"; .ok (.num (variance xs))
@@ -136,7 +136,8 @@ private def dispatchFn (name : String) (args : Array Value) : Except String Valu
     let known := ["mean", "variance", "stdDev", "median", "quantile", "correlation",
       "linearRegression", "tTestOneSample", "tTestTwoSample", "logTransform",
       "sqrtTransform", "recipTransform", "summary", "regressionDiag"]
-    let suggs := known.filter fun k => k.toLower.startsWith (fname.toLower.take 3)
+    let pref := (fname.toLower.take 3).toString
+    let suggs := known.filter fun k => k.toLower.startsWith pref
     let msg := s!"unknown function '{fname}' with {nargs} args"
     let hint := if suggs.isEmpty then "" else s!". Did you mean: {suggs}?"
     .error (msg ++ hint)
@@ -159,7 +160,7 @@ private partial def parseExprAt (s : ParseState) : Except String (Value × Parse
       match peek s with
       | some '(' => parseCall name (advance s)
       | _ => .error s!"bare identifier '{name}' — did you mean {name}(...)?"
-    else .error s!"unexpected '{c}' at {s.pos}"
+    else .error s!"unexpected '{c}' at {s.pos.byteIdx}"
 where
   collectIdent (s : ParseState) : String × ParseState :=
     let start := s.pos
@@ -168,7 +169,7 @@ where
       | some c => if isIdent c then go (advance s) else s
       | none => s
     let s' := go s
-    (s.input.extract ⟨start⟩ ⟨s'.pos⟩, s')
+    (String.Pos.Raw.extract s.input start s'.pos, s')
   parseArray (s : ParseState) : Except String (Value × ParseState) :=
     let s := skipWs s
     match peek s with
@@ -181,7 +182,7 @@ where
     match peek s with
     | some ']' => .ok (.arr acc, advance s)
     | some ',' => do let (v, s) ← parseExprAt (skipWs (advance s)); collectMore (acc.push v) s
-    | _ => .error s!"expected ',' or ']' at {s.pos}"
+    | _ => .error s!"expected ',' or ']' at {s.pos.byteIdx}"
   parseCall (name : String) (s : ParseState) : Except String (Value × ParseState) :=
     let s := skipWs s
     match peek s with
@@ -194,7 +195,7 @@ where
     match peek s with
     | some ')' => dispatch name acc (advance s)
     | some ',' => do let (v, s) ← parseExprAt (skipWs (advance s)); collectArgs name (acc.push v) s
-    | _ => .error s!"expected ',' or ')' at {s.pos}"
+    | _ => .error s!"expected ',' or ')' at {s.pos.byteIdx}"
   parseString (s : ParseState) : Except String (Value × ParseState) :=
     let start := s.pos
     let rec go (s : ParseState) : ParseState :=
@@ -203,7 +204,7 @@ where
       | some _ => go (advance s)
       | none => s
     let s' := go s
-    .ok (.str (s.input.extract ⟨start⟩ ⟨s'.pos⟩), advance s')
+    .ok (.str (String.Pos.Raw.extract s.input start s'.pos), advance s')
   dispatch (name : String) (args : Array Value) (s : ParseState) : Except String (Value × ParseState) :=
     match dispatchFn name args with
     | .ok v => .ok (v, s)
@@ -223,7 +224,7 @@ partial def stringify : Value → String
 /-- Parse and evaluate a stats expression string. Returns the result as a string
     or an error message. This is the single entry point l3m calls. -/
 def evalString (input : String) : Except String String :=
-  match parseExprAt { input, pos := 0 } with
+  match parseExprAt { input, pos := ⟨0⟩ } with
   | .error e => .error e
   | .ok (val, _) => .ok (stringify val)
 

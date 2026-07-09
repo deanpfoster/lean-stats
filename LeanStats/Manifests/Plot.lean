@@ -44,31 +44,31 @@ ProvenTheorem svgdoc_prefix :
   (svgDoc 600 400 (Svg.group [] [])).startsWith "<svg xmlns=" = true
 
 /-- Scale of constant data maps any input to rangeMin (degenerate case). -/
-theorem scale_constant_proof :
-  (Scale.fromData #[5.0] 10 200).apply 5.0 = 10 := by native_decide
+theorem scale_constant_test :
+  LeanStats.Manifests.floatBitsEq ((Scale.fromData #[5.0] 10 200).apply 5.0) 10 = true := by native_decide
 
-ProvenTheorem scale_constant :
+TestedConjecture scale_constant :
   (Scale.fromData #[5.0] 10 200).apply 5.0 = 10
 
 /-- Scale maps domainMin to rangeMin. -/
-theorem scale_min_proof :
-  (Scale.fromData #[1.0, 5.0] 0 100).apply 1.0 = 0 := by native_decide
+theorem scale_min_test :
+  LeanStats.Manifests.floatBitsEq ((Scale.fromData #[1.0, 5.0] 0 100).apply 1.0) 0 = true := by native_decide
 
-ProvenTheorem scale_min :
+TestedConjecture scale_min :
   (Scale.fromData #[1.0, 5.0] 0 100).apply 1.0 = 0
 
 /-- Scale maps domainMax to rangeMax. -/
-theorem scale_max_proof :
-  (Scale.fromData #[1.0, 5.0] 0 100).apply 5.0 = 100 := by native_decide
+theorem scale_max_test :
+  LeanStats.Manifests.floatBitsEq ((Scale.fromData #[1.0, 5.0] 0 100).apply 5.0) 100 = true := by native_decide
 
-ProvenTheorem scale_max :
+TestedConjecture scale_max :
   (Scale.fromData #[1.0, 5.0] 0 100).apply 5.0 = 100
 
 /-- Scale midpoint maps to range midpoint (linearity). -/
-theorem scale_mid_proof :
-  (Scale.fromData #[0.0, 10.0] 0 100).apply 5.0 = 50 := by native_decide
+theorem scale_mid_test :
+  LeanStats.Manifests.floatBitsEq ((Scale.fromData #[0.0, 10.0] 0 100).apply 5.0) 50 = true := by native_decide
 
-ProvenTheorem scale_mid :
+TestedConjecture scale_mid :
   (Scale.fromData #[0.0, 10.0] 0 100).apply 5.0 = 50
 
 -- ════════════════════════════════════════════════════════════
@@ -83,17 +83,17 @@ ProvenTheorem empty_group :
   (Svg.group [] []).render = "<g>\n</g>"
 
 /-- Scale.fromData captures the min of the input. -/
-theorem scale_domain_min_proof :
-  (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMin = 1.0 := by native_decide
+theorem scale_domain_min_test :
+  LeanStats.Manifests.floatBitsEq ((Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMin) 1.0 = true := by native_decide
 
-ProvenTheorem scale_domain_min :
+TestedConjecture scale_domain_min :
   (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMin = 1.0
 
 /-- Scale.fromData captures the max of the input. -/
-theorem scale_domain_max_proof :
-  (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMax = 5.0 := by native_decide
+theorem scale_domain_max_test :
+  LeanStats.Manifests.floatBitsEq ((Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMax) 5.0 = true := by native_decide
 
-ProvenTheorem scale_domain_max :
+TestedConjecture scale_domain_max :
   (Scale.fromData #[3.0, 1.0, 5.0] 0 100).domainMax = 5.0
 
 /-- Attr renders to key='value' format. -/

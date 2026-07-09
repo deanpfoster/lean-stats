@@ -112,9 +112,9 @@ ProvenTheorem iqr_positive : iqrExpected = true
 
 private def pairedIdentical : Float := tTestPaired #[1,2,3] #[1,2,3]
 
-theorem paired_t_identical_proof : pairedIdentical = 0 := by native_decide
+theorem paired_t_identical_test : LeanStats.Manifests.floatBitsEq pairedIdentical 0 = true := by native_decide
 
-ProvenTheorem paired_t_identical : pairedIdentical = 0
+TestedConjecture paired_t_identical : pairedIdentical = 0
 
 -- VIF-Regression conformance: validated against R's VIF package (CRAN archive)
 -- R 4.3.2, VIF 1.0, run: Rscript Conformance/R/vif_regression.R

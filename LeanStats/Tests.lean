@@ -37,7 +37,7 @@ def tTestTwoSample (xs ys : Array Float) : Float :=
 def tTestPaired (xs ys : Array Float) : Float :=
   if xs.size != ys.size || xs.size < 2 then 0
   else
-    let d := xs.zipWith ys (· - ·)
+    let d := Array.zipWith (fun x y => x - y) xs ys
     tTestOneSample d 0
 
 end LeanStats

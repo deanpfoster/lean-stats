@@ -192,7 +192,7 @@ def assessQualityFull (t : Table) : DataQuality :=
     let isStr := nonNa.all (fun c => match c with | .str _ => true | _ => false)
     if !isStr || nonNa.isEmpty then none
     else
-      let distinct := nonNa.foldl (init := #[]) fun acc c =>
+      let distinct : Array Cell := nonNa.foldl (init := #[]) fun acc c =>
         if acc.contains c then acc else acc.push c
       if distinct.size.toFloat / nonNa.size.toFloat > 0.9 then some col.name
       else none
@@ -202,7 +202,7 @@ def assessQualityFull (t : Table) : DataQuality :=
     let isNum := nonNa.all (fun c => match c with | .float _ => true | _ => false)
     if !isNum || nonNa.isEmpty then none
     else
-      let distinct := nonNa.foldl (init := #[]) fun acc c =>
+      let distinct : Array Cell := nonNa.foldl (init := #[]) fun acc c =>
         if acc.contains c then acc else acc.push c
       if distinct.size < 5 then some col.name
       else none
@@ -223,7 +223,7 @@ def assessQualityFull (t : Table) : DataQuality :=
   let nDups := if t.nRows == 0 then 0
     else
       let rows := (List.range t.nRows).toArray.map t.row
-      let unique := rows.foldl (init := #[]) fun acc r =>
+      let unique : Array (Array Cell) := rows.foldl (init := #[]) fun acc r =>
         if acc.contains r then acc else acc.push r
       t.nRows - unique.size
   { base with
@@ -316,9 +316,9 @@ def DataSource.renderForLLM (src : DataSource) (budget : Nat := 400) : String :=
     "\nnotes: " ++ (src.notes.getD 0 "")
   let comms := if src.communications.isEmpty then "" else
     let last := src.communications.getD (src.communications.size - 1) { content := "" }
-    s!"\nlast heard: {last.person} ({last.date}): {last.content.take 60}"
+    s!"\nlast heard: {last.person} ({last.date}): {(last.content.take 60).toString}"
   let result := header ++ owner ++ contact ++ confidence ++ cols ++ notes ++ comms
-  if result.length > budget then result.take budget ++ "…" else result
+  if result.length > budget then (result.take budget).toString ++ "…" else result
 
 /-- Render the full catalog as a summary for the LLM. -/
 def DataCatalog.renderForLLM (cat : DataCatalog) (budget : Nat := 1200) : String :=

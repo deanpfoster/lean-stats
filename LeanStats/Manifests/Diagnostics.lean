@@ -68,38 +68,38 @@ ProvenTheorem diag_valid :
 -- ════════════════════════════════════════════════════════════
 
 /-- Perfect linear data (y = 2x): R² = 1. -/
-theorem diag_perfect_r2_proof :
-  getDiagR2 #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 1.0 := by native_decide
+theorem diag_perfect_r2_test :
+  LeanStats.Manifests.optionFloatBitsEq (getDiagR2 #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0]) (some 1.0) = true := by native_decide
 
-ProvenTheorem diag_perfect_r2 :
+TestedConjecture diag_perfect_r2 :
   getDiagR2 #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 1.0
 
 /-- Perfect linear data: se = 0. -/
-theorem diag_perfect_se_proof :
-  getDiagSe #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 0.0 := by native_decide
+theorem diag_perfect_se_test :
+  LeanStats.Manifests.optionFloatBitsEq (getDiagSe #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0]) (some 0.0) = true := by native_decide
 
-ProvenTheorem diag_perfect_se :
+TestedConjecture diag_perfect_se :
   getDiagSe #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 0.0
 
 /-- Perfect linear data: slope = 2. -/
-theorem diag_perfect_slope_proof :
-  getDiagSlope #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0 := by native_decide
+theorem diag_perfect_slope_test :
+  LeanStats.Manifests.optionFloatBitsEq (getDiagSlope #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0]) (some 2.0) = true := by native_decide
 
-ProvenTheorem diag_perfect_slope :
+TestedConjecture diag_perfect_slope :
   getDiagSlope #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0
 
 /-- Perfect linear data: all residuals are 0. -/
-theorem diag_perfect_resid_proof :
-  getDiagResiduals #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some #[0.0, 0.0, 0.0] := by native_decide
+theorem diag_perfect_resid_test :
+  LeanStats.Manifests.optionFloatArrayBitsEq (getDiagResiduals #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0]) (some #[0.0, 0.0, 0.0]) = true := by native_decide
 
-ProvenTheorem diag_perfect_resid :
+TestedConjecture diag_perfect_resid :
   getDiagResiduals #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some #[0.0, 0.0, 0.0]
 
 /-- Perfect linear data: Durbin-Watson = 2 (no autocorrelation, since residuals are 0). -/
-theorem diag_perfect_dw_proof :
-  getDiagDW #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0 := by native_decide
+theorem diag_perfect_dw_test :
+  LeanStats.Manifests.optionFloatBitsEq (getDiagDW #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0]) (some 2.0) = true := by native_decide
 
-ProvenTheorem diag_perfect_dw :
+TestedConjecture diag_perfect_dw :
   getDiagDW #[1.0, 2.0, 3.0] #[2.0, 4.0, 6.0] = some 2.0
 
 private def getDiagOutlierCount (xs ys : Array Float) : Option Nat :=

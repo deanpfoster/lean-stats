@@ -273,10 +273,10 @@ def multiRegTabbedPlot (xs : Array (String × Array Float)) (ys : Array Float)
   let predNames := String.intercalate "," (xs.toList.map fun (name, _) => s!"'{name}'")
   let yJson := "[" ++ String.intercalate "," (ys.toList.map toString) ++ "]"
   -- Tabs HTML
-  let predTabs := String.join (xs.toList.enum.map fun (i, (name, _)) =>
+  let predTabs := String.join ((List.range xs.size).zip xs.toList |>.map fun (i, (name, _)) =>
     s!"<div class='tab' onclick='switchTab({i+1})'>{name}</div>")
   -- Per-predictor hidden controls (transform + degree)
-  let predCtrls := String.join (xs.toList.enum.map fun (i, (name, _)) =>
+  let predCtrls := String.join ((List.range xs.size).zip xs.toList |>.map fun (i, (name, _)) =>
     s!"<span style='margin-left:12px;font-size:12px'><b>{name}</b>: " ++
     s!"<select id='tf_{i}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> " ++
     s!"deg <select id='deg_{i}'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></span>")

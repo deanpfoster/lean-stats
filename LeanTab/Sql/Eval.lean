@@ -113,7 +113,6 @@ def evalAgg (fn : AggFn) (cells : Array Cell) : Cell :=
 /-- Cross product of two tables (all column names prefixed if ambiguous). -/
 private def crossJoin (l r : Table) : Table :=
   let lNames := l.colNames
-  let rNames := r.colNames
   let nl := l.nRows
   let nr := r.nRows
   let totalRows := nl * nr
@@ -219,7 +218,7 @@ partial def Expr.columns : Expr → List String
   | .and l r | .or l r => l.columns ++ r.columns
   | .not e | .isNull e | .isNotNull e => e.columns
   | .between e lo hi => e.columns ++ lo.columns ++ hi.columns
-  | .inList e vals => e.columns ++ vals.bind Expr.columns
+  | .inList e vals => e.columns ++ vals.flatMap Expr.columns
   | _ => []
 
 /-- Check that all columns referenced in an Expr exist in a table.
@@ -231,13 +230,13 @@ def checkExpr (t : LeanTab.Table) (expr : Expr) : List String :=
 /-- Parse an aggregate expression like "avg(salary)" or "count(*)".
     Returns (AggFn, column name) or none on failure. -/
 def parseAggExpr (s : String) : Option (AggFn × String) :=
-  let s := s.trim
+  let s := s.trimAscii.toString
   let parts := s.splitOn "("
   if parts.length < 2 then none
   else
-    let fnStr := (parts.getD 0 "").trim.toLower
-    let colPart := (parts.getD 1 "").trim
-    let col := if colPart.endsWith ")" then colPart.dropRight 1 |>.trim else colPart
+    let fnStr := (parts.getD 0 "").trimAscii.toString.toLower
+    let colPart := (parts.getD 1 "").trimAscii.toString
+    let col := if colPart.endsWith ")" then (colPart.dropEnd 1).toString.trimAscii.toString else colPart
     match fnStr with
     | "count" => if col == "*" then some (.countStar, col) else some (.count, col)
     | "sum" => some (.sum, col)

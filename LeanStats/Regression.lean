@@ -26,7 +26,7 @@ def correlation (xs ys : Array Float) : Float :=
   else
     let mx := mean xs
     let my := mean ys
-    let num := (Array.zipWith xs ys (fun x y => (x - mx) * (y - my))).foldl (· + ·) 0
+    let num := (Array.zipWith (fun x y => (x - mx) * (y - my)) xs ys).foldl (· + ·) 0
     let dx := (xs.map (fun x => (x - mx) ^ 2)).foldl (· + ·) 0
     let dy := (ys.map (fun y => (y - my) ^ 2)).foldl (· + ·) 0
     let denom := (dx * dy).sqrt
@@ -41,7 +41,7 @@ def linearRegression (xs ys : Array Float) : Option LinearFit :=
   else
     let mx := mean xs
     let my := mean ys
-    let ssxy := (Array.zipWith xs ys (fun x y => (x - mx) * (y - my))).foldl (· + ·) 0
+    let ssxy := (Array.zipWith (fun x y => (x - mx) * (y - my)) xs ys).foldl (· + ·) 0
     let ssxx := (xs.map (fun x => (x - mx) ^ 2)).foldl (· + ·) 0
     if ssxx == 0 then none
     else
@@ -92,8 +92,9 @@ def regressionConfInt (xs ys : Array Float) (level : Float := 0.95) : Option Reg
       match linearRegression xs ys with
       | none => none
       | some fit =>
-        let sse := (Array.zipWith xs ys (fun x y =>
-          let res := y - (fit.slope * x + fit.intercept); res ^ 2)).foldl (· + ·) 0
+        let sse := (Array.zipWith (fun x y =>
+          let res := y - (fit.slope * x + fit.intercept)
+          res ^ 2) xs ys).foldl (· + ·) 0
         let s := (sse / (n.toFloat - 2)).sqrt
         let t := 1.96
         let seSlope := s / sxx.sqrt
@@ -115,8 +116,9 @@ def predictCI (xs ys : Array Float) (xNew : Float) : Option (Float × Float × F
       | none => none
       | some fit =>
         let yhat := fit.slope * xNew + fit.intercept
-        let sse := (Array.zipWith xs ys (fun x y =>
-          let res := y - (fit.slope * x + fit.intercept); res ^ 2)).foldl (· + ·) 0
+        let sse := (Array.zipWith (fun x y =>
+          let res := y - (fit.slope * x + fit.intercept)
+          res ^ 2) xs ys).foldl (· + ·) 0
         let s := (sse / (n.toFloat - 2)).sqrt
         let t := 1.96
         let margin := t * s * (1 / n.toFloat + (xNew - mx) ^ 2 / sxx).sqrt
@@ -135,8 +137,9 @@ def predictPI (xs ys : Array Float) (xNew : Float) : Option (Float × Float × F
       | none => none
       | some fit =>
         let yhat := fit.slope * xNew + fit.intercept
-        let sse := (Array.zipWith xs ys (fun x y =>
-          let res := y - (fit.slope * x + fit.intercept); res ^ 2)).foldl (· + ·) 0
+        let sse := (Array.zipWith (fun x y =>
+          let res := y - (fit.slope * x + fit.intercept)
+          res ^ 2) xs ys).foldl (· + ·) 0
         let s := (sse / (n.toFloat - 2)).sqrt
         let t := 1.96
         let margin := t * s * (1 + 1 / n.toFloat + (xNew - mx) ^ 2 / sxx).sqrt
@@ -159,12 +162,12 @@ def vif (xs : Array (Array Float)) (idx : Nat) : Float :=
       if ssTotal == 0 then 1e10
       else
         -- Regress y on all other predictors: compute fitted values
-        let fitted := Array.mkArray n 0.0
+        let fitted := Array.replicate n 0.0
         let fitted := others.foldl (fun acc xj =>
           match linearRegression xj y with
           | some fit => acc.mapIdx (fun i v => v + fit.slope * xj[i]! + fit.intercept / (p - 1).toFloat)
           | none => acc) fitted
-        let ssRes := (Array.zipWith y fitted (fun yi fi => (yi - fi) ^ 2)).foldl (· + ·) 0
+        let ssRes := (Array.zipWith (fun yi fi => (yi - fi) ^ 2) y fitted).foldl (· + ·) 0
         let r2 := 1.0 - ssRes / ssTotal
         if r2 >= 1.0 then 1e10
         else 1.0 / (1.0 - r2)

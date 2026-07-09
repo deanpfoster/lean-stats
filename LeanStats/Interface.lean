@@ -2,7 +2,6 @@ import LeanManifests.Basic
 import LeanStats.Manifests.Util
 import LeanStats.Diagnostics
 import LeanStats.Transform
-import LeanStats.Manifest
 
 /-! # LeanStats.Interface — the manifest l3m reads to know what it can call
 
@@ -12,16 +11,17 @@ This is the MINIMAL trust surface for an agent wrapping LeanStats as tools.
 
 1. **Signatures** — type-checked function signatures (if the function
    changes type, this file breaks the build)
-2. **Safety** — proven: degenerate inputs return safe defaults
-3. **Correctness** — proven: known fixtures produce expected results
-4. **Purity** — asserted: no IO anywhere
+2. **Safety/correctness pointers** — names of the manifest modules that
+   carry the tested/proven claims
+3. **Purity pointer** — the separate audit module that checks the combined
+   LeanStats+LeanTab surface
 
 ## How l3m uses this
 
 The agent reads this file to populate its tool registry. Each Signature
-line becomes a tool. The Restate'd theorems become the tool's "trust
-documentation" — what the agent can tell the user about why the result
-is trustworthy.
+line becomes a tool. The full proof/test inventory is intentionally kept
+in `LeanStats.Manifest` and `LeanStats.Audit` so this core interface does
+not pull LeanTab back into LeanStats' shared library.
 -/
 -- API contract for l3m. See also: LeanStats/Manifest.lean
 
@@ -54,15 +54,16 @@ Signature bestResponseTransform : Array Float → Array Float → TransformKind 
 -- § Safety + Correctness: restated from sub-manifests
 -- ════════════════════════════════════════════════════════════
 
--- These are already proven in LeanStats.Manifest (which this imports).
+-- These are tracked in LeanStats.Manifest (import it separately when the
+-- full combined LeanStats+LeanTab trust inventory is needed).
 -- The agent can reference them by name:
 --   LeanStats.Manifest.degenerate_safe
 --   LeanStats.Manifests.Descriptive.mean_empty
 --   LeanStats.Manifests.Regression.regression_slope
 --   etc.
 --
--- We don't re-prove them here; we just document that they exist
--- and that importing LeanStats.Manifest gives you the full trust chain.
+-- We don't import or re-prove them here; this module stays on the
+-- LeanStats-only side of the package boundary.
 
 /-- The complete trust chain is available via `import LeanStats.Manifest`.
     Key proven claims:

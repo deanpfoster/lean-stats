@@ -5,15 +5,15 @@ set_option autoImplicit false
 namespace LeanTab
 
 private def tryParseFloat (s : String) : Option Float :=
-  let s := s.trim
+  let s := s.trimAscii.toString
   -- Split on 'e' or 'E' for scientific notation
   let (mantissa, exponent) := match s.splitOn "e" with
     | [m, e] => (m, e)
     | _ => match s.splitOn "E" with
       | [m, e] => (m, e)
       | _ => (s, "0")
-  let (neg, m) := if mantissa.startsWith "-" then (true, mantissa.drop 1)
-    else if mantissa.startsWith "+" then (false, mantissa.drop 1)
+  let (neg, m) := if mantissa.startsWith "-" then (true, (mantissa.drop 1).toString)
+    else if mantissa.startsWith "+" then (false, (mantissa.drop 1).toString)
     else (false, mantissa)
   let parts := m.splitOn "."
   let baseVal := match parts with
@@ -34,8 +34,8 @@ private def tryParseFloat (s : String) : Option Float :=
     let v := if neg then -v else v
     -- Apply exponent
     let expNeg := exponent.startsWith "-"
-    let expStr := if expNeg then exponent.drop 1
-      else if exponent.startsWith "+" then exponent.drop 1
+    let expStr := if expNeg then (exponent.drop 1).toString
+      else if exponent.startsWith "+" then (exponent.drop 1).toString
       else exponent
     match expStr.toNat? with
     | some e =>
@@ -51,64 +51,72 @@ def parseCell (s : String) : Cell :=
 
 /-- RFC 4180 CSV parser. Handles quoted fields, escaped quotes, newlines in quotes. -/
 partial def parseCsv (s : String) (delimiter : Char := ',') : Table :=
-  let rows := parseRows s.iter
+  let rows := parseRows s.toList
   match rows with
   | [] => { columns := #[] }
   | header :: rest =>
-    let names := header.map (·.trim)
+    let names := header.map (·.trimAscii.toString)
     Table.fromRows names.toArray (rest.map (·.map parseCell |>.toArray) |>.toArray)
 where
-  parseRows (it : String.Iterator) : List (List String) :=
-    if it.atEnd then []
-    else
-      let (row, rest) := parseRow it
+  finish (acc : List Char) : String :=
+    String.ofList acc.reverse
+  parseRows (cs : List Char) : List (List String) :=
+    match cs with
+    | [] => []
+    | _ =>
+      let (row, rest) := parseRow cs
       -- skip trailing empty row
-      if rest.atEnd && row == [""] then []
+      if rest.isEmpty && row == [""] then []
       else row :: parseRows rest
-  parseRow (it : String.Iterator) : (List String) × String.Iterator :=
-    let (field, rest, eol) := parseField it
+  parseRow (cs : List Char) : (List String) × List Char :=
+    let (field, rest, eol) := parseField cs
     if eol then ([field], rest)
     else
       let (fields, rest') := parseRow rest
       (field :: fields, rest')
-  parseField (it : String.Iterator) : String × String.Iterator × Bool :=
-    if it.atEnd then ("", it, true)
-    else if it.curr == '"' then parseQuoted it.next "".toSubstring
-    else parseUnquoted it "".toSubstring
-  parseUnquoted (it : String.Iterator) (acc : Substring) : String × String.Iterator × Bool :=
-    if it.atEnd then (acc.toString, it, true)
-    else
-      let c := it.curr
-      if c == delimiter then (acc.toString, it.next, false)
-      else if c == '\n' then (acc.toString, it.next, true)
+  parseField (cs : List Char) : String × List Char × Bool :=
+    match cs with
+    | [] => ("", [], true)
+    | '"' :: rest => parseQuoted rest []
+    | _ => parseUnquoted cs []
+  parseUnquoted (cs : List Char) (acc : List Char) : String × List Char × Bool :=
+    match cs with
+    | [] => (finish acc, [], true)
+    | c :: rest =>
+      if c == delimiter then (finish acc, rest, false)
+      else if c == '\n' then (finish acc, rest, true)
       else if c == '\r' then
-        let next := it.next
-        let next := if !next.atEnd && next.curr == '\n' then next.next else next
-        (acc.toString, next, true)
-      else parseUnquoted it.next (acc.toString ++ c.toString).toSubstring
-  parseQuoted (it : String.Iterator) (acc : Substring) : String × String.Iterator × Bool :=
-    if it.atEnd then (acc.toString, it, true)
-    else
-      let c := it.curr
+        let rest := match rest with
+          | '\n' :: rest' => rest'
+          | _ => rest
+        (finish acc, rest, true)
+      else parseUnquoted rest (c :: acc)
+  parseQuoted (cs : List Char) (acc : List Char) : String × List Char × Bool :=
+    match cs with
+    | [] => (finish acc, [], true)
+    | c :: rest =>
       if c == '"' then
-        let next := it.next
-        if !next.atEnd && next.curr == '"' then
+        match rest with
+        | '"' :: rest' =>
           -- escaped quote
-          parseQuoted next.next (acc.toString ++ "\"").toSubstring
-        else
+          parseQuoted rest' ('"' :: acc)
+        | _ =>
           -- end of quoted field, consume delimiter
-          consumeDelim next acc.toString
+          consumeDelim rest (finish acc)
       else
-        parseQuoted it.next (acc.toString ++ c.toString).toSubstring
-  consumeDelim (it : String.Iterator) (field : String) : String × String.Iterator × Bool :=
-    if it.atEnd then (field, it, true)
-    else if it.curr == delimiter then (field, it.next, false)
-    else if it.curr == '\n' then (field, it.next, true)
-    else if it.curr == '\r' then
-      let next := it.next
-      let next := if !next.atEnd && next.curr == '\n' then next.next else next
-      (field, next, true)
-    else (field, it, true)  -- malformed, treat as EOL
+        parseQuoted rest (c :: acc)
+  consumeDelim (cs : List Char) (field : String) : String × List Char × Bool :=
+    match cs with
+    | [] => (field, [], true)
+    | c :: rest =>
+      if c == delimiter then (field, rest, false)
+      else if c == '\n' then (field, rest, true)
+      else if c == '\r' then
+        let rest := match rest with
+          | '\n' :: rest' => rest'
+          | _ => rest
+        (field, rest, true)
+      else (field, cs, true)  -- malformed, treat as EOL
 
 private def needsQuoting (s : String) (delimiter : Char) : Bool :=
   s.any fun c => c == delimiter || c == '"' || c == '\n' || c == '\r'
@@ -124,7 +132,7 @@ def renderCell : Cell → String
   | .na => ""
 
 def renderCsv (t : Table) (delimiter : Char := ',') : String :=
-  let delStr := String.mk [delimiter]
+  let delStr := String.ofList [delimiter]
   let qf (s : String) := quoteField s delimiter
   let header := delStr.intercalate (t.colNames.toList.map qf)
   let rows := (List.range t.nRows).map fun i =>

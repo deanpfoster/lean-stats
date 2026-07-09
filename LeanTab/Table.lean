@@ -62,7 +62,7 @@ namespace Table
 
 /-- Number of rows. -/
 def nRows (t : Table) : Nat :=
-  match t.columns.get? 0 with
+  match t.columns[0]? with
   | some col => col.data.size
   | none => 0
 
@@ -143,7 +143,7 @@ def Table.dummyCodeAll (t : Table) (cols : Array String) : Table :=
 def Table.interactionCol (t : Table) (col1 col2 : String) : Table :=
   let xs := t.colFloats col1
   let ys := t.colFloats col2
-  let data := xs.zipWith ys (fun a b => Cell.float (a * b))
+  let data := Array.zipWith (fun a b => Cell.float (a * b)) xs ys
   let newCol : Column := { name := col1 ++ "×" ++ col2, data }
   { columns := t.columns.push newCol }
 

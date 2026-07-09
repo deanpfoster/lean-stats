@@ -217,12 +217,12 @@ def multiRegPlot (xs : Array (String × Array Float)) (ys : Array Float)
   -- Plot panels: plot_0 = Y vs Yhat, plot_1..nPred = AV plots
   let plotPanels := String.join (
     [s!"<div class='plot-panel'><div class='plot-title'>Y vs Ŷ</div><svg id='plot_0' width='300' height='250'></svg><div class='x-ctrl'>cal deg <select id='caldeg'><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option></select></div></div>"] ++
-    (xs.toList.enum.map fun (i, (name, _)) =>
+    ((List.range xs.size).zip xs.toList |>.map fun (i, (name, _)) =>
       s!"<div class='plot-panel'><div class='plot-title'>{name}</div><svg id='plot_{i+1}' width='300' height='250'></svg><div class='x-ctrl'><select id='tf_{i}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> deg <select id='deg_{i}'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>"))
   -- Fit plot selector options
   let fitPlotOpts := String.join (
     [s!"<option value='0'>Y vs Ŷ</option>"] ++
-    (xs.toList.enum.map fun (i, (name, _)) => s!"<option value='{i+1}'>{name}</option>"))
+    ((List.range xs.size).zip xs.toList |>.map fun (i, (name, _)) => s!"<option value='{i+1}'>{name}</option>"))
   s!"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{pageTitle}</title>
 <style>{multiRegCss}{theme.toCss}</style></head><body>
 <h2>{pageTitle} <button id='keepBtn' title='Pin this view' style='background:#16a34a;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;vertical-align:middle'>📌 Keep</button></h2>

@@ -9,19 +9,19 @@ set_option autoImplicit false
 namespace LeanTab.Manifests.Missing
 open LeanTab
 
-instance : DecidableEq Cell := fun a b =>
-  match a, b with
-  | .float x, .float y =>
-    if h : x = y then isTrue (by rw [h]) else isFalse (by intro heq; cases heq; exact h rfl)
-  | .str x, .str y =>
-    if h : x = y then isTrue (by rw [h]) else isFalse (by intro heq; cases heq; exact h rfl)
-  | .na, .na => isTrue rfl
-  | .float _, .str _ => isFalse (by intro h; cases h)
-  | .float _, .na => isFalse (by intro h; cases h)
-  | .str _, .float _ => isFalse (by intro h; cases h)
-  | .str _, .na => isFalse (by intro h; cases h)
-  | .na, .float _ => isFalse (by intro h; cases h)
-  | .na, .str _ => isFalse (by intro h; cases h)
+private def cellBitsEq : Cell → Cell → Bool
+  | .float x, .float y => LeanStats.Manifests.floatBitsEq x y
+  | .str x, .str y => x == y
+  | .na, .na => true
+  | _, _ => false
+
+private def cellListBitsEq : List Cell → List Cell → Bool
+  | [], [] => true
+  | x :: xs, y :: ys => cellBitsEq x y && cellListBitsEq xs ys
+  | _, _ => false
+
+private def cellArrayBitsEq (xs ys : Array Cell) : Bool :=
+  cellListBitsEq xs.toList ys.toList
 
 private def xs : Array Cell := #[.float 1, .na, .float 3, .na]
 
@@ -36,10 +36,10 @@ theorem countNa_claim_proof : countNa xs = 2 := by native_decide
 ProvenTheorem countNa_claim : countNa xs = 2
 
 /-- fillForward propagates last non-na value. -/
-theorem fillForward_claim_proof :
-  fillForward xs = #[.float 1, .float 1, .float 3, .float 3] := by native_decide
+theorem fillForward_claim_test :
+  cellArrayBitsEq (fillForward xs) #[.float 1, .float 1, .float 3, .float 3] = true := by native_decide
 
-ProvenTheorem fillForward_claim :
+TestedConjecture fillForward_claim :
   fillForward xs = #[.float 1, .float 1, .float 3, .float 3]
 
 /-- dropNa removes exactly the NA rows. -/

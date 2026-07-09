@@ -34,7 +34,7 @@ namespace LeanTab.Sql
 
 /-- Tokenize an expression string into words, respecting quoted strings. -/
 private partial def tokenize (s : String) : List String :=
-  let s := s.trim
+  let s := s.trimAscii.toString
   go s.toList []
 where
   go : List Char → List String → List String
@@ -84,10 +84,10 @@ private def tryFloat (s : String) : Option Float :=
 where
   parseFloatSimple (s : String) : Float :=
     let negative := s.startsWith "-"
-    let s := if negative then s.drop 1 else s
+    let s := if negative then (s.drop 1).toString else s
     let parts := s.splitOn "."
     let whole := (parts.getD 0 "0").foldl (fun acc c => acc * 10 + (c.toNat - '0'.toNat)) 0
-    let frac := match parts.get? 1 with
+    let frac := match parts[1]? with
       | none => 0.0
       | some f => f.foldl (fun (acc, div) c =>
           (acc + (c.toNat - '0'.toNat).toFloat / div, div * 10)) (0.0, 10.0) |>.1
@@ -97,7 +97,7 @@ where
 /-- Parse a term (literal or column reference). -/
 private def parseTerm (tok : String) : Expr :=
   if tok.startsWith "'" && tok.endsWith "'" then
-    .litStr (tok.drop 1 |>.dropRight 1)
+    .litStr ((tok.drop 1).toString.dropEnd 1).toString
   else match tryFloat tok with
     | some f => .litFloat f
     | none =>

@@ -283,7 +283,7 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
   let predNames := String.intercalate "," (xs.toList.map fun (name, _) => s!"'{name}'")
   let yJson := "[" ++ String.intercalate "," (ys.toList.map toString) ++ "]"
   -- Build terms array JS
-  let mainTerms := xs.toList.enum.map fun (i, _) =>
+  let mainTerms := (List.range xs.size).zip xs.toList |>.map fun (i, _) =>
     s!"\{type:'main',idx:{i},tf:'linear',deg:1}"
   let interTerms := interactions.toList.map fun (i, j) =>
     s!"\{type:'interact',parents:[{i},{j}],tf:'linear',deg:1}"
@@ -293,16 +293,16 @@ def multiRegInteract (xs : Array (String × Array Float)) (ys : Array Float)
   let panel0 := "<div class='panel'><svg id='panel_0' width='280' height='240'></svg>" ++
     "<div class='panel-ctrl'><b>Y vs Ŷ</b> deg <select id='caldeg'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option></select></div></div>"
   -- Main effect panels
-  let mainPanels := String.join (xs.toList.enum.map fun (i, (name, _)) =>
+  let mainPanels := String.join ((List.range xs.size).zip xs.toList |>.map fun (i, (name, _)) =>
     s!"<div class='panel'><svg id='panel_{i+1}' width='280' height='240'></svg>" ++
     s!"<div class='panel-ctrl'><b id='lbl_{i}'>{name}</b> " ++
     s!"<select id='tf_{i}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> " ++
     s!"deg <select id='deg_{i}' title='Polynomial degree in model. 0=excluded. 1=linear. 2=adds X². 3=adds X²+X³. The AV plot shows the combined contribution.'><option value='0'>0</option><option value='1' selected>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option></select></div></div>")
   -- Interaction panels
-  let interPanels := String.join (interactions.toList.enum.map fun (k, (i, j)) =>
+  let interPanels := String.join ((List.range interactions.size).zip interactions.toList |>.map fun (k, (i, j)) =>
     let idx := nMain + k
-    let nameI := match xs.get? i with | some (n, _) => n | none => s!"x{i}"
-    let nameJ := match xs.get? j with | some (n, _) => n | none => s!"x{j}"
+    let nameI := match xs[i]? with | some (n, _) => n | none => s!"x{i}"
+    let nameJ := match xs[j]? with | some (n, _) => n | none => s!"x{j}"
     s!"<div class='panel'><svg id='panel_{idx+1}' width='280' height='240'></svg>" ++
     s!"<div class='panel-ctrl'><b id='lbl_{idx}'>{nameI}·{nameJ}</b> " ++
     s!"<select id='tf_{idx}'><option value='recip'>1/x</option><option value='log'>log</option><option value='sqrt'>√</option><option value='linear' selected>linear</option><option value='square'>x²</option><option value='exp'>exp</option></select> " ++

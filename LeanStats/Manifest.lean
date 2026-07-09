@@ -111,18 +111,18 @@ open LeanStats
 -- ════════════════════════════════════════════════════════════
 
 /-- Every core function returns safe defaults on empty input. -/
-theorem degenerate_safe_proof :
-  mean #[] = 0 ∧
-  variance #[] = 0 ∧
-  stdDev #[] = 0 ∧
-  median #[] = 0 ∧
-  quantile #[] 0.5 = 0 ∧
-  correlation #[] #[] = 0 ∧
+theorem degenerate_safe_test :
+  LeanStats.Manifests.floatBitsEq (mean #[]) 0 = true ∧
+  LeanStats.Manifests.floatBitsEq (variance #[]) 0 = true ∧
+  LeanStats.Manifests.floatBitsEq (stdDev #[]) 0 = true ∧
+  LeanStats.Manifests.floatBitsEq (median #[]) 0 = true ∧
+  LeanStats.Manifests.floatBitsEq (quantile #[] 0.5) 0 = true ∧
+  LeanStats.Manifests.floatBitsEq (correlation #[] #[]) 0 = true ∧
   linearRegression #[] #[] = none ∧
-  tTestOneSample #[] 0 = 0 ∧
-  tTestTwoSample #[] #[] = 0 := by native_decide
+  LeanStats.Manifests.floatBitsEq (tTestOneSample #[] 0) 0 = true ∧
+  LeanStats.Manifests.floatBitsEq (tTestTwoSample #[] #[]) 0 = true := by native_decide
 
-ProvenTheorem degenerate_safe :
+TestedConjecture degenerate_safe :
   mean #[] = 0 ∧
   variance #[] = 0 ∧
   stdDev #[] = 0 ∧

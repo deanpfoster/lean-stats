@@ -21,7 +21,7 @@ private def isAllNa (col : Column) : Bool :=
 
 private def isConstant (col : Column) : Bool :=
   let nonNa := col.data.filter fun c => match c with | .na => false | _ => true
-  match nonNa.get? 0 with
+  match nonNa[0]? with
   | none => true
   | some first => nonNa.all (· == first)
 
@@ -33,10 +33,10 @@ private def isStringCol (col : Column) : Bool :=
   col.data.any fun c => match c with | .str _ => true | _ => false
 
 private def tryParseFloat (s : String) : Option Float :=
-  let s := s.trim
+  let s := s.trimAscii.toString
   if s.isEmpty then none
   else
-    let (neg, s) := if s.startsWith "-" then (true, s.drop 1) else (false, s)
+    let (neg, s) := if s.startsWith "-" then (true, (s.drop 1).toString) else (false, s)
     let parts := s.splitOn "."
     match parts with
     | [intPart] =>
@@ -71,7 +71,7 @@ private def coerceToFloat (col : Column) : Column :=
 
 private def trimStrings (col : Column) : Column :=
   { col with data := col.data.map fun c =>
-      match c with | .str s => .str s.trim | other => other }
+      match c with | .str s => .str s.trimAscii.toString | other => other }
 
 def autoClean (t : Table) : CleanResult :=
   let steps : Array CleaningStep := #[]

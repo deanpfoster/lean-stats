@@ -103,7 +103,7 @@ private def parseNat (s : String) : Option Nat :=
 private def parseInt (s : String) : Option Int :=
   if s.isEmpty then none
   else if s.get 0 == '-' then
-    parseNat (s.drop 1) |>.map fun n => -(Int.ofNat n)
+    parseNat (s.drop 1).toString |>.map fun n => -(Int.ofNat n)
   else parseNat s |>.map Int.ofNat
 
 def Date.fromString (s : String) : Option Date :=
@@ -209,29 +209,29 @@ private partial def findCharAfter (s : String) (c : Char) (startByte : Nat) : Na
   let bytes := s.length
   let rec go (i : Nat) : Nat :=
     if i >= bytes then bytes
-    else if s.get ⟨i⟩ == c then i
+    else if String.Pos.Raw.get s ⟨i⟩ == c then i
     else go (i + 1)
   go startByte
 
 def DateTime.fromString (s : String) : Option DateTime := do
-  let tIdx := s.posOf 'T'
-  if tIdx == s.endPos then none
+  let tIdx := (s.find "T").offset
+  if tIdx == s.endPos.offset then none
   else
-    let datePart := s.extract 0 tIdx
-    let rest := s.extract (s.next tIdx) s.endPos
+    let datePart := String.Pos.Raw.extract s 0 tIdx
+    let rest := String.Pos.Raw.extract s (String.Pos.Raw.next s tIdx) s.endPos.offset
     let date ← Date.fromString datePart
     -- find timezone separator
     let restLen := rest.length
     let (timePart, tzPart) :=
       let plusIdx := findCharAfter rest '+' 0
       if plusIdx < restLen then
-        (rest.extract 0 ⟨plusIdx⟩, rest.extract ⟨plusIdx⟩ rest.endPos)
+        (String.Pos.Raw.extract rest 0 ⟨plusIdx⟩, String.Pos.Raw.extract rest ⟨plusIdx⟩ rest.endPos.offset)
       else
         let minusIdx := findCharAfter rest '-' 8
         if minusIdx < restLen then
-          (rest.extract 0 ⟨minusIdx⟩, rest.extract ⟨minusIdx⟩ rest.endPos)
+          (String.Pos.Raw.extract rest 0 ⟨minusIdx⟩, String.Pos.Raw.extract rest ⟨minusIdx⟩ rest.endPos.offset)
         else if rest.endsWith "Z" then
-          (rest.dropRight 1, "Z")
+          ((rest.dropEnd 1).toString, "Z")
         else
           (rest, "")
     let timeParts := timePart.splitOn ":"
@@ -244,7 +244,7 @@ def DateTime.fromString (s : String) : Option DateTime := do
       let tz ← if tzPart == "" || tzPart == "Z" then some (0 : Int)
         else
           let sign : Int := if tzPart.get 0 == '-' then -1 else 1
-          let tzBody := tzPart.drop 1
+          let tzBody := (tzPart.drop 1).toString
           let tzParts := tzBody.splitOn ":"
           match tzParts with
           | thStr :: tmStr :: [] =>

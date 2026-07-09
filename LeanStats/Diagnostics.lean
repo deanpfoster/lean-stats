@@ -54,12 +54,12 @@ def regressionDiag (xs ys : Array Float) : Option RegressionDiag :=
     else
       -- Basic fit
       let my := mean ys
-      let ssxy := (Array.zipWith xs ys (fun x y => (x - mx) * (y - my))).foldl (· + ·) 0
+      let ssxy := (Array.zipWith (fun x y => (x - mx) * (y - my)) xs ys).foldl (· + ·) 0
       let slope := ssxy / ssxx
       let intercept := my - slope * mx
       -- Fitted and residuals
       let fitted := xs.map (fun x => slope * x + intercept)
-      let residuals := Array.zipWith ys fitted (· - ·)
+      let residuals := Array.zipWith (fun y yh => y - yh) ys fitted
       -- Standard error (root MSE)
       let sse := (residuals.map (· ^ 2)).foldl (· + ·) 0
       let df := (n - 2).toFloat
@@ -72,14 +72,14 @@ def regressionDiag (xs ys : Array Float) : Option RegressionDiag :=
       let nf := n.toFloat
       let leverage := xs.map (fun x => 1.0 / nf + (x - mx) ^ 2 / ssxx)
       -- Standardized residuals
-      let stdResiduals := Array.zipWith residuals leverage fun e h =>
+      let stdResiduals := Array.zipWith (fun e h =>
         let denom := se * (1.0 - h).sqrt
-        if denom == 0 then 0 else e / denom
+        if denom == 0 then 0 else e / denom) residuals leverage
       -- Cook's distance: Dᵢ = (eᵢ*)² * hᵢ / (p * (1 - hᵢ))
       -- where p = 2 (number of parameters: slope + intercept)
       let p : Float := 2.0
-      let cooksD := Array.zipWith stdResiduals leverage fun sr h =>
-        if h ≥ 1.0 then 0 else (sr ^ 2 * h) / (p * (1.0 - h))
+      let cooksD := Array.zipWith (fun sr h =>
+        if h ≥ 1.0 then 0 else (sr ^ 2 * h) / (p * (1.0 - h))) stdResiduals leverage
       -- Durbin-Watson: Σ(eᵢ - eᵢ₋₁)² / Σeᵢ²
       let dw := if sse == 0 then 2.0  -- perfect fit
         else

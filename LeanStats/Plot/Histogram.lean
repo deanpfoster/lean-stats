@@ -12,7 +12,7 @@ def histogram (data : Array Float) (bins : Nat := 10) (opts : PlotOptions := {})
   let mx := data.foldl (fun a b => if a > b then a else b) (data.getD 0 0)
   let range := if mx == mn then 1.0 else mx - mn
   let binWidth := range / Float.ofNat bins'
-  let counts := Array.mkArray bins' 0
+  let counts := Array.replicate bins' 0
   let counts := data.foldl (init := counts) fun acc v =>
     let fi := (v - mn) / binWidth
     let idx := fi.toUInt64.toNat

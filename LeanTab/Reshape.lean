@@ -72,7 +72,6 @@ def pivotWider (t : Table) (namesFrom valuesFrom : String) : Table :=
       if ks.contains key then (ks, idxs)
       else (ks.push key, idxs.push ks.size)
   let _ := firstIdx  -- suppress unused warning
-  let nOutRows := uniqueKeys.size
   -- For each unique row, find all source rows
   let rowGroups := uniqueKeys.map fun key =>
     (Array.range n).filter fun i => rowKeys.getD i "" == key

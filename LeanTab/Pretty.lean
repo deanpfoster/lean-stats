@@ -10,7 +10,7 @@ def prettyPrint (t : Table) (maxRows : Nat := 20) : String :=
   let nRows := min t.nRows maxRows
   let rows := (List.range nRows).map fun i => (t.row i).map renderCell |>.toList
   let widths := names.mapIdx fun j name =>
-    let colW := rows.foldl (fun acc r => max acc ((r.get? j).getD "").length) name.length
+    let colW := rows.foldl (fun acc r => max acc ((r[j]?).getD "").length) name.length
     colW
   let pad (s : String) (w : Nat) : String := s ++ String.mk (List.replicate (w - s.length) ' ')
   let headerLine := " | ".intercalate (List.zipWith pad names widths)
@@ -27,7 +27,7 @@ private def sparklineStr (vals : Array Float) : String :=
     let mx := vals.foldl max vals[0]!
     -- bin into 8 bins
     let bins : Array Nat := Id.run do
-      let mut b := Array.mkArray 8 0
+      let mut b := Array.replicate 8 0
       for v in vals do
         let idx := if mx == mn then 3
           else let raw := ((v - mn) / (mx - mn) * 7.99).toUInt32.toNat; min raw 7
@@ -68,8 +68,8 @@ def prettyPrintEnhanced (t : Table) (maxRows : Nat := 20) : String :=
   -- Column summaries (sparklines / value counts)
   let summaries := t.columns.toList.map columnSummary
   let widths := names.mapIdx fun j name =>
-    let colW := rows.foldl (fun acc r => max acc ((r.get? j).getD "").length) name.length
-    let sumW := (summaries.get? j).getD "" |>.length
+    let colW := rows.foldl (fun acc r => max acc ((r[j]?).getD "").length) name.length
+    let sumW := (summaries[j]?).getD "" |>.length
     max colW sumW
   let pad (s : String) (w : Nat) : String := s ++ String.mk (List.replicate (w - s.length) ' ')
   let headerLine := " | ".intercalate (List.zipWith pad names widths)
