@@ -83,7 +83,7 @@ def summarizeTable (t : Table) : TableSummary :=
 -- ════════════════════════════════════════════════════════════
 
 private def trunc (s : String) (n : Nat) : String :=
-  if s.length ≤ n then s else (s.take n) ++ "…"
+  if s.length ≤ n then s else (s.take n).toString ++ "…"
 
 private def fmtFloat (f : Float) (maxLen : Nat := 10) : String :=
   trunc (toString f) maxLen

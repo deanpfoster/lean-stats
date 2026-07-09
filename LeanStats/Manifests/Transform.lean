@@ -28,42 +28,49 @@ open LeanStats
 -- ════════════════════════════════════════════════════════════
 
 /-- Log of non-positive values returns 0 (no crash). -/
-theorem log_nonpositive_proof : logTransform #[0.0, -1.0] = #[0.0, 0.0] := by native_decide
+theorem log_nonpositive_test :
+  LeanStats.Manifests.floatArrayBitsEq (logTransform #[0.0, -1.0]) #[0.0, 0.0] = true := by native_decide
 
-ProvenTheorem log_nonpositive : logTransform #[0.0, -1.0] = #[0.0, 0.0]
+TestedConjecture log_nonpositive : logTransform #[0.0, -1.0] = #[0.0, 0.0]
 
 /-- Sqrt of negative values returns 0. -/
-theorem sqrt_negative_proof : sqrtTransform #[-4.0] = #[0.0] := by native_decide
+theorem sqrt_negative_test :
+  LeanStats.Manifests.floatArrayBitsEq (sqrtTransform #[-4.0]) #[0.0] = true := by native_decide
 
-ProvenTheorem sqrt_negative : sqrtTransform #[-4.0] = #[0.0]
+TestedConjecture sqrt_negative : sqrtTransform #[-4.0] = #[0.0]
 
 /-- Reciprocal of zero returns 0. -/
-theorem recip_zero_proof : recipTransform #[0.0] = #[0.0] := by native_decide
+theorem recip_zero_test :
+  LeanStats.Manifests.floatArrayBitsEq (recipTransform #[0.0]) #[0.0] = true := by native_decide
 
-ProvenTheorem recip_zero : recipTransform #[0.0] = #[0.0]
+TestedConjecture recip_zero : recipTransform #[0.0] = #[0.0]
 
 /-- Identity transform returns input unchanged. -/
-theorem identity_unchanged_proof : applyTransform #[1.0, 2.0, 3.0] .identity = #[1.0, 2.0, 3.0] := by native_decide
+theorem identity_unchanged_test :
+  LeanStats.Manifests.floatArrayBitsEq (applyTransform #[1.0, 2.0, 3.0] .identity) #[1.0, 2.0, 3.0] = true := by native_decide
 
-ProvenTheorem identity_unchanged : applyTransform #[1.0, 2.0, 3.0] .identity = #[1.0, 2.0, 3.0]
+TestedConjecture identity_unchanged : applyTransform #[1.0, 2.0, 3.0] .identity = #[1.0, 2.0, 3.0]
 
 -- ════════════════════════════════════════════════════════════
 -- § Internal claims
 -- ════════════════════════════════════════════════════════════
 
 /-- sqrt(4) = 2. -/
-theorem sqrt_four_proof : sqrtTransform #[4.0] = #[2.0] := by native_decide
+theorem sqrt_four_test :
+  LeanStats.Manifests.floatArrayBitsEq (sqrtTransform #[4.0]) #[2.0] = true := by native_decide
 
-ProvenTheorem sqrt_four : sqrtTransform #[4.0] = #[2.0]
+TestedConjecture sqrt_four : sqrtTransform #[4.0] = #[2.0]
 
 /-- reciprocal(2) = 0.5. -/
-theorem recip_two_proof : recipTransform #[2.0] = #[0.5] := by native_decide
+theorem recip_two_test :
+  LeanStats.Manifests.floatArrayBitsEq (recipTransform #[2.0]) #[0.5] = true := by native_decide
 
-ProvenTheorem recip_two : recipTransform #[2.0] = #[0.5]
+TestedConjecture recip_two : recipTransform #[2.0] = #[0.5]
 
 /-- square transform: 3² = 9. -/
-theorem square_three_proof : applyTransform #[3.0] .square = #[9.0] := by native_decide
+theorem square_three_test :
+  LeanStats.Manifests.floatArrayBitsEq (applyTransform #[3.0] .square) #[9.0] = true := by native_decide
 
-ProvenTheorem square_three : applyTransform #[3.0] .square = #[9.0]
+TestedConjecture square_three : applyTransform #[3.0] .square = #[9.0]
 
 end LeanStats.Manifests.Transform

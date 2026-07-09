@@ -342,7 +342,7 @@ def dashboard (ys : Array Float) (xs : Array (String × Array Float))
     | some (gName, gVals) =>
       "{\"" ++ gName ++ "\":[" ++ String.intercalate "," (gVals.toList.map fun g => "\"" ++ g ++ "\"") ++ "]}"
     | none => "{}"
-  let firstX := match xs.get? 0 with | some (name, _) => name | none => ""
+  let firstX := match xs[0]? with | some (name, _) => name | none => ""
   let initHistoVar := match groups with
     | some (gName, _) => gName
     | none => firstX

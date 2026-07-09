@@ -34,9 +34,11 @@ private def xorBytes (a b : ByteArray) : ByteArray :=
 
 /-- Encode bytes as hex string. -/
 private def toHex (bs : ByteArray) : String :=
-  let hexChars := "0123456789abcdef"
-  String.mk (bs.toList.bind fun b =>
-    [hexChars.get! ⟨(b.toNat / 16)⟩, hexChars.get! ⟨(b.toNat % 16)⟩])
+  let hexChars : Array Char :=
+    #['0', '1', '2', '3', '4', '5', '6', '7',
+      '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+  String.ofList (bs.toList.flatMap fun b =>
+    [hexChars.getD (b.toNat / 16) '0', hexChars.getD (b.toNat % 16) '0'])
 
 /-- Decode hex string to bytes. -/
 private def fromHex (s : String) : ByteArray :=

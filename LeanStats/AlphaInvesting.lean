@@ -57,7 +57,7 @@ structure SEResult where
 
 /-- Approximate two-sided p-value from t-statistic and df.
     Uses normal approximation for large df. -/
-private def approxPValue (t : Float) (df : Nat) : Float :=
+private def approxPValue (t : Float) (_df : Nat) : Float :=
   let z := t.abs
   if z < 0.001 then 1.0
   else if z > 8 then 0.0
@@ -87,7 +87,7 @@ def computeSE (method : SEMethod) (xs : Array Float) (residuals : Array Float)
     { se, tStat := t, pValue := p }
   | .white =>
     -- HC1: Σ(eᵢ² × (xᵢ - x̄)²) / Sxx² × n/(n-2)
-    let hc := (Array.zipWith residuals xs (fun e x => e ^ 2 * (x - mx) ^ 2)).foldl (· + ·) 0
+    let hc := (Array.zipWith (fun e x => e ^ 2 * (x - mx) ^ 2) residuals xs).foldl (· + ·) 0
     let se := (hc / (sxx ^ 2) * n / (n - 2)).sqrt
     let t := if se == 0 then 0 else slope / se
     let p := approxPValue t (xs.size - 2)
@@ -170,7 +170,6 @@ structure AlphaState where
     config: alpha-investing parameters -/
 def alphaInvesting (ys : Array Float) (candidates : Array (String × Array Float))
     (config : AlphaConfig := {}) : AlphaState :=
-  let n := ys.size
   candidates.foldl (init := { wealth := config.initialWealth, inModel := #[], history := #[] })
     fun state (vname, xs) =>
       if state.wealth < config.testCost then
@@ -187,10 +186,10 @@ def alphaInvesting (ys : Array Float) (candidates : Array (String × Array Float
         -- Compute slope of xs on residuals
         let mx := mean xs
         let sxx := (xs.map (fun x => (x - mx) ^ 2)).foldl (· + ·) 0
-        let sxy := (Array.zipWith xs residuals (fun x r => (x - mx) * r)).foldl (· + ·) 0
+        let sxy := (Array.zipWith (fun x r => (x - mx) * r) xs residuals).foldl (· + ·) 0
         let slope := if sxx == 0 then 0 else sxy / sxx
         -- Compute residuals from this fit
-        let fitResid := Array.zipWith residuals xs (fun r x => r - slope * (x - mx))
+        let fitResid := Array.zipWith (fun r x => r - slope * (x - mx)) residuals xs
         -- Get SE and p-value
         let seResult := computeSE config.seMethod xs fitResid slope
         -- Decision

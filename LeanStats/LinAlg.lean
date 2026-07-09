@@ -56,7 +56,7 @@ def Matrix.identity (n : Nat) : Matrix :=
 
 /-- Create a zero matrix. -/
 def Matrix.zeros (rows cols : Nat) : Matrix :=
-  { rows, cols, data := Array.mkArray (rows * cols) 0.0 }
+  { rows, cols, data := Array.replicate (rows * cols) 0.0 }
 
 /-- Transpose. -/
 def transpose (m : Matrix) : Matrix :=
@@ -118,7 +118,7 @@ partial def solve (a : Matrix) (b : Array Float) : Option (Array Float) :=
         let pidx := col * (n+1) + j
         aug := aug.set! idx (aug.getD idx 0 - factor * aug.getD pidx 0)
   -- Back substitution
-  let mut x := Array.mkArray n 0.0
+  let mut x := Array.replicate n 0.0
   for i' in List.range n do
     let i := n - 1 - i'
     let mut sum := aug.getD (i * (n+1) + n) 0
@@ -156,7 +156,7 @@ def batchedOLS (x : Matrix) (ys : Array (Array Float)) : Array (Option (Array Fl
 /-- Compute residuals: y - Xβ. -/
 def residuals (x : Matrix) (y : Array Float) (beta : Array Float) : Array Float :=
   let yhat := matvec x beta
-  Array.zipWith y yhat (· - ·)
+  Array.zipWith (fun yi yh => yi - yh) y yhat
 
 /-- Compute R² from residuals and y. -/
 def rSquared (y : Array Float) (resid : Array Float) : Float :=

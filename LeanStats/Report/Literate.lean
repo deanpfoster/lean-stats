@@ -40,33 +40,34 @@ set_option autoImplicit false
 namespace LeanStats.Report
 
 /-- Look up a key in an association list. -/
-private def lookupMeta (meta : List (String × String)) (key : String) (default : String := "") : String :=
-  match meta.find? (·.1 == key) with
+private def lookupMeta (metadata : List (String × String)) (key : String) (default : String := "") : String :=
+  match metadata.find? (·.1 == key) with
   | some (_, v) => v
   | none => default
 
 /-- Parse a literate markdown document into a Document. -/
 partial def parseLiterate (src : String) : Document :=
   let lines := src.splitOn "\n"
-  let (meta, rest) := parseFrontmatter lines
+  let (metadata, rest) := parseFrontmatter lines
   let blocks := parseBlocks rest []
-  { title := lookupMeta meta "title" "Untitled"
-    author := lookupMeta meta "author"
-    date := lookupMeta meta "date"
+  { title := lookupMeta metadata "title" "Untitled"
+    author := lookupMeta metadata "author"
+    date := lookupMeta metadata "date"
     blocks := blocks }
 where
   parseFrontmatter (lines : List String) : (List (String × String)) × List String :=
     match lines with
     | "---" :: rest =>
       let (yamlLines, after) := rest.span (· != "---")
-      let meta := yamlLines.filterMap fun line =>
+      let metadata := yamlLines.filterMap fun line =>
         let parts := line.splitOn ":"
         if parts.length >= 2 then
-          some ((parts.getD 0 "").trim, (String.intercalate ":" (parts.drop 1)).trim)
+          some ((parts.getD 0 "").trimAscii.toString,
+            (String.intercalate ":" (parts.drop 1)).trimAscii.toString)
         else none
-      (meta, after.tailD [])
+      (metadata, tailD after)
     | _ => ([], lines)
-  List.tailD : List String → List String
+  tailD : List String → List String
     | [] => []
     | _ :: t => t
   parseBlocks (lines : List String) (acc : List Block) : List Block :=
@@ -78,11 +79,11 @@ where
         let (codeLines, after) := rest.span (· != "```")
         let code := String.intercalate "\n" codeLines
         let block := Block.artifact code "" caption
-        parseBlocks (after.tailD []) (block :: acc)
+        parseBlocks (tailD after) (block :: acc)
       else
         let (proseLines, after) := collectProse (line :: rest) []
         let prose := String.intercalate "\n" proseLines
-        if prose.trim != "" then
+        if prose.trimAscii.toString != "" then
           parseBlocks after (Block.prose prose :: acc)
         else
           parseBlocks after acc

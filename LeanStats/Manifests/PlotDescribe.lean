@@ -28,8 +28,9 @@ theorem histogram_n_proof : (describeHistogram histData).n = histData.size := by
 ProvenTheorem histogram_n : (describeHistogram histData).n = histData.size
 
 /-- describeScatter correlation matches LeanStats.correlation -/
-theorem scatter_corr_proof : (describeScatter xs ys).correlation = LeanStats.correlation xs ys := by native_decide
+theorem scatter_corr_test :
+  LeanStats.Manifests.floatBitsEq ((describeScatter xs ys).correlation) (LeanStats.correlation xs ys) = true := by native_decide
 
-ProvenTheorem scatter_corr : (describeScatter xs ys).correlation = LeanStats.correlation xs ys
+TestedConjecture scatter_corr : (describeScatter xs ys).correlation = LeanStats.correlation xs ys
 
 end LeanStats.Manifests.PlotDescribe

@@ -73,13 +73,8 @@ def Table.transform (t : Table) (colName : String) (kind : LeanStats.TransformKi
   let xs := t.colFloats colName
   let transformed := LeanStats.applyTransform xs kind
   let outName := newName.getD (colName ++ "_" ++ reprStr kind)
-  mutate t outName (fun row =>
-    let i := 0  -- This is a simplification; proper impl needs row index
-    .na)
-  -- Better: directly build the column
-  |> fun _ =>
-    let newCol : Column := { name := outName, data := transformed.map .float }
-    { columns := t.columns.push newCol }
+  let newCol : Column := { name := outName, data := transformed.map .float }
+  { columns := t.columns.push newCol }
 
 /-- Find the best response transform for a regression. -/
 def Table.bestTransform (t : Table) (response predictor : String) :

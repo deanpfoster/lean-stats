@@ -22,10 +22,10 @@ ProvenTheorem lead_preserves_length :
   (lead #[Cell.float 1, Cell.float 2, Cell.float 3] 1).size = 3
 
 /-- cumSum computes running sum. -/
-theorem cumsum_correct_proof :
-  cumSum #[1.0, 2.0, 3.0] = #[1.0, 3.0, 6.0] := by native_decide
+theorem cumsum_correct_test :
+  LeanStats.Manifests.floatArrayBitsEq (cumSum #[1.0, 2.0, 3.0]) #[1.0, 3.0, 6.0] = true := by native_decide
 
-ProvenTheorem cumsum_correct :
+TestedConjecture cumsum_correct :
   cumSum #[1.0, 2.0, 3.0] = #[1.0, 3.0, 6.0]
 
 /-- rowNumber produces correct size. -/
@@ -36,10 +36,10 @@ ProvenTheorem row_number_size :
   (rowNumber 3).size = 3
 
 /-- cumSum last element equals total. -/
-theorem cumsum_last_proof :
-  (cumSum #[1.0, 2.0, 3.0]).getD 2 0 = 6.0 := by native_decide
+theorem cumsum_last_test :
+  LeanStats.Manifests.floatBitsEq ((cumSum #[1.0, 2.0, 3.0]).getD 2 0) 6.0 = true := by native_decide
 
-ProvenTheorem cumsum_last :
+TestedConjecture cumsum_last :
   (cumSum #[1.0, 2.0, 3.0]).getD 2 0 = 6.0
 
 end LeanTab.Manifests.Window

@@ -26,7 +26,7 @@ def strToLower (xs : Array Cell) : Array Cell :=
 
 def strTrim (xs : Array Cell) : Array Cell :=
   xs.map fun c => match c with
-    | .str s => .str s.trim
+    | .str s => .str s.trimAscii.toString
     | other => other
 
 def strLength (xs : Array Cell) : Array Cell :=

@@ -142,7 +142,7 @@ def describeHistogram (data : Array Float) (varName : String := "x")
   -- Find mode bin
   let range := if mx == mn then 1.0 else mx - mn
   let binWidth := range / bins.toFloat
-  let counts := data.foldl (init := Array.mkArray bins 0) fun acc v =>
+  let counts := data.foldl (init := Array.replicate bins 0) fun acc v =>
     let idx := ((v - mn) / binWidth).toUInt64.toNat
     let idx := if idx >= bins then bins - 1 else idx
     acc.set! idx (acc.getD idx 0 + 1)

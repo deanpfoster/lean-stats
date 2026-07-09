@@ -253,7 +253,7 @@ def verticalHistogram (data : Array Float) (sy : Float → Float)
         let idx := ((v - mn) / binWidth).toUInt64.toNat
         let idx := if idx >= bins then bins - 1 else idx
         acc.set! idx ((acc.getD idx 0) + 1)
-      ) (Array.mkArray bins 0)
+      ) (Array.replicate bins 0)
       let maxCount := counts.foldl (fun acc c => if c > acc then c else acc) 0
       if maxCount == 0 then ""
       else Id.run do

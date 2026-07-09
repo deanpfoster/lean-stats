@@ -37,10 +37,11 @@ import LeanStats.Report.Provenance
 import LeanStats.Report.Literate
 import LeanStats.Report.Html
 
-import LeanStats.Manifest
-import LeanStats.Manifests.NewFunctions
 import LeanStats.Interface
-import LeanStats.Audit
+
+-- The combined LeanStats+LeanTab manifests/audit intentionally stay out
+-- of this default root. LeanTab's stats bridge depends on LeanStats; pulling
+-- LeanTab-facing manifests back into LeanStats creates a shared-library cycle.
 
 /-! # LeanStats — pure-Lean statistics, plotting, and reporting
 

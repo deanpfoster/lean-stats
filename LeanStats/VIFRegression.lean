@@ -70,7 +70,6 @@ private def vifTStat (y : Array Float) (xIn : Array (Array Float)) (xNew : Array
   let residY := if xInSub.isEmpty then ySub
     else
       -- Simple: regress y on xIn via normal equations
-      let p := xInSub.size
       let designRows := (Array.range ss).map fun i =>
         #[1.0] ++ xInSub.map (·.getD i 0)
       let X := LinAlg.Matrix.fromRows designRows

@@ -129,10 +129,10 @@ ProvenTheorem col_floats_len :
   (t1.colFloats "x").size = 3
 
 /-- colFloats extracts correct values. -/
-theorem col_floats_vals_proof :
-  t1.colFloats "x" = #[1.0, 2.0, 3.0] := by native_decide
+theorem col_floats_vals_test :
+  LeanStats.Manifests.floatArrayBitsEq (t1.colFloats "x") #[1.0, 2.0, 3.0] = true := by native_decide
 
-ProvenTheorem col_floats_vals :
+TestedConjecture col_floats_vals :
   t1.colFloats "x" = #[1.0, 2.0, 3.0]
 
 -- ════════════════════════════════════════════════════════════
@@ -158,17 +158,17 @@ ProvenTheorem pivot_longer_cols :
 -- ════════════════════════════════════════════════════════════
 
 /-- Table.colMean computes correct mean. -/
-theorem col_mean_proof :
-  t1.colMean "x" = 2.0 := by native_decide
+theorem col_mean_test :
+  LeanStats.Manifests.floatBitsEq (t1.colMean "x") 2.0 = true := by native_decide
 
-ProvenTheorem col_mean :
+TestedConjecture col_mean :
   t1.colMean "x" = 2.0
 
 /-- Table.corr on perfectly correlated columns = 1. -/
-theorem col_corr_proof :
-  t1.corr "x" "y" = 1.0 := by native_decide
+theorem col_corr_test :
+  LeanStats.Manifests.floatBitsEq (t1.corr "x" "y") 1.0 = true := by native_decide
 
-ProvenTheorem col_corr :
+TestedConjecture col_corr :
   t1.corr "x" "y" = 1.0
 
 end LeanTab.Manifest

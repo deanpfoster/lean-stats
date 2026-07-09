@@ -96,14 +96,14 @@ def aggN (cells : Array Cell) : Cell :=
 /-- Min of float cells. -/
 def aggMin (cells : Array Cell) : Cell :=
   let floats := cells.filterMap Cell.toFloat?
-  match floats.get? 0 with
+  match floats[0]? with
   | none => .na
   | some init => .float (floats.foldl (fun a b => if b < a then b else a) init)
 
 /-- Max of float cells. -/
 def aggMax (cells : Array Cell) : Cell :=
   let floats := cells.filterMap Cell.toFloat?
-  match floats.get? 0 with
+  match floats[0]? with
   | none => .na
   | some init => .float (floats.foldl (fun a b => if b > a then b else a) init)
 

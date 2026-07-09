@@ -7,15 +7,6 @@ set_option autoImplicit false
 namespace LeanTab.Manifests.StringOps
 open LeanTab
 
-instance : DecidableEq Cell := fun a b =>
-  match a, b with
-  | .float x, .float y =>
-    if x.toUInt64 == y.toUInt64 then isTrue (by sorry) else isFalse (by sorry)
-  | .str x, .str y =>
-    if x == y then isTrue (by sorry) else isFalse (by sorry)
-  | .na, .na => isTrue (by sorry)
-  | _, _ => isFalse (by sorry)
-
 private def testCells : Array Cell := #[Cell.str "hello", Cell.str "world"]
 private def testCells2 : Array Cell := #[Cell.str "hi", Cell.na, Cell.float 1.0]
 
